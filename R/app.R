@@ -10,10 +10,10 @@
 #' @return
 #' @keywords internal
 
-library( shiny )
-library( ggplot2 )
-library( R.utils ) # withTimeout(), https://stackoverflow.com/questions/7891073/time-out-an-r-command-via-something-like-try
-source( "http://amor.cms.hu-berlin.de/~psymetho/optimalDesign/optimalDesign_functions_v3.R" )
+require( shiny )
+require( ggplot2 )
+require( R.utils ) # withTimeout(), https://stackoverflow.com/questions/7891073/time-out-an-r-command-via-something-like-try
+# source( "http://amor.cms.hu-berlin.de/~psymetho/optimalDesign/optimalDesign_functions_v3.R" )
 
 # ui <- fluidPage( HTML( "<h2 style='text-align: center; width: 500px'><b>Calculation of Optimal Designs for<br>Classroom Climate Studies</b></h2><br>" ),
 # v2
@@ -622,6 +622,15 @@ server <- function(input, output) {
 		
 }
 
+### development
+Rfiles <- list.files( "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R", pattern="*.R" )
+Rfiles <- Rfiles[ !Rfiles %in% "app.R" ]
+for( Rfile in Rfiles ){
+	source( Rfile )
+}
 
 
 shinyApp( ui = ui, server = server )
+
+
+

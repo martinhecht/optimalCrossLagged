@@ -22,7 +22,7 @@ annotate.plot <- function(p,y.criterion,budget) {
 }
 
 ### development
-# Rfiles <- list.files( "c:/Users/martin/Dropbox/68_causalSEM/04_martinhecht/R", pattern="*.R" )
+# Rfiles <- list.files( "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R", pattern="*.R" )
 # Rfiles <- Rfiles[ !Rfiles %in% "plot_density.R" ]
 # for( Rfile in Rfiles ){
 	# source( Rfile )
