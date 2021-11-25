@@ -140,8 +140,10 @@ compute_se_mx <- function(N, timepoints, n_ov, names_ov, n_process, names_proces
 }
 
 ### development
-# Rfiles <- list.files( "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R", pattern="*.R", include.dirs = TRUE )
-# Rfiles <- Rfiles[ !Rfiles %in% c("compute_se_mx.R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R") ]
+# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
+# Rfiles <- list.files( Rdir, pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("compute_se_mx.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+# Rfiles <- file.path( Rdir, Rfiles )
 # for( Rfile in Rfiles ){
 	# source( Rfile )
 # }

@@ -203,8 +203,10 @@ generate_model_example2 <- function(){
 }
 
 ### development
-# Rfiles <- list.files( "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R", pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("generate_input_example2.R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R") ]
+# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
+# Rfiles <- list.files( Rdir, pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("generate_model_example2.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+# Rfiles <- file.path( Rdir, Rfiles )
 # for( Rfile in Rfiles ){
 	# source( Rfile )
 # }

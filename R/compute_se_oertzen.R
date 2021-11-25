@@ -189,3 +189,29 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
   sqrt(diag(acov))[target_parameters]
   
 }
+
+### development
+# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
+# Rfiles <- list.files( Rdir, pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("compute_se_oertzen.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+# Rfiles <- file.path( Rdir, Rfiles )
+# for( Rfile in Rfiles ){
+	# source( Rfile )
+# }
+
+# example 2
+# model <- generate_model_example2()
+
+# se <- compute_se_oertzen( 
+						  ##N=model$N,
+						  # N=80,
+						  ##timepoints=model$timepoints,
+						  # timepoints=15,
+						  # n_ov=model$n_ov,
+						  # n_process=model$n_process,
+						  # matrices=model$matrices,
+						  # target_parameters="arcl_eta1eta2" )
+# se
+
+
+

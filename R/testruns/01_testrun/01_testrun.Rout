@@ -1,0 +1,1269 @@
+
+R version 4.1.0 (2021-05-18) -- "Camp Pontanezen"
+Copyright (C) 2021 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R ist freie Software und kommt OHNE JEGLICHE GARANTIE.
+Sie sind eingeladen, es unter bestimmten Bedingungen weiter zu verbreiten.
+Tippen Sie 'license()' or 'licence()' für Details dazu.
+
+R ist ein Gemeinschaftsprojekt mit vielen Beitragenden.
+Tippen Sie 'contributors()' für mehr Information und 'citation()',
+um zu erfahren, wie R oder R packages in Publikationen zitiert werden können.
+
+Tippen Sie 'demo()' für einige Demos, 'help()' für on-line Hilfe, oder
+'help.start()' für eine HTML Browserschnittstelle zur Hilfe.
+Tippen Sie 'q()', um R zu verlassen.
+
+> 
+> library( plyr )
+> library( psych )
+> library( xlsx )
+> 
+> folder.main <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R/testruns/01_testrun"
+> 
+> Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
+> Rfiles <- list.files( Rdir, pattern="*.R" )
+> Rfiles <- Rfiles[ !Rfiles %in% c("app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+> Rfiles <- file.path( Rdir, Rfiles )
+> for( Rfile in Rfiles ){
++ 	source( Rfile )
++ }
+Lade nötiges Paket: ggplot2
+
+Attache Paket: 'ggplot2'
+
+Die folgenden Objekte sind maskiert von 'package:psych':
+
+    %+%, alpha
+
+> 
+> # example 2
+> model <- generate_model_example2()
+> 
+> 
+> # k.starts <- seq( 100, 110, 10 )
+> k.starts <- seq( 50, 200, 10 )
+> 
+> 
+> loop <- function( nr, k.start ){
++ 		
++ 		cat( paste0( "\n\n==================== ", nr, "/", length(k.starts), " ====================\n" ) ); flush.console()
++ 		
++ 		r <- data.frame(
++ 				budget=20000,
++ 				cost2=10,
++ 				cost1=10,
++ 				k.start)
++ 		
++ 		res <- try( calc.power( budget=r$budget, cost2=r$cost2, cost1=r$cost1, k.start=r$k.start, model=model, target_parameter="arcl_eta1eta2", timeout=60, verbose=TRUE ) )
++ 		
++ 		if( !inherits(res,"try-error") ){
++ 			res <- cbind( r, as.data.frame( res ) )
++ 		} else {
++ 			res <- r
++ 		}
++ 		res
++ }
+> res.l <- mapply( loop, seq( along=k.starts ), k.starts, SIMPLIFY=FALSE )
+
+
+==================== 1/16 ====================
+Lade nötiges Paket: R.utils
+Lade nötiges Paket: R.oo
+Lade nötiges Paket: R.methodsS3
+R.methodsS3 v1.8.1 (2020-08-26 16:20:06 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.24.0 (2020-08-26 16:11:58 UTC) successfully loaded. See ?R.oo for help.
+
+Attache Paket: 'R.oo'
+
+Das folgende Objekt ist maskiert 'package:R.methodsS3':
+
+    throw
+
+Die folgenden Objekte sind maskiert von 'package:methods':
+
+    getClasses, getMethods
+
+Die folgenden Objekte sind maskiert von 'package:base':
+
+    attach, detach, load, save
+
+R.utils v2.10.1 (2020-08-26 22:50:31 UTC) successfully loaded. See ?R.utils for help.
+
+Attache Paket: 'R.utils'
+
+Das folgende Objekt ist maskiert 'package:utils':
+
+    timestamp
+
+Die folgenden Objekte sind maskiert von 'package:base':
+
+    cat, commandArgs, getOption, inherits, isOpen, nullfile, parse,
+    warnings
+
+starting optim 
+optim run:  1 
+number of persons:  50 
+number of time points:  39 
+se of target parameter:  0.0240242 
+optim run:  2 
+number of persons:  55 
+number of time points:  35 
+se of target parameter:  0.02417992 
+optim run:  3 
+number of persons:  45 
+number of time points:  43 
+se of target parameter:  0.02411042 
+optim run:  4 
+number of persons:  48 
+number of time points:  41 
+se of target parameter:  0.02391375 
+optim run:  5 
+number of persons:  45 
+number of time points:  43 
+se of target parameter:  0.02411042 
+optim run:  6 
+number of persons:  49 
+number of time points:  40 
+se of target parameter:  0.02396283 
+optim run:  7 
+number of persons:  46 
+number of time points:  42 
+Error in compute_se_oertzen(N = k, timepoints = n, n_ov = model$n_ov,  : 
+  Zeitlimit erreicht
+Zusätzlich: Warnmeldung:
+Paket 'R.utils' wurde unter R Version 4.1.1 erstellt 
+end of optim 
+
+
+==================== 2/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  60 
+number of time points:  32 
+se of target parameter:  0.02421107 
+optim run:  2 
+number of persons:  66 
+number of time points:  29 
+se of target parameter:  0.02424671 
+optim run:  3 
+number of persons:  54 
+number of time points:  36 
+se of target parameter:  0.02406283 
+optim run:  4 
+number of persons:  48 
+number of time points:  41 
+se of target parameter:  0.02391375 
+optim run:  5 
+number of persons:  36 
+number of time points:  55 
+se of target parameter:  0.02381493 
+optim run:  6 
+number of persons:  24 
+number of time points:  82 
+Error in t(Sigma_deriv_ij) : Zeitlimit erreicht
+end of optim 
+
+
+==================== 3/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  70 
+number of time points:  28 
+se of target parameter:  0.02396279 
+optim run:  2 
+number of persons:  77 
+number of time points:  25 
+se of target parameter:  0.02417238 
+optim run:  3 
+number of persons:  63 
+number of time points:  31 
+se of target parameter:  0.02400795 
+optim run:  4 
+number of persons:  66 
+number of time points:  29 
+se of target parameter:  0.02424671 
+optim run:  5 
+number of persons:  77 
+number of time points:  25 
+se of target parameter:  0.02417238 
+optim run:  6 
+number of persons:  66 
+number of time points:  29 
+se of target parameter:  0.02424671 
+optim run:  7 
+number of persons:  66 
+number of time points:  29 
+se of target parameter:  0.02424671 
+optim run:  8 
+number of persons:  74 
+number of time points:  26 
+se of target parameter:  0.02418041 
+optim run:  9 
+number of persons:  72 
+number of time points:  27 
+se of target parameter:  0.02405868 
+optim run:  10 
+number of persons:  68 
+number of time points:  28 
+se of target parameter:  0.02430848 
+optim run:  11 
+number of persons:  71 
+number of time points:  27 
+se of target parameter:  0.02422559 
+optim run:  12 
+number of persons:  71 
+number of time points:  27 
+se of target parameter:  0.02422559 
+optim run:  13 
+number of persons:  69 
+number of time points:  28 
+se of target parameter:  0.02413378 
+optim run:  14 
+number of persons:  70 
+number of time points:  28 
+se of target parameter:  0.02396279 
+end of optim 
+fpow se call 
+
+
+==================== 4/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  2 
+number of persons:  88 
+number of time points:  22 
+se of target parameter:  0.02409747 
+optim run:  3 
+number of persons:  96 
+number of time points:  20 
+se of target parameter:  0.0241915 
+optim run:  4 
+number of persons:  92 
+number of time points:  21 
+se of target parameter:  0.02411956 
+optim run:  5 
+number of persons:  84 
+number of time points:  23 
+se of target parameter:  0.02412465 
+optim run:  6 
+number of persons:  90 
+number of time points:  21 
+se of target parameter:  0.02438371 
+optim run:  7 
+number of persons:  90 
+number of time points:  21 
+se of target parameter:  0.02438371 
+optim run:  8 
+number of persons:  86 
+number of time points:  22 
+se of target parameter:  0.02437347 
+optim run:  9 
+number of persons:  87 
+number of time points:  22 
+se of target parameter:  0.02423429 
+optim run:  10 
+number of persons:  89 
+number of time points:  21 
+se of target parameter:  0.02451908 
+optim run:  11 
+number of persons:  88 
+number of time points:  22 
+se of target parameter:  0.02409747 
+end of optim 
+fpow se call 
+
+
+==================== 5/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  90 
+number of time points:  21 
+se of target parameter:  0.02438371 
+optim run:  2 
+number of persons:  99 
+number of time points:  19 
+se of target parameter:  0.02443634 
+optim run:  3 
+number of persons:  81 
+number of time points:  24 
+se of target parameter:  0.0240531 
+optim run:  4 
+number of persons:  72 
+number of time points:  27 
+se of target parameter:  0.02405868 
+optim run:  5 
+number of persons:  72 
+number of time points:  27 
+se of target parameter:  0.02405868 
+optim run:  6 
+number of persons:  76 
+number of time points:  25 
+se of target parameter:  0.0243292 
+optim run:  7 
+number of persons:  90 
+number of time points:  21 
+se of target parameter:  0.02438371 
+optim run:  8 
+number of persons:  76 
+number of time points:  25 
+se of target parameter:  0.0243292 
+optim run:  9 
+number of persons:  76 
+number of time points:  25 
+se of target parameter:  0.0243292 
+optim run:  10 
+number of persons:  86 
+number of time points:  22 
+se of target parameter:  0.02437347 
+optim run:  11 
+number of persons:  79 
+number of time points:  24 
+se of target parameter:  0.02435259 
+optim run:  12 
+number of persons:  79 
+number of time points:  24 
+se of target parameter:  0.02435259 
+optim run:  13 
+number of persons:  83 
+number of time points:  23 
+se of target parameter:  0.02426814 
+optim run:  14 
+number of persons:  82 
+number of time points:  23 
+se of target parameter:  0.02441422 
+optim run:  15 
+number of persons:  79 
+number of time points:  24 
+se of target parameter:  0.02435259 
+optim run:  16 
+number of persons:  82 
+number of time points:  23 
+se of target parameter:  0.02441422 
+optim run:  17 
+number of persons:  82 
+number of time points:  23 
+se of target parameter:  0.02441422 
+optim run:  18 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  19 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  20 
+number of persons:  82 
+number of time points:  23 
+se of target parameter:  0.02441422 
+optim run:  21 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  22 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  23 
+number of persons:  82 
+number of time points:  23 
+se of target parameter:  0.02441422 
+optim run:  24 
+number of persons:  81 
+number of time points:  24 
+se of target parameter:  0.0240531 
+end of optim 
+fpow se call 
+
+
+==================== 6/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  100 
+number of time points:  19 
+se of target parameter:  0.02431484 
+optim run:  2 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  3 
+number of persons:  90 
+number of time points:  21 
+se of target parameter:  0.02438371 
+optim run:  4 
+number of persons:  95 
+number of time points:  20 
+se of target parameter:  0.02431742 
+optim run:  5 
+number of persons:  105 
+number of time points:  18 
+se of target parameter:  0.0243762 
+optim run:  6 
+number of persons:  98 
+number of time points:  19 
+se of target parameter:  0.02455968 
+optim run:  7 
+number of persons:  98 
+number of time points:  19 
+se of target parameter:  0.02455968 
+optim run:  8 
+number of persons:  102 
+number of time points:  19 
+se of target parameter:  0.02407717 
+optim run:  9 
+number of persons:  105 
+number of time points:  18 
+se of target parameter:  0.0243762 
+optim run:  10 
+number of persons:  105 
+number of time points:  18 
+se of target parameter:  0.0243762 
+optim run:  11 
+number of persons:  101 
+number of time points:  19 
+se of target parameter:  0.02419513 
+optim run:  12 
+number of persons:  104 
+number of time points:  18 
+se of target parameter:  0.02449221 
+optim run:  13 
+number of persons:  102 
+number of time points:  19 
+se of target parameter:  0.02407717 
+end of optim 
+fpow se call 
+
+
+==================== 7/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  2 
+number of persons:  121 
+number of time points:  16 
+se of target parameter:  0.02408377 
+optim run:  3 
+number of persons:  132 
+number of time points:  14 
+se of target parameter:  0.02464933 
+optim run:  4 
+number of persons:  116 
+number of time points:  16 
+se of target parameter:  0.02459384 
+optim run:  5 
+number of persons:  116 
+number of time points:  16 
+se of target parameter:  0.02459384 
+optim run:  6 
+number of persons:  126 
+number of time points:  15 
+se of target parameter:  0.02437329 
+optim run:  7 
+number of persons:  124 
+number of time points:  15 
+se of target parameter:  0.02456782 
+optim run:  8 
+number of persons:  116 
+number of time points:  16 
+se of target parameter:  0.02459384 
+optim run:  9 
+number of persons:  124 
+number of time points:  15 
+se of target parameter:  0.02456782 
+optim run:  10 
+number of persons:  124 
+number of time points:  15 
+se of target parameter:  0.02456782 
+optim run:  11 
+number of persons:  118 
+number of time points:  16 
+se of target parameter:  0.02438595 
+optim run:  12 
+number of persons:  120 
+number of time points:  16 
+se of target parameter:  0.02418324 
+optim run:  13 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  14 
+number of persons:  120 
+number of time points:  16 
+se of target parameter:  0.02418324 
+optim run:  15 
+number of persons:  120 
+number of time points:  16 
+se of target parameter:  0.02418324 
+optim run:  16 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  17 
+number of persons:  121 
+number of time points:  16 
+se of target parameter:  0.02408377 
+end of optim 
+fpow se call 
+
+
+==================== 8/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  120 
+number of time points:  16 
+se of target parameter:  0.02418324 
+optim run:  2 
+number of persons:  132 
+number of time points:  14 
+se of target parameter:  0.02464933 
+optim run:  3 
+number of persons:  108 
+number of time points:  18 
+se of target parameter:  0.0240378 
+optim run:  4 
+number of persons:  96 
+number of time points:  20 
+se of target parameter:  0.0241915 
+optim run:  5 
+number of persons:  96 
+number of time points:  20 
+se of target parameter:  0.0241915 
+optim run:  6 
+number of persons:  114 
+number of time points:  17 
+se of target parameter:  0.02407268 
+optim run:  7 
+number of persons:  102 
+number of time points:  19 
+se of target parameter:  0.02407717 
+optim run:  8 
+number of persons:  111 
+number of time points:  17 
+se of target parameter:  0.0243935 
+optim run:  9 
+number of persons:  111 
+number of time points:  17 
+se of target parameter:  0.0243935 
+optim run:  10 
+number of persons:  105 
+number of time points:  18 
+se of target parameter:  0.0243762 
+optim run:  11 
+number of persons:  106 
+number of time points:  18 
+se of target parameter:  0.02426182 
+optim run:  12 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  13 
+number of persons:  107 
+number of time points:  18 
+se of target parameter:  0.02414903 
+optim run:  14 
+number of persons:  109 
+number of time points:  17 
+se of target parameter:  0.02461465 
+optim run:  15 
+number of persons:  108 
+number of time points:  18 
+se of target parameter:  0.0240378 
+end of optim 
+fpow se call 
+
+
+==================== 9/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  130 
+number of time points:  14 
+se of target parameter:  0.02483707 
+optim run:  2 
+number of persons:  143 
+number of time points:  13 
+se of target parameter:  0.02458239 
+optim run:  3 
+number of persons:  156 
+number of time points:  12 
+se of target parameter:  0.02450809 
+optim run:  4 
+number of persons:  169 
+number of time points:  11 
+se of target parameter:  0.02461214 
+optim run:  5 
+number of persons:  169 
+number of time points:  11 
+se of target parameter:  0.02461214 
+optim run:  6 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  7 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  8 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  9 
+number of persons:  153 
+number of time points:  12 
+se of target parameter:  0.02474598 
+optim run:  10 
+number of persons:  159 
+number of time points:  12 
+se of target parameter:  0.02427694 
+optim run:  11 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  12 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  13 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  14 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  15 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  16 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  17 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+optim run:  18 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  19 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  20 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+end of optim 
+fpow se call 
+
+
+==================== 10/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  2 
+number of persons:  154 
+number of time points:  12 
+se of target parameter:  0.02466591 
+optim run:  3 
+number of persons:  168 
+number of time points:  11 
+se of target parameter:  0.02468494 
+optim run:  4 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  5 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  6 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  7 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  8 
+number of persons:  147 
+number of time points:  13 
+se of target parameter:  0.02424745 
+optim run:  9 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  10 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  11 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  12 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  13 
+number of persons:  144 
+number of time points:  13 
+se of target parameter:  0.02449735 
+optim run:  14 
+number of persons:  145 
+number of time points:  13 
+se of target parameter:  0.0244132 
+optim run:  15 
+number of persons:  149 
+number of time points:  12 
+se of target parameter:  0.0250742 
+optim run:  16 
+number of persons:  146 
+number of time points:  13 
+se of target parameter:  0.0243299 
+optim run:  17 
+number of persons:  148 
+number of time points:  13 
+se of target parameter:  0.02416583 
+optim run:  18 
+number of persons:  149 
+number of time points:  12 
+se of target parameter:  0.0250742 
+optim run:  19 
+number of persons:  149 
+number of time points:  12 
+se of target parameter:  0.0250742 
+optim run:  20 
+number of persons:  147 
+number of time points:  13 
+se of target parameter:  0.02424745 
+optim run:  21 
+number of persons:  147 
+number of time points:  13 
+se of target parameter:  0.02424745 
+optim run:  22 
+number of persons:  148 
+number of time points:  13 
+se of target parameter:  0.02416583 
+optim run:  23 
+number of persons:  148 
+number of time points:  13 
+se of target parameter:  0.02416583 
+end of optim 
+fpow se call 
+
+
+==================== 11/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  2 
+number of persons:  165 
+number of time points:  11 
+se of target parameter:  0.02490728 
+optim run:  3 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  4 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  5 
+number of persons:  150 
+number of time points:  12 
+se of target parameter:  0.02499092 
+optim run:  6 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  7 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  8 
+number of persons:  154 
+number of time points:  12 
+se of target parameter:  0.02466591 
+optim run:  9 
+number of persons:  156 
+number of time points:  12 
+se of target parameter:  0.02450809 
+optim run:  10 
+number of persons:  159 
+number of time points:  12 
+se of target parameter:  0.02427694 
+optim run:  11 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  12 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  13 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  14 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  15 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+optim run:  16 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  17 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  18 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+end of optim 
+fpow se call 
+
+
+==================== 12/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+optim run:  2 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  3 
+number of persons:  144 
+number of time points:  13 
+se of target parameter:  0.02449735 
+optim run:  4 
+number of persons:  152 
+number of time points:  12 
+se of target parameter:  0.02482682 
+optim run:  5 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  6 
+number of persons:  152 
+number of time points:  12 
+se of target parameter:  0.02482682 
+optim run:  7 
+number of persons:  152 
+number of time points:  12 
+se of target parameter:  0.02482682 
+optim run:  8 
+number of persons:  168 
+number of time points:  11 
+se of target parameter:  0.02468494 
+optim run:  9 
+number of persons:  164 
+number of time points:  11 
+se of target parameter:  0.02498274 
+optim run:  10 
+number of persons:  152 
+number of time points:  12 
+se of target parameter:  0.02482682 
+optim run:  11 
+number of persons:  164 
+number of time points:  11 
+se of target parameter:  0.02498274 
+optim run:  12 
+number of persons:  164 
+number of time points:  11 
+se of target parameter:  0.02498274 
+optim run:  13 
+number of persons:  156 
+number of time points:  12 
+se of target parameter:  0.02450809 
+optim run:  14 
+number of persons:  158 
+number of time points:  12 
+se of target parameter:  0.02435326 
+optim run:  15 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  16 
+number of persons:  159 
+number of time points:  12 
+se of target parameter:  0.02427694 
+optim run:  17 
+number of persons:  161 
+number of time points:  11 
+se of target parameter:  0.0252133 
+optim run:  18 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+end of optim 
+fpow se call 
+
+
+==================== 13/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  170 
+number of time points:  11 
+se of target parameter:  0.02453998 
+optim run:  2 
+number of persons:  187 
+number of time points:  10 
+se of target parameter:  0.02457175 
+optim run:  3 
+number of persons:  153 
+number of time points:  12 
+se of target parameter:  0.02474598 
+optim run:  4 
+number of persons:  178 
+number of time points:  10 
+se of target parameter:  0.02518263 
+optim run:  5 
+number of persons:  178 
+number of time points:  10 
+se of target parameter:  0.02518263 
+optim run:  6 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  7 
+number of persons:  166 
+number of time points:  11 
+se of target parameter:  0.0248325 
+optim run:  8 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  9 
+number of persons:  168 
+number of time points:  11 
+se of target parameter:  0.02468494 
+optim run:  10 
+number of persons:  172 
+number of time points:  11 
+se of target parameter:  0.02439754 
+optim run:  11 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  12 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  13 
+number of persons:  171 
+number of time points:  11 
+se of target parameter:  0.02446845 
+optim run:  14 
+number of persons:  173 
+number of time points:  11 
+se of target parameter:  0.02432725 
+optim run:  15 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  16 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  17 
+number of persons:  173 
+number of time points:  11 
+se of target parameter:  0.02432725 
+end of optim 
+fpow se call 
+
+
+==================== 14/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  2 
+number of persons:  198 
+number of time points:  9 
+se of target parameter:  0.02522297 
+optim run:  3 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  4 
+number of persons:  171 
+number of time points:  11 
+se of target parameter:  0.02446845 
+optim run:  5 
+number of persons:  162 
+number of time points:  11 
+se of target parameter:  0.02513574 
+optim run:  6 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  7 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  8 
+number of persons:  166 
+number of time points:  11 
+se of target parameter:  0.0248325 
+optim run:  9 
+number of persons:  169 
+number of time points:  11 
+se of target parameter:  0.02461214 
+optim run:  10 
+number of persons:  173 
+number of time points:  11 
+se of target parameter:  0.02432725 
+optim run:  11 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  12 
+number of persons:  176 
+number of time points:  10 
+se of target parameter:  0.02532467 
+optim run:  13 
+number of persons:  172 
+number of time points:  11 
+se of target parameter:  0.02439754 
+optim run:  14 
+number of persons:  174 
+number of time points:  10 
+se of target parameter:  0.02546915 
+optim run:  15 
+number of persons:  173 
+number of time points:  11 
+se of target parameter:  0.02432725 
+end of optim 
+fpow se call 
+
+
+==================== 15/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  190 
+number of time points:  10 
+se of target parameter:  0.0243778 
+optim run:  2 
+number of persons:  209 
+number of time points:  9 
+se of target parameter:  0.02455278 
+optim run:  3 
+number of persons:  171 
+number of time points:  11 
+se of target parameter:  0.02446845 
+optim run:  4 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  5 
+number of persons:  209 
+number of time points:  9 
+se of target parameter:  0.02455278 
+optim run:  6 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  7 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  8 
+number of persons:  200 
+number of time points:  9 
+se of target parameter:  0.02509704 
+optim run:  9 
+number of persons:  185 
+number of time points:  10 
+se of target parameter:  0.02470366 
+optim run:  10 
+number of persons:  195 
+number of time points:  9 
+se of target parameter:  0.02541549 
+optim run:  11 
+number of persons:  188 
+number of time points:  10 
+se of target parameter:  0.02450659 
+optim run:  12 
+number of persons:  192 
+number of time points:  9 
+se of target parameter:  0.02561247 
+optim run:  13 
+number of persons:  189 
+number of time points:  10 
+se of target parameter:  0.02444194 
+optim run:  14 
+number of persons:  191 
+number of time points:  9 
+se of target parameter:  0.02567916 
+optim run:  15 
+number of persons:  189 
+number of time points:  10 
+se of target parameter:  0.02444194 
+optim run:  16 
+number of persons:  189 
+number of time points:  10 
+se of target parameter:  0.02444194 
+optim run:  17 
+number of persons:  191 
+number of time points:  9 
+se of target parameter:  0.02567916 
+optim run:  18 
+number of persons:  190 
+number of time points:  10 
+se of target parameter:  0.0243778 
+end of optim 
+fpow se call 
+
+
+==================== 16/16 ====================
+starting optim 
+optim run:  1 
+number of persons:  200 
+number of time points:  9 
+se of target parameter:  0.02509704 
+optim run:  2 
+number of persons:  220 
+number of time points:  8 
+se of target parameter:  0.02547087 
+optim run:  3 
+number of persons:  180 
+number of time points:  10 
+se of target parameter:  0.02504294 
+optim run:  4 
+number of persons:  160 
+number of time points:  12 
+se of target parameter:  0.02420133 
+optim run:  5 
+number of persons:  120 
+number of time points:  16 
+se of target parameter:  0.02418324 
+optim run:  6 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  7 
+number of persons:  80 
+number of time points:  24 
+se of target parameter:  0.02420146 
+optim run:  8 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  9 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  10 
+number of persons:  100 
+number of time points:  19 
+se of target parameter:  0.02431484 
+optim run:  11 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  12 
+number of persons:  140 
+number of time points:  13 
+se of target parameter:  0.0248429 
+optim run:  13 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  14 
+number of persons:  110 
+number of time points:  17 
+se of target parameter:  0.02450333 
+optim run:  15 
+number of persons:  130 
+number of time points:  14 
+se of target parameter:  0.02483707 
+optim run:  16 
+number of persons:  115 
+number of time points:  16 
+se of target parameter:  0.0246998 
+optim run:  17 
+number of persons:  115 
+number of time points:  16 
+se of target parameter:  0.0246998 
+optim run:  18 
+number of persons:  125 
+number of time points:  15 
+se of target parameter:  0.02446998 
+optim run:  19 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  20 
+number of persons:  115 
+number of time points:  16 
+se of target parameter:  0.0246998 
+optim run:  21 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  22 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  23 
+number of persons:  118 
+number of time points:  16 
+se of target parameter:  0.02438595 
+optim run:  24 
+number of persons:  119 
+number of time points:  16 
+se of target parameter:  0.02428396 
+optim run:  25 
+number of persons:  121 
+number of time points:  16 
+se of target parameter:  0.02408377 
+optim run:  26 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  27 
+number of persons:  122 
+number of time points:  15 
+se of target parameter:  0.02476707 
+optim run:  28 
+number of persons:  121 
+number of time points:  16 
+se of target parameter:  0.02408377 
+end of optim 
+fpow se call 
+> res <- do.call( "rbind.fill", res.l )
+> 
+> res.descr <- describe( res[,c("N.opt","T.opt","power","run.time","n_optim_runs")] )
+> 
+> xlsx.file <- file.path( folder.main, "01_testrun.xlsx" )
+> write.xlsx( res.descr,        file=xlsx.file, sheetName = "res.descr", col.names = TRUE, row.names = TRUE )
+> write.xlsx( res, append=TRUE, file=xlsx.file, sheetName = "res", col.names = TRUE, row.names = TRUE )
+> 
+> save( res, res.descr, file=file.path( folder.main, "01_testrun.Rdata" ) )
+> 
+> 
+> 
+> proc.time()
+       User      System verstrichen 
+     346.71        2.03      349.32 
