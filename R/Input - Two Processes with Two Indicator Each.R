@@ -1,8 +1,13 @@
 # Set up ----
+
+library(Matrix)
+
 rm(list = ls())
 source("compute_se_mx.R")
+source("compute_se_oertzen.R")
 source("compute_se_sparse.R")
-source("compute_fisher_sparse.R")
+
+library(OpenMx)
 
 
 # User Input ----
@@ -187,94 +192,48 @@ matrices <- list(loadings = loadings,
 )
 
 
-# Compute standard errors
-SE <- compute_se_mx(N = 100, timepoints = 5, n_ov = n_ov, n_process = n_process,
-                    matrices = matrices)
-SE
+# Check standard errors ----
+se_mx <- compute_se_mx(N = 100, timepoints = 5, n_ov = n_ov, n_process = n_process,
+                       matrices = matrices)
+se_oertzen <- compute_se_oertzen(N = 100, timepoints = 5, n_ov = n_ov, n_process = n_process,
+                                 matrices = matrices)
+se_sparse <- compute_se_sparse(N = 100, timepoints = 5, n_ov = n_ov, n_process = n_process,
+                               matrices = matrices)
 
-compute_se_mx(N = 100, timepoints = 5, n_ov = n_ov, n_process = n_process,
-              matrices = matrices, target_parameters = "arcl_eta1eta2")
+SE <- cbind("mx" = se_mx, "oertzen" = se_oertzen, "sparse" = se_sparse)
 
 
 # Runtime ----
-library(OpenMx)
-system.time(compute_se_mx(N = 100, timepoints = 10, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
-system.time(compute_se_mx(N = 100, timepoints = 50, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
-system.time(compute_se_mx(N = 100, timepoints = 100, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
 
-system.time(compute_se_mx(N = 1000, timepoints = 10, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
-system.time(compute_se_mx(N = 1000, timepoints = 50, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
-system.time(compute_se_mx(N = 1000, timepoints = 100, n_ov = n_ov, n_process = n_process,
-                          matrices = matrices))
+runs <- 25
+timepoints <- c(3, 5, 10, 20, 30)
+results <- data.frame(matrix(NA, nrow = runs * timepoints, ncol = 4))
 
-
-
-# Compare analytical standard errors with empirical ----
-
-# Simulation parameters
-N = 100
-timepoints = 5
-
-# Population model
-source("Make RAM matrices.R")
-
-m_pop <- OpenMx::mxModel(
-  manifestVars = names_ov_time,
-  latentVars = names_process_time,
-  type = "RAM",
-  OpenMx::mxMatrix(type = "Full",
-                   nrow = n_ov_time,
-                   ncol = n_all,
-                   free = FALSE,
-                   values = RAM_F_values,
-                   name = "F"),
-  OpenMx::mxMatrix(type = "Full",
-                   nrow = n_all,
-                   ncol = n_all,
-                   free = !is.na(RAM_A_labels),
-                   values = RAM_A_values,
-                   labels = RAM_A_labels,
-                   name = "A"),
-  OpenMx::mxMatrix(type = "Symm",
-                   nrow = n_all,
-                   ncol = n_all,
-                   free = !is.na(RAM_S_labels),
-                   values = RAM_S_values,
-                   labels = RAM_S_labels,
-                   name = "S"),
-  OpenMx::mxMatrix(type = "Full",
-                   nrow = 1,
-                   ncol = n_all,
-                   free = !is.na(RAM_m_labels),
-                   values = t(RAM_m_values),
-                   labels = t(RAM_m_labels),
-                   name = "M"),
-  OpenMx::mxExpectationRAM(A = "A", S = "S", F = "F", M = "M",
-                           dimnames = c(names_ov_time, names_process_time)),
-  OpenMx::mxFitFunctionML(),
-  OpenMx::mxData(observed = exp_cov, type = "cov", means = exp_m, numObs = 100)
-)
-
-runs <- 250
-results <- data.frame(matrix(NA, nrow = runs, ncol = 20))
-
-for (i in 1:runs){
-  
-  Data <- OpenMx::mxGenerateData(model = m_pop, nrows = N)
-  colnames(Data) <- names_ov_time
-  m_sample <- OpenMx::mxModel(model = m_pop,
-                              OpenMx::mxData(observed = Data, type = "raw"))
-  fit <- OpenMx::mxTryHard(model = m_sample)
-  results[i, ] <- fit$output$standardErrors
-  
+counter <- 1
+for (i in 1:runs) {
+  for (j in timepoints) {
+    
+    res_mx <-  system.time(compute_se_mx(N = 1000, timepoints = j, n_ov = n_ov, n_process = n_process,
+                                         matrices = matrices))
+    res_oertzen <- system.time(compute_se_oertzen(N = 1000, timepoints = j, n_ov = n_ov, n_process = n_process,
+                                                  matrices = matrices))
+    res_sparse <- system.time(compute_se_sparse(N = 1000, timepoints = j, n_ov = n_ov, n_process = n_process,
+                                                matrices = matrices))
+    
+    results[counter, 1] <- j
+    results[counter, 2] <- res_mx[3]
+    results[counter, 3] <- res_oertzen[3]
+    results[counter, 4] <- res_sparse[3]
+    
+    counter <- counter + 1
+    
+  }
 }
 
-colnames(results) <- rownames(fit$output$standardErrors)
+colnames(results) <- c("timepoints", "mx", "oertzen", "sparse")
 
-boxplot(results, ylim = c(0, 1))
-points(x = 1:20, y = SE, pch = 4, col = "red", cex = 3)
+boxplot(subset(results[, 2:4], subset = results$timepoints == 3), main = "10 time points")
+boxplot(subset(results[, 2:4], subset = results$timepoints == 5), main = "10 time points")
+boxplot(subset(results[, 2:4], subset = results$timepoints == 10), main = "10 time points")
+boxplot(subset(results[, 2:4], subset = results$timepoints == 20), main = "20 time points")
+boxplot(subset(results[, 2:4], subset = results$timepoints == 30), main = "30 time points")

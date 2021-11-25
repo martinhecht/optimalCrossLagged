@@ -122,7 +122,7 @@ compute_se_mx <- function(N, timepoints, n_ov, n_process, matrices,
     OpenMx::mxExpectationRAM(A = "A", S = "S", F = "F", M = "M",
                              dimnames = c(names_ov_time, names_process_time)),
     OpenMx::mxFitFunctionML(),
-    OpenMx::mxData(observed = exp_cov, type = "cov", means = exp_m, numObs = 100)
+    OpenMx::mxData(observed = exp_cov, type = "cov", means = exp_m, numObs = N)
   )
   
   m <- OpenMx::mxRun(model = m)
