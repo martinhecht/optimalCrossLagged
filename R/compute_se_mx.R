@@ -1,5 +1,9 @@
-compute_se_mx <- function(N, timepoints, n_ov, n_process, matrices,
+# MH 0.0.2 2021-11-25: added arguments names_ov, names_process; added require( OpenMx )
+
+compute_se_mx <- function(N, timepoints, n_ov, names_ov, n_process, names_process, matrices,
                           target_parameters = NULL) {
+  
+  require( OpenMx )
   
   # Calculate dimensions and create indices ----
   n_ov_time <- timepoints * n_ov
@@ -122,7 +126,7 @@ compute_se_mx <- function(N, timepoints, n_ov, n_process, matrices,
     OpenMx::mxExpectationRAM(A = "A", S = "S", F = "F", M = "M",
                              dimnames = c(names_ov_time, names_process_time)),
     OpenMx::mxFitFunctionML(),
-    OpenMx::mxData(observed = exp_cov, type = "cov", means = exp_m, numObs = N)
+    OpenMx::mxData(observed = exp_cov, type = "cov", means = exp_m, numObs = 100)
   )
   
   m <- OpenMx::mxRun(model = m)
@@ -134,3 +138,25 @@ compute_se_mx <- function(N, timepoints, n_ov, n_process, matrices,
   }
  
 }
+
+### development
+# Rfiles <- list.files( "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R", pattern="*.R", include.dirs = TRUE )
+# Rfiles <- Rfiles[ !Rfiles %in% c("compute_se_mx.R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R") ]
+# for( Rfile in Rfiles ){
+	# source( Rfile )
+# }
+
+# example 2
+# model <- generate_model_example2()
+
+# se <- compute_se_mx( N=model$N,
+                     # timepoints=model$timepoints,
+					 # n_ov=model$n_ov,
+					 # names_ov=model$names_ov,
+					 # n_process=model$n_process,
+					 # names_process=model$names_process,
+					 # matrices=model$matrices,
+                     # target_parameters="arcl_eta1eta2" )
+# se
+
+
