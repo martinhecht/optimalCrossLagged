@@ -12,26 +12,33 @@
 #' @keywords internal
 
 ## Function definition
-# foptim <- function( k,   budget=20000, cost2=100, cost1=10,   icc.y=0.2, icc.x=0.2, b2=0.5, b1=0.2,   w=1, b0=0 ){
-foptim <- function( k,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
+# foptim <- function( N,   budget=20000, cost2=100, cost1=10,   icc.y=0.2, icc.x=0.2, b2=0.5, b1=0.2,   w=1, b0=0 ){
+# foptim <- function( N,   budget, cost2, cost1 ){
+# foptim <- function( ind,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
+foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
 		
-		k <- round( k )
+
+		# N <- round( N )
+		# N <- N[1]
+		# N <- (1:200)[sample(ind,1)]
+		
+		start.time <- Sys.time()
 		
 		# number of optim runs
 		n_optim_runs_current <- get( "n_optim_runs", pos=env )
 		n_optim_runs_new <- n_optim_runs_current + 1
 		assign( "n_optim_runs", n_optim_runs_new, pos = env, inherits = FALSE, immediate = TRUE )
 		if ( verbose ) {
-				cat( "optim run: ", n_optim_runs_new, "\n" )
-				cat( "number of persons: ", k, "\n" )
+				cat( "optimizer run: ", n_optim_runs_new, "\n" )
+				cat( "number of persons: ", N, "\n" )
 				flush.console()
 		}
 
 		
 		# n Anzahl Zeitpunkt
-		# k Anzahl Personen
+		# N Anzahl Personen
 		# Constraint / Cost function
-		n <- round( (budget-cost2*k)/(cost1*k) )
+		n <- round( (budget-cost2*N)/(cost1*N) )
 
 
 
@@ -48,10 +55,10 @@ foptim <- function( k,   budget, cost2, cost1, model, target_parameter, env, ver
 		# cov.yx2 <- b2*var.x2
 		# cov.yx1 <- b1*var.x1
 
-		# bias.bayes.dir <- (1-w)*b0 + w*(cov.yx2/var.x2)*(1-(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,k,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,k,n)/(var.x2^2))) - b2
-		# var.bayes.dir <- w^2*(((cov.yx2)^2/(var.x2)^2)*((fv.cov.yx2(icc.y,icc.x,b2,b1,k,n)/(cov.yx2)^2)-2*(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,k,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,k,n)/(var.x2^2))))
+		# bias.bayes.dir <- (1-w)*b0 + w*(cov.yx2/var.x2)*(1-(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,N,n)/(var.x2^2))) - b2
+		# var.bayes.dir <- w^2*(((cov.yx2)^2/(var.x2)^2)*((fv.cov.yx2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2)^2)-2*(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,N,n)/(var.x2^2))))
 
-		# se <- compute_se_mx( N=k,
+		# se <- compute_se_mx( N=N,
 		                     # timepoints=n,
 							 # n_ov=model$n_ov,
 							 # names_ov=model$names_ov,
@@ -60,22 +67,26 @@ foptim <- function( k,   budget, cost2, cost1, model, target_parameter, env, ver
 							 # matrices=model$matrices,
                              # target_parameters=target_parameter )
 							 
-		se <- compute_se_oertzen( N=k,
+		se <- compute_se_oertzen( N=N,
 								  timepoints=n,
 								  n_ov=model$n_ov,
-								  # names_ov=model$names_ov,
+								  #names_ov=model$names_ov,
 								  n_process=model$n_process,
-								  # names_process=model$names_process,
+								  #names_process=model$names_process,
 								  matrices=model$matrices,
 								  target_parameters=target_parameter )
 
-		if ( verbose ) {
+		# if ( verbose ) {
 				cat( "se of target parameter: ", se, "\n" )
 				flush.console()
-		}
+		# }
 
 		
 		# mse.bayes.dir <- bias.bayes.dir^2 + var.bayes.dir
+		
+		cat( "run time: ", Sys.time() - start.time, "\n" )
+		flush.console()
+		
 		
 		return( se^2 ) # Varianz statt SE, Gespräch 25.11.2021
 }

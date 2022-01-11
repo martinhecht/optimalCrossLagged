@@ -47,18 +47,20 @@ calc.power <- function( budget=20000, cost2=10, cost1=10, k.start=100, model, ta
 }
 
 ### development
-# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
-# Rfiles <- list.files( Rdir, pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
-# Rfiles <- file.path( Rdir, Rfiles )
-# for( Rfile in Rfiles ){
-	# source( Rfile )
-# }
+Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
+Rfiles <- list.files( Rdir, pattern="*.R" )
+Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+Rfiles <- file.path( Rdir, Rfiles )
+for( Rfile in Rfiles ){
+	# cat( Rfile, "\n" ); flush.console()
+	source( Rfile )
+	# Sys.sleep( 0.2 )
+}
 
 # example 2
-# model <- generate_model_example2()
+model <- generate_model_example2()
 
-# res <- calc.power( k.start=200, model=model, target_parameter="arcl_eta1eta2", verbose=TRUE )
+res <- calc.power( k.start=200, model=model, target_parameter="arcl_eta1eta2", verbose=TRUE )
 
 
 

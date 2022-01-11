@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.3 2022-01-10:
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
 
@@ -37,8 +38,72 @@ calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter,
 		
 			k <- NULL
 			# k.opt <- try( suppressWarnings( optim( 2, foptim, k,   budget, cost2, cost1,   icc.y, icc.x, b2, b1,   w=1, b0=0 )$par ) )
-			k.opt <- try( suppressWarnings( optim( k.start, foptim, k, budget, cost2, cost1, model, target_parameter, env, verbose )$par ) )
+			# k.opt <- try( suppressWarnings( optim( k.start, foptim, k, budget, cost2, cost1, model, target_parameter, env, verbose )$par ) )
+# browser()			
+			# MH 0.0.3 2021-11-30
+			# require( CEoptim )
+			# k.opt <- CEoptim(	f=foptim,
+							# f.arg=list(budget=budget, cost2=cost2, cost1=cost1, model=model, target_parameter=target_parameter, env=env, verbose=verbose),
+							# maximize=FALSE,
+							# continuous=NULL,
+							# discrete=list(categories=300L),
+							# N=100L, rho=0.1, iterThr=1e4L, noImproveThr=5, verbose=TRUE )
 			
+# browser()			
+			# MH 0.0.3 2021-11-30
+			# require( kofnGA )
+			# k.opt <- kofnGA(n=200,
+						# k=1,
+						# OF=foptim,
+						# budget=budget, cost2=cost2, cost1=cost1, model=model, target_parameter=target_parameter, env=env, verbose=1 )
+						## budget=30000, cost2=100, cost1=10, model=model, target_parameter=target_parameter, env=env, verbose=1 )
+						
+
+# browser()
+			# MH 0.0.3 2022-01-10
+			#### GEHT NICHT DA KEINE FUNKTION in Minimize() reinkann, muesste man versuchen zu tweaken, vllt. geht's, vllt. nicht
+			# https://stackoverflow.com/questions/61047653/non-linear-optimisation-programming-with-integer-variables-in-r
+			# require(CVXR)
+
+			#modified for Stackoverflow integer MIQP ####
+			#Solves, but terms not normalised by y and q respectively
+
+			# Variables minimized over
+			# N <- Variable(1, integer=TRUE)
+# foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE )
+
+			# Problem definition (terms not normalised by y and q respectively)
+			# objective <- Minimize( compute_se_oertzen )
+			# constraints <- list(x >= 0, y >= 0, p >= 0, q >= 0, 
+								# x <= 67.314, y <= 78, p <= 76.11, q <= 86)
+			# prob2.1 <- Problem(objective, constraints)
+
+			# Problem solution
+			# solution2.1 <- solve(prob2.1)
+			# solution2.1$status
+			# solution2.1$value
+			# solution2.1$getValue(x)
+			# solution2.1$getValue(y)
+			# solution2.1$getValue(p)
+			# solution2.1$getValue(q)
+			
+browser()
+			# MH 0.0.3 2022-01-10
+			require( rgenoud )
+			min.T <- 3
+			min.N <- 300
+			# print( max.N <- floor( budget/((cost1+cost2)*min.T) ) )
+			print( max.N <- 333 )
+			
+			x <- genoud( foptim, nvars=1, max=FALSE, data.type.int=TRUE,
+			             Domains=matrix( c( min.N, max.N ), 1, 2 ),
+						 boundary.enforcement=2, # no trespassing
+                         solution.tolerance=0.001,
+						 starting.values=round(mean(c(min.N,max.N))),
+						 budget=budget, cost2=cost2, cost1=cost1, model=model, target_parameter=target_parameter, env=env, verbose=verbose )
+			k.opt <- x$par
+			
+
 			if( verbose ) { cat( "end of optim","\n" ); flush.console()}
 			
 			if( any( c(inherits(k.opt,"try-error") ))){
@@ -68,7 +133,7 @@ calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter,
 ### development
 # Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
 # Rfiles <- list.files( Rdir, pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("calc.power..R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+# Rfiles <- Rfiles[ !Rfiles %in% c("calc.power..R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
 # Rfiles <- file.path( Rdir, Rfiles )
 # for( Rfile in Rfiles ){
 	# source( Rfile )
