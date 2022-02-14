@@ -41,7 +41,7 @@ generate_model_example2 <- function(){
 
 
 		# Target parameter for which standard errors are to be estimated
-		target_parameters <- NULL
+		target.parameters <- NULL
 
 
 		# Calculate standard errors ----

@@ -2,20 +2,20 @@
 # MH 0.0.2 2022-02-14:
 
 compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
-                              cppfenv,
-							  target_parameters = NULL) {
+                              cppf.env,
+							  target.parameters = NULL) {
   
   # MH 0.0.2 2022-02-14 
   require( Rcpp )
   require( RcppArmadillo )
 
   ## function definition mm, mmm, mmmm, minv in calc.power() >= 0.0.3 2022-01-10
-  ## cppfenv contains all Rcpp functions, get them
-  # ls(name, envir = cppfenv, all.names = FALSE, pattern, sorted = TRUE)
-  mm <- get( "mm", envir = cppfenv, mode = "function", inherits = FALSE)
-  mmm <- get( "mmm", envir = cppfenv, mode = "function", inherits = FALSE)
-  mmmm <- get( "mmmm", envir = cppfenv, mode = "function", inherits = FALSE)
-  minv <- get( "minv", envir = cppfenv, mode = "function", inherits = FALSE)
+  ## cppf.env contains all Rcpp functions, get them
+  # ls(name, envir = cppf.env, all.names = FALSE, pattern, sorted = TRUE)
+  mm <- get( "mm", envir = cppf.env, mode = "function", inherits = FALSE)
+  mmm <- get( "mmm", envir = cppf.env, mode = "function", inherits = FALSE)
+  mmmm <- get( "mmmm", envir = cppf.env, mode = "function", inherits = FALSE)
+  minv <- get( "minv", envir = cppf.env, mode = "function", inherits = FALSE)
   
   
   # Dimensions and indices for RAM matrices ----
@@ -235,11 +235,11 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
   colnames(acov) <- colnames(fisher)
   rownames(acov) <- rownames(fisher)
   
-  if (is.null(target_parameters)) {
-    target_parameters <- RAM_unique_labels
+  if (is.null(target.parameters)) {
+    target.parameters <- RAM_unique_labels
   }
   
-  sqrt(diag(acov))[target_parameters]
+  sqrt(diag(acov))[target.parameters]
   
 }
 
@@ -263,7 +263,7 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
 						  # n_ov=model$n_ov,
 						  # n_process=model$n_process,
 						  # matrices=model$matrices,
-						  # target_parameters="arcl_eta1eta2" )
+						  # target.parameters="arcl_eta1eta2" )
 # se
 
 

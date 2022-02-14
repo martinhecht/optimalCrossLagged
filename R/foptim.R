@@ -12,92 +12,51 @@
 #' @keywords internal
 
 ## Function definition
-# foptim <- function( N,   budget=20000, cost2=100, cost1=10,   icc.y=0.2, icc.x=0.2, b2=0.5, b1=0.2,   w=1, b0=0 ){
-# foptim <- function( N,   budget, cost2, cost1 ){
-# foptim <- function( ind,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
-foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, cppfenv, verbose=TRUE ){
-# browser()		
-		### CVXR
-		# Nval <- N@value
-		# if( is.na( Nval ) ) Nval <- 100
-		# cat( "Nval: ", Nval, "\n" ); flush.console()
-	
+foptim <- function( N, study, model, target.parameter, envs, verbose ){
 		
-		# N <- round( N )
-		# N <- N[1]
-		# N <- (1:200)[sample(ind,1)]
-		
+		# start time
 		start.time <- Sys.time()
 		
 		# number of optim runs
-		# n_optim_runs_current <- get( "n_optim_runs", pos=env )
-		# n_optim_runs_new <- n_optim_runs_current + 1
-		# assign( "n_optim_runs", n_optim_runs_new, pos = env, inherits = FALSE, immediate = TRUE )
-		# if ( verbose ) {
-				# cat( "optimizer run: ", n_optim_runs_new, "\n" )
-				# cat( "number of persons: ", N, "\n" )
-				# flush.console()
-		# }
-
-		
-		# n Anzahl Zeitpunkt
-		# N Anzahl Personen
-		# Constraint / Cost function
-		n <- round( (budget-cost2*N)/(cost1*N) )
-		# ### CVXR
-		# n <- round( (budget-cost2*Nval)/(cost1*Nval) )
-
-
-
+		n.optim.runs_current <- get( "n.optim.runs", envir=envs$optmz.env )
+		n.optim.runs_new <- n.optim.runs_current + 1
+		assign( "n.optim.runs", n.optim.runs_new, envir = envs$optmz.env, inherits = FALSE, immediate = TRUE )
 		if ( verbose ) {
-				cat( "number of time points: ", n, "\n" )
+				cat( "optimizer run: ", n.optim.runs_new, "\n" )
+				cat( "number of persons: ", N, "\n" )
 				flush.console()
 		}
 
+		
+		# Constraint / Cost function: compute T from N
+		T <- round( (study$budget-study$l2.cost*N)/(study$l1.cost*N) )
 
-		# var.y2 <- icc.y
-		# var.y1 <- 1 - var.y2
-		# var.x2 <- icc.x
-		# var.x1 <- 1 - icc.x
-		# cov.yx2 <- b2*var.x2
-		# cov.yx1 <- b1*var.x1
+		# console output
+		if ( verbose ) {
+				cat( "number of time points: ", T, "\n" )
+				flush.console()
+		}
 
-		# bias.bayes.dir <- (1-w)*b0 + w*(cov.yx2/var.x2)*(1-(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,N,n)/(var.x2^2))) - b2
-		# var.bayes.dir <- w^2*(((cov.yx2)^2/(var.x2)^2)*((fv.cov.yx2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2)^2)-2*(fcv.cov.yx2.var.x2(icc.y,icc.x,b2,b1,N,n)/(cov.yx2*var.x2))+(fv.var.x2(icc.y,icc.x,b2,b1,N,n)/(var.x2^2))))
-
-		# se <- compute_se_mx( N=N,
-		                     # timepoints=n,
-							 # n_ov=model$n_ov,
-							 # names_ov=model$names_ov,
-							 # n_process=model$n_process,
-							 # names_process=model$names_process,
-							 # matrices=model$matrices,
-                             # target_parameters=target_parameter )
-							 
-							 
-		# se <- compute_se_oertzen( N=Nval, # ### CVXR
+# browser()
+		# compute standard error
 		se <- compute_se_oertzen( N=N,
-								  timepoints=n,
+								  timepoints=T,
 								  n_ov=model$n_ov,
 								  #names_ov=model$names_ov,
 								  n_process=model$n_process,
 								  #names_process=model$names_process,
 								  matrices=model$matrices,
-								  cppfenv=cppfenv, 
-								  target_parameters=target_parameter )
+								  cppf.env=envs$cppf.env, 
+								  target.parameters=target.parameter )
 
-		# if ( verbose ) {
-				cat( "se of target parameter: ", se, "\n" )
-				flush.console()
-		# }
-
+		# console output
+		if ( verbose ) {
+			cat( "se of target parameter: ", se, "\n" )
+			cat( "run time: ", Sys.time() - start.time, "\n" )
+			flush.console()
+		}
 		
-		# mse.bayes.dir <- bias.bayes.dir^2 + var.bayes.dir
-		
-		cat( "run time: ", Sys.time() - start.time, "\n" )
-		flush.console()
-		
-		
+		# return
 		return( se^2 ) # Varianz statt SE, Gespräch 25.11.2021
 }
 
