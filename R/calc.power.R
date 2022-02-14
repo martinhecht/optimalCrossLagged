@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.3 2022-01-10
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
 
@@ -16,6 +17,32 @@ calc.power <- function( budget=20000, cost2=10, cost1=10, k.start=100, model, ta
 		
 		require( R.utils )
 		
+		# MH 0.0.3 2022-01-10
+		# packages & function definitions based on RcppArmadillo
+		require( Rcpp )
+		require( RcppArmadillo )
+		
+		
+		# https://stackoverflow.com/questions/31671026/how-to-write-rcpp-function-for-simple-matrix-multiplication-in-r
+		# https://scholar.princeton.edu/sites/default/files/q-aps/files/slides_day4_am.pdf
+		# environment for cpp functions
+		if( verbose ) {
+			start.time <- Sys.time()
+			cat( "defining Rcpp functions\n" )
+			flush.console()
+		}
+		cppfenv <- new.env()
+		# definitions of Rcpp functions
+		cppFunction("arma::mat mm(arma::mat A, arma::mat B) { return A * B; }", depends="RcppArmadillo", env=cppfenv)
+		cppFunction("arma::mat mmm(arma::mat A, arma::mat B, arma::mat C) { return A * B * C; }", depends="RcppArmadillo", env=cppfenv)
+		cppFunction("arma::mat mmmm(arma::mat A, arma::mat B, arma::mat C, arma::mat D) { return A * B * C * D; }", depends="RcppArmadillo", env=cppfenv)
+		cppFunction("arma::mat minv(arma::mat A) { return inv(A); }", depends="RcppArmadillo", env=cppfenv)
+		if( verbose ) {
+			rt.def <- Sys.time() - start.time
+			cat( "end of defining Rcpp functions, run time: ", rt.def, " ", units( rt.def ), "\n" )
+			flush.console()
+		}	
+		
 		# environment for number of optim runs
 		env <- new.env()
 		assign( "n_optim_runs", 0, pos = env, inherits = FALSE, immediate = TRUE )
@@ -27,7 +54,7 @@ calc.power <- function( budget=20000, cost2=10, cost1=10, k.start=100, model, ta
 		# res <- try( calc.power.( budget, cost2, cost1, icc.y, icc.x, b2, b1 ) )
 		# res <- try_with_time_limit( calc.power.( budget, cost2, cost1, icc.y, icc.x, b2, b1 ), 1 )
 		# res <- withTimeout( calc.power.( budget=budget, cost2=cost2, cost1=cost1, icc.y=icc.y, icc.x=icc.x, b2=b2, b1=b1 ), timeout = 1, onTimeout = "error" )
-		res <- withTimeout( calc.power.( budget=budget, cost2=cost2, cost1=cost1, k.start=k.start, model, target_parameter, env, verbose=verbose ), timeout = timeout, onTimeout = "error" )
+		res <- withTimeout( calc.power.( budget=budget, cost2=cost2, cost1=cost1, k.start=k.start, model, target_parameter, env, cppfenv, verbose=verbose ), timeout = timeout, onTimeout = "error" )
 		if( !(!is.null(res) && !inherits( res, "try-error" )) ) res <- list( "optclass"=NA, "optstud"=NA, "power"=NA )
 		
 		# runtime

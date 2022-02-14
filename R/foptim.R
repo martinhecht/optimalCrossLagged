@@ -15,9 +15,14 @@
 # foptim <- function( N,   budget=20000, cost2=100, cost1=10,   icc.y=0.2, icc.x=0.2, b2=0.5, b1=0.2,   w=1, b0=0 ){
 # foptim <- function( N,   budget, cost2, cost1 ){
 # foptim <- function( ind,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
-foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE ){
+foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, cppfenv, verbose=TRUE ){
+# browser()		
+		### CVXR
+		# Nval <- N@value
+		# if( is.na( Nval ) ) Nval <- 100
+		# cat( "Nval: ", Nval, "\n" ); flush.console()
+	
 		
-
 		# N <- round( N )
 		# N <- N[1]
 		# N <- (1:200)[sample(ind,1)]
@@ -25,20 +30,22 @@ foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, ver
 		start.time <- Sys.time()
 		
 		# number of optim runs
-		n_optim_runs_current <- get( "n_optim_runs", pos=env )
-		n_optim_runs_new <- n_optim_runs_current + 1
-		assign( "n_optim_runs", n_optim_runs_new, pos = env, inherits = FALSE, immediate = TRUE )
-		if ( verbose ) {
-				cat( "optimizer run: ", n_optim_runs_new, "\n" )
-				cat( "number of persons: ", N, "\n" )
-				flush.console()
-		}
+		# n_optim_runs_current <- get( "n_optim_runs", pos=env )
+		# n_optim_runs_new <- n_optim_runs_current + 1
+		# assign( "n_optim_runs", n_optim_runs_new, pos = env, inherits = FALSE, immediate = TRUE )
+		# if ( verbose ) {
+				# cat( "optimizer run: ", n_optim_runs_new, "\n" )
+				# cat( "number of persons: ", N, "\n" )
+				# flush.console()
+		# }
 
 		
 		# n Anzahl Zeitpunkt
 		# N Anzahl Personen
 		# Constraint / Cost function
 		n <- round( (budget-cost2*N)/(cost1*N) )
+		# ### CVXR
+		# n <- round( (budget-cost2*Nval)/(cost1*Nval) )
 
 
 
@@ -67,6 +74,8 @@ foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, ver
 							 # matrices=model$matrices,
                              # target_parameters=target_parameter )
 							 
+							 
+		# se <- compute_se_oertzen( N=Nval, # ### CVXR
 		se <- compute_se_oertzen( N=N,
 								  timepoints=n,
 								  n_ov=model$n_ov,
@@ -74,6 +83,7 @@ foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, ver
 								  n_process=model$n_process,
 								  #names_process=model$names_process,
 								  matrices=model$matrices,
+								  cppfenv=cppfenv, 
 								  target_parameters=target_parameter )
 
 		# if ( verbose ) {

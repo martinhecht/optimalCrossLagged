@@ -1,5 +1,22 @@
+## Changelog:
+# MH 0.0.2 2022-02-14:
+
 compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
-                              target_parameters = NULL) {
+                              cppfenv,
+							  target_parameters = NULL) {
+  
+  # MH 0.0.2 2022-02-14 
+  require( Rcpp )
+  require( RcppArmadillo )
+
+  ## function definition mm, mmm, mmmm, minv in calc.power() >= 0.0.3 2022-01-10
+  ## cppfenv contains all Rcpp functions, get them
+  # ls(name, envir = cppfenv, all.names = FALSE, pattern, sorted = TRUE)
+  mm <- get( "mm", envir = cppfenv, mode = "function", inherits = FALSE)
+  mmm <- get( "mmm", envir = cppfenv, mode = "function", inherits = FALSE)
+  mmmm <- get( "mmmm", envir = cppfenv, mode = "function", inherits = FALSE)
+  minv <- get( "minv", envir = cppfenv, mode = "function", inherits = FALSE)
+  
   
   # Dimensions and indices for RAM matrices ----
   n_ov_time <- timepoints * n_ov
@@ -93,16 +110,24 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
   n_parameters <-length(RAM_unique_labels)
   seq_parameters <- seq_len(n_parameters)
   
-  
+# browser()  
   # Compute fixed matrices ----
-  B <- solve(diag(1, nrow = n_all) - RAM_A_values)
-  Bm <- B %*% RAM_m_values
-  E <- B %*% RAM_S_values %*% t(B)
-  FB <- RAM_F_values %*% B
-  EFt <- E %*% t(RAM_F_values)
+  # MH 0.0.2 2022-02-14
+  # B <- solve(diag(1, nrow = n_all) - RAM_A_values)
+  B <- minv(diag(1, nrow = n_all) - RAM_A_values)
+  # Bm <- B %*% RAM_m_values
+  Bm <- mm( B, RAM_m_values )
+  # E <- B %*% RAM_S_values %*% t(B)
+  E <- mm( mm( B, RAM_S_values ), t(B) )
+  # FB <- RAM_F_values %*% B
+  FB <- mm( RAM_F_values, B )
+  # EFt <- E %*% t(RAM_F_values)
+  EFt <- mm( E, t(RAM_F_values) )
   BtFt <- t(FB)
-  exp_cov <- RAM_F_values %*% E %*% t(RAM_F_values)
-  exp_cov_inv <- solve(exp_cov)
+  # exp_cov <- RAM_F_values %*% E %*% t(RAM_F_values)
+  exp_cov <- mmm( RAM_F_values, E, t(RAM_F_values) )
+  # exp_cov_inv <- solve(exp_cov)
+  exp_cov_inv <- minv(exp_cov)
   
   
   # Compute partial derivatives of RAM matrices ----
@@ -133,14 +158,23 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
   # Prepare lists with with terms depending on the elements of theta
   fisher_terms <- list()
   for (i in seq_parameters) {
-    A_deriv_EFt <- A_deriv[[i]] %*% EFt
-    FB_A_deriv <- FB %*% A_deriv[[i]]
-    FB_A_deriv_B <- FB_A_deriv %*% B
-    S_deriv_BtFt <- S_deriv[[i]] %*% BtFt
-    symm <- FB %*% A_deriv_EFt
-    Sigma_deriv <- symm + t(symm) + FB %*% S_deriv_BtFt
-    mu_deriv <- FB_A_deriv %*% Bm + FB %*% m_deriv[[i]]
-    exp_cov_inv_Sigma_deriv <- exp_cov_inv %*% Sigma_deriv
+    # MH 0.0.2 2022-02-14
+	# A_deriv_EFt <- A_deriv[[i]] %*% EFt
+	A_deriv_EFt <- mm( A_deriv[[i]], EFt )
+    # FB_A_deriv <- FB %*% A_deriv[[i]]
+    FB_A_deriv <- mm( FB, A_deriv[[i]] )
+    # FB_A_deriv_B <- FB_A_deriv %*% B
+    FB_A_deriv_B <- mm( FB_A_deriv, B )
+    # S_deriv_BtFt <- S_deriv[[i]] %*% BtFt
+    S_deriv_BtFt <- mm( S_deriv[[i]], BtFt )
+    # symm <- FB %*% A_deriv_EFt
+    symm <- mm( FB, A_deriv_EFt )
+    # Sigma_deriv <- symm + t(symm) + FB %*% S_deriv_BtFt
+    Sigma_deriv <- symm + t(symm) + mm( FB, S_deriv_BtFt )
+    # mu_deriv <- FB_A_deriv %*% Bm + FB %*% m_deriv[[i]]
+    mu_deriv <- mm( FB_A_deriv, Bm ) + mm( FB, m_deriv[[i]] )
+    # exp_cov_inv_Sigma_deriv <- exp_cov_inv %*% Sigma_deriv
+    exp_cov_inv_Sigma_deriv <- mm( exp_cov_inv, Sigma_deriv )
     
     fisher_terms[[i]] <- list(A_deriv_EFt = A_deriv_EFt,
                               FB_A_deriv = FB_A_deriv,
@@ -156,22 +190,37 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
     for (j in seq_len(i)) {
       
       # Second-order derivative of Sigma
+	  # MH 0.0.2 2022-02-14
       Sigma_deriv_ij <- 
-        fisher_terms[[i]]$FB_A_deriv_B %*% fisher_terms[[j]]$A_deriv_EFt +
-        fisher_terms[[j]]$FB_A_deriv_B %*% fisher_terms[[i]]$A_deriv_EFt +
-        fisher_terms[[i]]$FB_A_deriv_B %*% fisher_terms[[j]]$S_deriv_BtFt +
-        fisher_terms[[i]]$FB_A_deriv %*% E %*% t(A_deriv[[j]]) %*% BtFt +
-        fisher_terms[[j]]$FB_A_deriv_B %*% fisher_terms[[i]]$S_deriv_BtFt
+        # fisher_terms[[i]]$FB_A_deriv_B %*% fisher_terms[[j]]$A_deriv_EFt +
+        mm( fisher_terms[[i]]$FB_A_deriv_B, fisher_terms[[j]]$A_deriv_EFt ) +
+        # fisher_terms[[j]]$FB_A_deriv_B %*% fisher_terms[[i]]$A_deriv_EFt +
+        mm( fisher_terms[[j]]$FB_A_deriv_B, fisher_terms[[i]]$A_deriv_EFt )+
+        # fisher_terms[[i]]$FB_A_deriv_B %*% fisher_terms[[j]]$S_deriv_BtFt +
+        mm( fisher_terms[[i]]$FB_A_deriv_B, fisher_terms[[j]]$S_deriv_BtFt ) +
+        # fisher_terms[[i]]$FB_A_deriv %*% E %*% t(A_deriv[[j]]) %*% BtFt +
+        mmmm( fisher_terms[[i]]$FB_A_deriv, E, t(A_deriv[[j]]), BtFt ) +
+        # fisher_terms[[j]]$FB_A_deriv_B %*% fisher_terms[[i]]$S_deriv_BtFt
+        mm( fisher_terms[[j]]$FB_A_deriv_B, fisher_terms[[i]]$S_deriv_BtFt )
       Sigma_deriv_ij <- Sigma_deriv_ij + t(Sigma_deriv_ij)
-      
-      fisher[i, j] <-
-        N/2 * OpenMx::tr(fisher_terms[[j]]$exp_cov_inv_Sigma_deriv %*%
-                           fisher_terms[[i]]$exp_cov_inv_Sigma_deriv) +
-        OpenMx::tr(fisher_terms[[i]]$exp_cov_inv_Sigma_deriv %*%
-                     fisher_terms[[j]]$exp_cov_inv_Sigma_deriv -
-                     0.5*exp_cov_inv %*%  Sigma_deriv_ij) +
-        N*t(fisher_terms[[i]]$mu_deriv) %*% exp_cov_inv %*% 
-        fisher_terms[[j]]$mu_deriv
+
+# browser()      
+      # MH 0.0.2 2022-02-14
+	  fisher[i, j] <-
+        # N/2 * OpenMx::tr(fisher_terms[[j]]$exp_cov_inv_Sigma_deriv %*%
+        N/2 * OpenMx::tr( mm( fisher_terms[[j]]$exp_cov_inv_Sigma_deriv,
+                           # fisher_terms[[i]]$exp_cov_inv_Sigma_deriv) +
+                           fisher_terms[[i]]$exp_cov_inv_Sigma_deriv ) ) +
+        # OpenMx::tr(fisher_terms[[i]]$exp_cov_inv_Sigma_deriv %*%
+        OpenMx::tr( mm( fisher_terms[[i]]$exp_cov_inv_Sigma_deriv,
+                     # fisher_terms[[j]]$exp_cov_inv_Sigma_deriv -
+                     fisher_terms[[j]]$exp_cov_inv_Sigma_deriv ) -
+                     # 0.5*exp_cov_inv %*%  Sigma_deriv_ij) +
+                     mm( 0.5*exp_cov_inv, Sigma_deriv_ij ) ) +
+        # N*t(fisher_terms[[i]]$mu_deriv) %*% exp_cov_inv %*% 
+        mmm( N*t(fisher_terms[[i]]$mu_deriv), exp_cov_inv,
+        # fisher_terms[[j]]$mu_deriv
+        fisher_terms[[j]]$mu_deriv )
     }
   }
   
@@ -180,7 +229,11 @@ compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
   
   # Prepare output ----
   colnames(fisher) <- rownames(fisher) <- RAM_unique_labels
-  acov <- solve(fisher)
+  # MH 0.0.2 2022-02-14
+  # acov <- solve(fisher)
+  acov <- minv(fisher)
+  colnames(acov) <- colnames(fisher)
+  rownames(acov) <- rownames(fisher)
   
   if (is.null(target_parameters)) {
     target_parameters <- RAM_unique_labels

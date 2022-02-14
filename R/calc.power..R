@@ -13,7 +13,7 @@
 #' @keywords internal
 
 ## Function definition
-calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter, env, verbose=TRUE ){
+calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter, env, cppfenv, verbose=TRUE ){
 
 # browser()
 		
@@ -59,7 +59,7 @@ calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter,
 						## budget=30000, cost2=100, cost1=10, model=model, target_parameter=target_parameter, env=env, verbose=1 )
 						
 
-# browser()
+
 			# MH 0.0.3 2022-01-10
 			#### GEHT NICHT DA KEINE FUNKTION in Minimize() reinkann, muesste man versuchen zu tweaken, vllt. geht's, vllt. nicht
 			# https://stackoverflow.com/questions/61047653/non-linear-optimisation-programming-with-integer-variables-in-r
@@ -70,7 +70,10 @@ calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter,
 
 			# Variables minimized over
 			# N <- Variable(1, integer=TRUE)
-# foptim <- function( N,   budget, cost2, cost1, model, target_parameter, env, verbose=TRUE )
+# foptim <- function( N ){
+			# N^2
+# }
+
 
 			# Problem definition (terms not normalised by y and q respectively)
 			# objective <- Minimize( compute_se_oertzen )
@@ -86,22 +89,43 @@ calc.power. <- function( budget, cost2, cost1, k.start, model, target_parameter,
 			# solution2.1$getValue(y)
 			# solution2.1$getValue(p)
 			# solution2.1$getValue(q)
+
+		
+			# 16.01.22 neuer Versuch
+			# define variable
+			# N <- Variable(1,1,"N",integer=TRUE)
+			# N@value <- 50
+			# define objective
+# browser()			
+			# obj <- parse(text="foptim(N, budget, cost2, cost1, model, target_parameter)")
+			# obj <- foptim(N)
+			# create problem
+			# prob <- Problem(Minimize(obj))
+			# solve it!
+			# result <- solve(prob)
+
+			# print(r1 <- result)
+
 			
-browser()
+			
+# browser()
 			# MH 0.0.3 2022-01-10
 			require( rgenoud )
 			min.T <- 3
 			min.N <- 300
-			# print( max.N <- floor( budget/((cost1+cost2)*min.T) ) )
+			##### print( max.N <- floor( budget/((cost1+cost2)*min.T) ) )
 			print( max.N <- 333 )
 			
 			x <- genoud( foptim, nvars=1, max=FALSE, data.type.int=TRUE,
 			             Domains=matrix( c( min.N, max.N ), 1, 2 ),
+						 pop.size=25, max.generations=10, 
+						 wait.generations=1,
 						 boundary.enforcement=2, # no trespassing
                          solution.tolerance=0.001,
 						 starting.values=round(mean(c(min.N,max.N))),
-						 budget=budget, cost2=cost2, cost1=cost1, model=model, target_parameter=target_parameter, env=env, verbose=verbose )
-			k.opt <- x$par
+						 budget=budget, cost2=cost2, cost1=cost1, model=model, target_parameter=target_parameter, env=env, cppfenv=cppfenv, verbose=verbose )
+						 
+			( k.opt <- x$par )
 			
 
 			if( verbose ) { cat( "end of optim","\n" ); flush.console()}
@@ -114,7 +138,7 @@ browser()
 				n.opt <- round( (budget-cost2*k.opt)/(cost1*k.opt) )
 				# b2 true value (user Eingabe) des Target Parameters
 				# pow.opt <- fpow( icc.y, icc.x, b2, b1, k.opt, n.opt, w=1, b0=0 )
-				pow.opt <- fpow( k.opt, n.opt, model, target_parameter, verbose )
+				pow.opt <- fpow( k.opt, n.opt, model, target_parameter, cppfenv, verbose )
 		
 				# results vector
 				v <- c( k.opt, n.opt, pow.opt )

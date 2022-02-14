@@ -13,7 +13,7 @@
 
 ## Function definition
 # fpow <- function( icc.y, icc.x, b2, b1, k, n, w, b0 ){
-fpow <- function( k, n, model, target_parameter, verbose=TRUE ){
+fpow <- function( k, n, model, target_parameter, cppfenv, verbose=TRUE ){
 		# Power according to the formula by Kelcey et al. (2017)
 		# pow <- 100*(1-pnorm( (1.96 - b2/sqrt(fvar.bayes.dir( icc.y=icc.y, icc.x=icc.x, b2=b2, b1=b1, k=k, n=n, w=w, b0=b0 ))), 0, 1) + pnorm( (-1.96 - b2/sqrt(fvar.bayes.dir( icc.y=icc.y, icc.x=icc.x, b2=b2, b1=b1, k=k, n=n, w=w, b0=b0 ))), 0, 1))
 # browser()
@@ -41,6 +41,7 @@ fpow <- function( k, n, model, target_parameter, verbose=TRUE ){
 												   n_ov=model$n_ov,
 												   n_process=model$n_process,
 												   matrices=model$matrices,
+												   cppfenv=cppfenv,
 												   target_parameters=target_parameter )
 		
 		pow <- 100*(1-pnorm( 1.96 - value_target_parameter/se_target_parameter, 0, 1) + pnorm( -1.96 - value_target_parameter/se_target_parameter, 0, 1))
