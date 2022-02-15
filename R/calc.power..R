@@ -42,9 +42,15 @@ calc.power. <- function( study, model, target.parameter, envs, verbose ){
 			# https://github.com/AnotherSamWilson/ParBayesianOptimization/issues/3
 			# if( !verbose ) sink("/dev/null")
 			# but it doesn't work in Windows. In Windows you can use:
-			if( !verbose ) sink("nul:")
+			# if( !verbose ) sink("nul:")
 			# but that works only in Windows. A cross-OS solutions might be:
 			# if( !verbose ) sink(tempfile())
+			if( !verbose ){
+				platform <- .Platform$OS.type
+				if ( platform %in% "windows" ) { sink("nul:") }
+				else if ( platform %in% "unix" ) { sink("/dev/null") }
+				else { sink(tempfile()) }
+			}
 			
 			# start optimizer
 			res.opt <- genoud( fn = foptim,
@@ -86,7 +92,7 @@ calc.power. <- function( study, model, target.parameter, envs, verbose ){
 				
 				# optimal T
 				T.opt. <- (study$budget-study$l2.cost*N.opt)/(study$l2.cost*N.opt)
-				T.opt <- as.integer( round( T.opt. ) )
+				T.opt <- as.integer( floor( T.opt. ) )
 				
 				# console output
 				if( verbose ) { cat( "fpow se call", "\n" ); flush.console() }

@@ -1,22 +1,59 @@
 ## Changelog:
 # MH 0.0.2 2022-02-14:
 
-compute_se_oertzen<- function(N, timepoints, n_ov, n_process, matrices,
+compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
                               cppf.env,
 							  target.parameters = NULL) {
   
   # MH 0.0.2 2022-02-14 
-  require( Rcpp )
-  require( RcppArmadillo )
+  # require( Rcpp )
+  # require( RcppArmadillo )
 
   ## function definition mm, mmm, mmmm, minv in calc.power() >= 0.0.3 2022-01-10
   ## cppf.env contains all Rcpp functions, get them
   # ls(name, envir = cppf.env, all.names = FALSE, pattern, sorted = TRUE)
-  mm <- get( "mm", envir = cppf.env, mode = "function", inherits = FALSE)
-  mmm <- get( "mmm", envir = cppf.env, mode = "function", inherits = FALSE)
-  mmmm <- get( "mmmm", envir = cppf.env, mode = "function", inherits = FALSE)
-  minv <- get( "minv", envir = cppf.env, mode = "function", inherits = FALSE)
+  # mm <- get( "mm", envir = cppf.env, mode = "function", inherits = FALSE)
+  # mmm <- get( "mmm", envir = cppf.env, mode = "function", inherits = FALSE)
+  # mmmm <- get( "mmmm", envir = cppf.env, mode = "function", inherits = FALSE)
+  # minv <- get( "minv", envir = cppf.env, mode = "function", inherits = FALSE)
   
+  # console output
+  if( verbose ) {
+  	  cat( "checking for resp. defining Rcpp functions\n" )
+  	  flush.console()
+  }
+  
+  # start time cppf
+  start.time.cppf <- Sys.time()		
+
+  if( ! all( sapply( c("mm","mmm","mmmm","minv"), function(f)
+											exists( f, mode="function" ) ) ) ){
+  
+	  # definitions of Rcpp functions
+	  ### !!! ensure consistency with c:\Users\martin\Dropbox\84_optimalclpm\
+	  ###                                      04_martinhecht\src\rcpparma.cpp
+	  cppFunction("arma::mat mm(arma::mat A, arma::mat B) { return A * B; }",
+									depends="RcppArmadillo" )
+	  cppFunction("arma::mat mmm(arma::mat A, arma::mat B, arma::mat C)
+			{ return A * B * C; }", depends="RcppArmadillo" )
+	  cppFunction("arma::mat mmmm(arma::mat A, arma::mat B, arma::mat C,
+								arma::mat D) { return A * B * C * D; }",
+								depends="RcppArmadillo" )
+	  cppFunction("arma::mat minv(arma::mat A) { return inv(A); }",
+									depends="RcppArmadillo" )
+  }
+  
+  # runtime in seconds
+  run.time.cppf.difftime <- Sys.time() - start.time.cppf
+  run.time.cppf <- as.double( run.time.cppf.difftime, units="secs" )		
+  
+  # console output
+  if( verbose ) {
+  	cat("end of defining Rcpp functions, run time: ",run.time.cppf,
+  													" seconds", "\n" )
+  	flush.console()
+  }	  
+
   
   # Dimensions and indices for RAM matrices ----
   n_ov_time <- timepoints * n_ov

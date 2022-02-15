@@ -37,38 +37,38 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		#                                                    slides_day4_am.pdf
 		
 		# console output
-		if( verbose ) {
-			cat( "defining Rcpp functions\n" )
-			flush.console()
-		}
+		# if( verbose ) {
+			# cat( "defining Rcpp functions\n" )
+			# flush.console()
+		# }
 		
 		# environment for cpp functions
-		cppf.env <- new.env()
+		# cppf.env <- new.env()
 		
 		# start time cppf
-		start.time.cppf <- Sys.time()		
-		
+		# start.time.cppf <- Sys.time()		
+
 		# definitions of Rcpp functions
-		cppFunction("arma::mat mm(arma::mat A, arma::mat B) { return A * B; }",
-										depends="RcppArmadillo", env=cppf.env)
-		cppFunction("arma::mat mmm(arma::mat A, arma::mat B, arma::mat C)
-				{ return A * B * C; }", depends="RcppArmadillo", env=cppf.env)
-		cppFunction("arma::mat mmmm(arma::mat A, arma::mat B, arma::mat C,
-									arma::mat D) { return A * B * C * D; }",
-									depends="RcppArmadillo", env=cppf.env)
-		cppFunction("arma::mat minv(arma::mat A) { return inv(A); }",
-										depends="RcppArmadillo", env=cppf.env)
+		# cppFunction("arma::mat mm(arma::mat A, arma::mat B) { return A * B; }",
+										# depends="RcppArmadillo", env=cppf.env)
+		# cppFunction("arma::mat mmm(arma::mat A, arma::mat B, arma::mat C)
+				# { return A * B * C; }", depends="RcppArmadillo", env=cppf.env)
+		# cppFunction("arma::mat mmmm(arma::mat A, arma::mat B, arma::mat C,
+									# arma::mat D) { return A * B * C * D; }",
+									# depends="RcppArmadillo", env=cppf.env)
+		# cppFunction("arma::mat minv(arma::mat A) { return inv(A); }",
+										# depends="RcppArmadillo", env=cppf.env)
 		
 		# runtime in seconds
-		run.time.cppf.difftime <- Sys.time() - start.time.cppf
-		run.time.cppf <- as.double( run.time.cppf.difftime, units="secs" )		
+		# run.time.cppf.difftime <- Sys.time() - start.time.cppf
+		# run.time.cppf <- as.double( run.time.cppf.difftime, units="secs" )		
 		
 		# console output
-		if( verbose ) {
-			cat("end of defining Rcpp functions, run time: ",run.time.cppf,
-															" seconds", "\n" )
-			flush.console()
-		}	
+		# if( verbose ) {
+			# cat("end of defining Rcpp functions, run time: ",run.time.cppf,
+															# " seconds", "\n" )
+			# flush.console()
+		# }	
 		
 		# environment for statistics of optimizer (e.g., number of optim runs)
 		optmz.env <- new.env()
@@ -76,8 +76,10 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 											  inherits = FALSE, immediate=TRUE)
 		
 		# environments lists
-		envs <- list( optmz.env, cppf.env )
-		names( envs ) <- c( "optmz.env", "cppf.env" )
+		# envs <- list( optmz.env, cppf.env )
+		envs <- list( optmz.env )
+		# names( envs ) <- c( "optmz.env", "cppf.env" )
+		names( envs ) <- c( "optmz.env" )
 		
 		# start time 
 		start.time.calc.power. <- Sys.time()
@@ -103,7 +105,8 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		n.optim.runs <- get( "n.optim.runs", pos=envs$optmz.env )
 		
 		# add optimizer runs to results list
-		res <- c( res, list( "run.time.cppf"=run.time.cppf,
+		res <- c( res, list( 
+							 # "run.time.cppf"=run.time.cppf,
 							 "run.time.calc.power."=run.time.calc.power.,
 							 "n.optim.runs"=n.optim.runs ) )
 		
@@ -112,22 +115,31 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 }
 
 ### development
-user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
-Rfiles.folder <- file.path( user.profile,
-                                    "Dropbox/84_optimalclpm/04_martinhecht/R" )
-Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R") ]
-for( Rfile in Rfiles ){
-	source( file.path( Rfiles.folder, Rfile ) )
-}
+# optimalclpm needs to be loaded for compiled C++ functions
+# else they are defined in compute_se_oertzen()
+# library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
+
+# user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
+# Rfiles.folder <- file.path( user.profile,
+                                    # "Dropbox/84_optimalclpm/04_martinhecht/R" )
+# Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","RcppExports.R") ]
+# for( Rfile in Rfiles ){
+	# source( file.path( Rfiles.folder, Rfile ) )
+# }
+
 
 # example 2
-model <- generate_model_example2()
-					
-res <- calc.power( model=model,target.parameter="arcl_eta1eta2",verbose=TRUE)
+# model <- generate_model_example2()
 
-print( res )
-str( res )
+# res <- calc.power( model=model,target.parameter="arcl_eta1eta2",verbose=TRUE)
+
+
+# print( res )
+# str( res )
+
+
+
 
 
 
