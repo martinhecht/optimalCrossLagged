@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed calc.power to maximize.power
 # MH 0.0.3 2022-01-10
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
@@ -10,15 +11,14 @@
 #' @param
 #' @param
 #' @return
-#' @keywords internal
 
 ## Function definition
-calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
-						constraints=list("N.min"=200, "N.max"=300, "T.min"=3, "T.max"=300),
-						genoud=list("pop.size"=20,"max.generations"=10,"wait.generations"=1,
-									"boundary.enforcement"=2,"solution.tolerance"=0.001,
-									"starting.values"="round(mean(c(N.min.set,N.max.set)))"),
-						model, target.parameters=NULL, timeout=60, verbose=TRUE ){
+maximize.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
+							constraints=list("N.min"=200, "N.max"=300, "T.min"=3, "T.max"=300),
+							genoud=list("pop.size"=20,"max.generations"=10,"wait.generations"=1,
+										"boundary.enforcement"=2,"solution.tolerance"=0.001,
+										"starting.values"="round(mean(c(N.min.set,N.max.set)))"),
+							model, target.parameters=NULL, timeout=60, verbose=TRUE ){
 		
 		# packages
 		pkgs <- "require( R.utils ); # withTimeout()
@@ -117,27 +117,27 @@ calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		names( envs ) <- c( "optmz.env" )
 		
 		# start time 
-		start.time.calc.power. <- Sys.time()
+		start.time.optimizer <- Sys.time()
 
-		# call calc.power.() with timeout
+		# call maximize.power.() with timeout
 		if( !is.na( timeout ) && !is.null( timeout ) && is.numeric( timeout ) && timeout > 0 ){
-			res <- withTimeout(try(calc.power.( study=study,
-												constraints=constraints,
-												genoud=genoud,
-												model=model,
-												target.parameters=target.parameters,
-												envs=envs,
-												verbose=verbose ) ),
-												timeout = timeout,
-												onTimeout = "error" )
+			res <- withTimeout(try(kickstart.optimizer( study=study,
+														constraints=constraints,
+														genoud=genoud,
+														model=model,
+														target.parameters=target.parameters,
+														envs=envs,
+														verbose=verbose ) ),
+														timeout = timeout,
+														onTimeout = "error" )
 		} else {
-			res <- 			   try(calc.power.( study=study,
-												constraints=constraints,
-												genoud=genoud,
-												model=model,
-												target.parameters=target.parameters,
-												envs=envs,
-												verbose=verbose ) )
+			res <- 			   try(kickstart.optimizer( study=study,
+														constraints=constraints,
+														genoud=genoud,
+														model=model,
+														target.parameters=target.parameters,
+														envs=envs,
+														verbose=verbose ) )
 		}
 		
 		# if timeouted or error, results are NA
@@ -145,8 +145,8 @@ calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
 						  res <- list( "N.opt"=NA, "T.opt"=NA, "power.max"=NA )
 		
 		# runtime in seconds
-		run.time.calc.power..difftime <- Sys.time() - start.time.calc.power.
-		run.time.calc.power. <- as.double( run.time.calc.power..difftime, units="secs" )
+		run.time.optimizer.difftime <- Sys.time() - start.time.optimizer
+		run.time.optimizer <- as.double( run.time.optimizer.difftime, units="secs" )
 		
 		# number of optimizer runs
 		n.optim.runs <- get( "n.optim.runs", pos=envs$optmz.env )
@@ -154,7 +154,7 @@ calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		# add optimizer runs to results list
 		res <- c( res, list( 
 							 # "run.time.cppf"=run.time.cppf,
-							 "run.time.calc.power."=run.time.calc.power.,
+							 "run.time.optimizer"=run.time.optimizer,
 							 "n.optim.runs"=n.optim.runs ) )
 		
 		# return
@@ -163,28 +163,28 @@ calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
 
 ### development
 # optimalclpm needs to be loaded for compiled C++ functions
-# else they are defined locally in compute_se_oertzen()
-library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
+# else they are defined locally in compute.se.oertzen()
+# library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
 
-user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
-Rfiles.folder <- file.path( user.profile,
-                                    "Dropbox/84_optimalclpm/04_martinhecht/R" )
-Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","RcppExports.R") ]
-for( Rfile in Rfiles ){
-	source( file.path( Rfiles.folder, Rfile ) )
-}
+# user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
+# Rfiles.folder <- file.path( user.profile,
+                                    # "Dropbox/84_optimalclpm/04_martinhecht/R" )
+# Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
+# Rfiles <- Rfiles[ !Rfiles %in% c("maximize.power.R","RcppExports.R") ]
+# for( Rfile in Rfiles ){
+	# source( file.path( Rfiles.folder, Rfile ) )
+# }
 
 
 # example 2
-model <- generate_model_example2()
+# model <- generate.model.example.2()
 
-# res <- calc.power( model=model,target.parameters="arcl_eta1eta2",timeout=6000,verbose=TRUE)
-# res <- calc.power( model=model,timeout=6000,verbose=TRUE)
-res <- calc.power( model=model,target.parameters=c("arcl_eta1eta2","arcl_eta2eta1"),timeout=6000,verbose=FALSE)
+# res <- maximize.power( model=model,target.parameters="arcl_eta1eta2",timeout=6000,verbose=TRUE)
+# res <- maximize.power( model=model,timeout=6000,verbose=TRUE)
+# res <- maximize.power( model=model,target.parameters=c("arcl_eta1eta2","arcl_eta2eta1"),verbose=TRUE)
 
-print( res )
-str( res )
+# print( res )
+# str( res )
 
 
 

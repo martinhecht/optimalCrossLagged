@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed calc.power. to kickstart.optimizer
 # MH 0.0.3 2022-01-10:
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
@@ -13,7 +14,7 @@
 #' @keywords internal
 
 ## Function definition
-calc.power. <- function( study, constraints, genoud, model, target.parameters, envs, verbose=TRUE ){
+kickstart.optimizer <- function( study, constraints, genoud, model, target.parameters, envs, verbose=TRUE ){
 
 # browser()
 		# initialize output as NA
@@ -99,7 +100,7 @@ calc.power. <- function( study, constraints, genoud, model, target.parameters, e
 				cat( paste0( "N.min.set: "  ,N.min.set,"\n" ) )
 				cat( paste0( "   Note:  T.min has priority over N.max\n" ) )
 				cat( paste0( "          N.min has priority over T.max\n" ) )
-				cat( paste0( "   for checking:\n" ) )
+				cat( paste0( "   fyi:\n" ) )
 				cat( paste0( "   T.max.bound: "  ,T.max.bound,"\n" ) )
 				flush.console()
 			}
@@ -123,7 +124,7 @@ calc.power. <- function( study, constraints, genoud, model, target.parameters, e
 			starting.values <- eval(parse(text=genoud$starting.values))
 			
 			# start optimizer
-			res.opt <- genoud( fn = foptim,
+			res.opt <- genoud( fn = fn,
 							   nvars = 1,
 							   lexical = length( target.parameters ),
 							   max = FALSE,
@@ -135,7 +136,7 @@ calc.power. <- function( study, constraints, genoud, model, target.parameters, e
 							   boundary.enforcement = genoud$boundary.enforcement,
 							   solution.tolerance = genoud$solution.tolerance,
 							   starting.values = starting.values,
-							   # ... foptim arguments
+							   # ... fn arguments
 							   study = study,
 							   model = model,
 							   target.parameters = target.parameters,
@@ -165,10 +166,10 @@ calc.power. <- function( study, constraints, genoud, model, target.parameters, e
 				T.opt <- as.integer( floor( T.opt. ) )
 				
 				# console output
-				if( verbose ) { cat( "fpow se call", "\n" ); flush.console() }
+				if( verbose ) { cat( "calculate.power se call", "\n" ); flush.console() }
 				
 				# maximal power
-				power.max <- fpow( N=N.opt,
+				power.max <- calculate.power( N=N.opt,
 								   T=T.opt,
 								   model=model,
 								   target.parameters=target.parameters,
@@ -188,5 +189,5 @@ calc.power. <- function( study, constraints, genoud, model, target.parameters, e
 		}
 		
 		# return
-		res
+		return( res )
 }

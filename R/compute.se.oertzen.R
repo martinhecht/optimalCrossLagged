@@ -1,7 +1,8 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed compute_se_oertzen to compute.se.oertzen
 # MH 0.0.2 2022-02-14:
 
-compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
+compute.se.oertzen <- function(N, timepoints, n_ov, n_process, matrices,
                               # cppf.env,
 							  target.parameters = NULL, verbose=TRUE ) {
   
@@ -9,7 +10,7 @@ compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
   # require( Rcpp )
   # require( RcppArmadillo )
 
-  ## function definition mm, mmm, mmmm, minv in calc.power() >= 0.0.3 2022-01-10
+  ## function definition mm, mmm, mmmm, minv in maximize.power() >= 0.0.3 2022-01-10
   ## cppf.env contains all Rcpp functions, get them
   # ls(name, envir = cppf.env, all.names = FALSE, pattern, sorted = TRUE)
   # mm <- get( "mm", envir = cppf.env, mode = "function", inherits = FALSE)
@@ -284,16 +285,16 @@ compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
 ### development
 # Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
 # Rfiles <- list.files( Rdir, pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("compute_se_oertzen.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
+# Rfiles <- Rfiles[ !Rfiles %in% c("compute.se.oertzen.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
 # Rfiles <- file.path( Rdir, Rfiles )
 # for( Rfile in Rfiles ){
 	# source( Rfile )
 # }
 
 # example 2
-# model <- generate_model_example2()
+# model <- generate.model.example.2()
 
-# se <- compute_se_oertzen( 
+# se <- compute.se.oertzen( 
 						  ##N=model$N,
 						  # N=80,
 						  ##timepoints=model$timepoints,

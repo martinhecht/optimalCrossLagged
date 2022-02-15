@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed foptim to fn
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
 
@@ -12,7 +13,7 @@
 #' @keywords internal
 
 ## Function definition
-foptim <- function( N, study, model, target.parameters, envs, verbose=TRUE ){
+fn <- function( N, study, model, target.parameters, envs, verbose=TRUE ){
 		
 		# start time
 		start.time <- Sys.time()
@@ -20,7 +21,7 @@ foptim <- function( N, study, model, target.parameters, envs, verbose=TRUE ){
 		# number of optim runs
 		n.optim.runs.current <- get( "n.optim.runs", envir=envs$optmz.env )
 		n.optim.runs.new <- n.optim.runs.current + 1
-		assign( "n.optim.runs", n.optim.runs.new, envir = envs$optmz.env, inherits = FALSE, immediate = TRUE )
+		assign( "n.optim.runs", n.optim.runs.new, envir=envs$optmz.env, inherits=FALSE, immediate=TRUE )
 		if ( verbose ) {
 				cat( "======= OPTIMIZER RUN: ", n.optim.runs.new, "=======\n" )
 				cat( "number of persons: ", N, "\n" )
@@ -39,7 +40,7 @@ foptim <- function( N, study, model, target.parameters, envs, verbose=TRUE ){
 
 # browser()
 		# compute standard error
-		se <- compute_se_oertzen( N=N,
+		se <- compute.se.oertzen( N=N,
 								  timepoints=T,
 								  n_ov=model$n_ov,
 								  #names_ov=model$names_ov,

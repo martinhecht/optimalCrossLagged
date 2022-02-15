@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed fpow to calculate.power
 # MH 0.0.2 2021-11-25: update
 # MH 0.0.1 2021-11-03: copy from multi level optimal design project
 
@@ -12,7 +13,7 @@
 #' @keywords internal
 
 ## Function definition
-fpow <- function( N, T, model, target.parameters,
+calculate.power <- function( N, T, model, target.parameters,
 									se.target.parameters=NULL,
 									# , cppf.env
 									verbose=TRUE	){
@@ -26,7 +27,7 @@ fpow <- function( N, T, model, target.parameters,
 
 		# se of target parameter
 		if( is.null( se.target.parameters ) ){
-			se.target.parameters <- compute_se_oertzen(	N=N,
+			se.target.parameters <- compute.se.oertzen(	N=N,
 														timepoints=T,
 														n_ov=model$n_ov,
 														n_process=model$n_process,

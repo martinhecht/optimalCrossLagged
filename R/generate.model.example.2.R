@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.4 2022-01-15: renamed generate_model_example2 to generate.model.example.2
 # MH 0.0.1 2021-11-03: copied chunks from Input - Two Processes with Two Indicator Each.R
 
 ## Documentation
@@ -11,7 +12,7 @@
 #' @keywords internal
 
 ## Function definition
-generate_model_example2 <- function(){
+generate.model.example.2 <- function(){
 		
 		# Number of individuals and measurement time points
 		N <- 100
@@ -201,20 +202,3 @@ generate_model_example2 <- function(){
 		
 		return( ret )
 }
-
-### development
-# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
-# Rfiles <- list.files( Rdir, pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("generate_model_example2.R","app.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
-# Rfiles <- file.path( Rdir, Rfiles )
-# for( Rfile in Rfiles ){
-	# source( Rfile )
-# }
-
-# inp <- generate_input_example2()
-# inp
-
-
-### test
-# require( testthat )
-# test_file("../tests/testthat/XXXXX.R")
