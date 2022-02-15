@@ -13,8 +13,12 @@
 #' @keywords internal
 
 ## Function definition
-calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
-						model, target.parameter, timeout = 60, verbose=TRUE ){
+calc.power <- function( study=list("budget"=20000, "l2.cost"=10,"l1.cost"=10),
+						constraints=list("N.min"=200, "N.max"=300, "T.min"=3, "T.max"=300),
+						genoud=list("pop.size"=20,"max.generations"=10,"wait.generations"=1,
+									"boundary.enforcement"=2,"solution.tolerance"=0.001,
+									"starting.values"="round(mean(c(N.min.set,N.max.set)))"),
+						model, target.parameters=NULL, timeout=60, verbose=TRUE ){
 		
 		# packages
 		pkgs <- "require( R.utils ); # withTimeout()
@@ -28,6 +32,37 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		} else {
 			eval( parse( text=pkgs ) )
 		}
+		
+
+		## target parameters
+		all.tp.named <- do.call( "c", sapply( model$matrices, "[[", "labels" ))
+		all.tp.named <- all.tp.named[!is.na( all.tp.named )]
+		all.tp <- unname( all.tp.named )
+		
+		# set all if target.parameters is NULL
+		if( is.null( target.parameters ) ){
+			target.parameters <- all.tp
+		}
+		
+		# check whether all specified target parameters are in the model object
+		tp.log <- target.parameters %in% all.tp
+		
+		# if none specified parameter is valid then set all
+		if( !any( tp.log ) ){
+			msg <- "none of the specified target parameters are parameters in the model object;\n all model parameters are used."
+			if( verbose ) cat( paste0( msg, "\n" ) ); flush.console()
+			warning( msg )
+			target.parameters <- all.tp
+		}
+		
+		# if some are wrongly specified, kick them out
+		if( !all( tp.log ) ){
+			msg <- paste0( "the following target parameters are not in the model object and are discarded: ", paste( target.parameters[ !tp.log ], collapse=", " ) )
+			if( verbose ) cat( paste0( msg, "\n" ) ); flush.console()
+			warning( msg )
+			target.parameters <- target.parameters[ tp.log ]
+		}
+		
 		
 		# MH 0.0.3 2022-01-10
 		# packages & function definitions based on RcppArmadillo
@@ -83,15 +118,27 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 		
 		# start time 
 		start.time.calc.power. <- Sys.time()
-		
+
 		# call calc.power.() with timeout
-		res <- withTimeout( try( calc.power.( study=study,
-										 model=model,
-										 target.parameter=target.parameter,
-										 envs=envs,
-										 verbose=verbose ) ),
-										 timeout = timeout,
-										 onTimeout = "error" )
+		if( !is.na( timeout ) && !is.null( timeout ) && is.numeric( timeout ) && timeout > 0 ){
+			res <- withTimeout(try(calc.power.( study=study,
+												constraints=constraints,
+												genoud=genoud,
+												model=model,
+												target.parameters=target.parameters,
+												envs=envs,
+												verbose=verbose ) ),
+												timeout = timeout,
+												onTimeout = "error" )
+		} else {
+			res <- 			   try(calc.power.( study=study,
+												constraints=constraints,
+												genoud=genoud,
+												model=model,
+												target.parameters=target.parameters,
+												envs=envs,
+												verbose=verbose ) )
+		}
 		
 		# if timeouted or error, results are NA
 		if( !(!is.null(res) && !inherits( res, "try-error" )) ) 
@@ -116,27 +163,28 @@ calc.power <- function( study=list( "budget"=20000, "l2.cost"=10,"l1.cost"=10),
 
 ### development
 # optimalclpm needs to be loaded for compiled C++ functions
-# else they are defined in compute_se_oertzen()
-# library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
+# else they are defined locally in compute_se_oertzen()
+library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
 
-# user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
-# Rfiles.folder <- file.path( user.profile,
-                                    # "Dropbox/84_optimalclpm/04_martinhecht/R" )
-# Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","RcppExports.R") ]
-# for( Rfile in Rfiles ){
-	# source( file.path( Rfiles.folder, Rfile ) )
-# }
+user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
+Rfiles.folder <- file.path( user.profile,
+                                    "Dropbox/84_optimalclpm/04_martinhecht/R" )
+Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
+Rfiles <- Rfiles[ !Rfiles %in% c("calc.power.R","RcppExports.R") ]
+for( Rfile in Rfiles ){
+	source( file.path( Rfiles.folder, Rfile ) )
+}
 
 
 # example 2
-# model <- generate_model_example2()
+model <- generate_model_example2()
 
-# res <- calc.power( model=model,target.parameter="arcl_eta1eta2",verbose=TRUE)
+# res <- calc.power( model=model,target.parameters="arcl_eta1eta2",timeout=6000,verbose=TRUE)
+# res <- calc.power( model=model,timeout=6000,verbose=TRUE)
+res <- calc.power( model=model,target.parameters=c("arcl_eta1eta2","arcl_eta2eta1"),timeout=6000,verbose=FALSE)
 
-
-# print( res )
-# str( res )
+print( res )
+str( res )
 
 
 

@@ -12,17 +12,17 @@
 #' @keywords internal
 
 ## Function definition
-foptim <- function( N, study, model, target.parameter, envs, verbose ){
+foptim <- function( N, study, model, target.parameters, envs, verbose=TRUE ){
 		
 		# start time
 		start.time <- Sys.time()
 		
 		# number of optim runs
-		n.optim.runs_current <- get( "n.optim.runs", envir=envs$optmz.env )
-		n.optim.runs_new <- n.optim.runs_current + 1
-		assign( "n.optim.runs", n.optim.runs_new, envir = envs$optmz.env, inherits = FALSE, immediate = TRUE )
+		n.optim.runs.current <- get( "n.optim.runs", envir=envs$optmz.env )
+		n.optim.runs.new <- n.optim.runs.current + 1
+		assign( "n.optim.runs", n.optim.runs.new, envir = envs$optmz.env, inherits = FALSE, immediate = TRUE )
 		if ( verbose ) {
-				cat( "optimizer run: ", n.optim.runs_new, "\n" )
+				cat( "======= OPTIMIZER RUN: ", n.optim.runs.new, "=======\n" )
 				cat( "number of persons: ", N, "\n" )
 				flush.console()
 		}
@@ -46,8 +46,9 @@ foptim <- function( N, study, model, target.parameter, envs, verbose ){
 								  n_process=model$n_process,
 								  #names_process=model$names_process,
 								  matrices=model$matrices,
-								  cppf.env=envs$cppf.env, 
-								  target.parameters=target.parameter )
+								  # cppf.env=envs$cppf.env, 
+								  target.parameters=target.parameters,
+								  verbose=verbose )
 
 		# console output
 		if ( verbose ) {
@@ -59,16 +60,3 @@ foptim <- function( N, study, model, target.parameter, envs, verbose ){
 		# return
 		return( se^2 ) # Varianz statt SE, Gespräch 25.11.2021
 }
-
-### development
-# Rdir <- "c:/Users/martin/Dropbox/84_optimalclpm/04_martinhecht/R"
-# Rfiles <- list.files( Rdir, pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("foptim.R","Input - Single Process with a Single Indicator.R","Input - Two Processes with Two Indicator Each.R","Make RAM matrices.R") ]
-# Rfiles <- file.path( Rdir, Rfiles )
-# for( Rfile in Rfiles ){
-	# source( Rfile )
-# }
-
-### test
-# require( testthat )
-# test_file("../tests/testthat/XXXXX.R")

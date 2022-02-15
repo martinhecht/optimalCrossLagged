@@ -2,8 +2,8 @@
 # MH 0.0.2 2022-02-14:
 
 compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
-                              cppf.env,
-							  target.parameters = NULL) {
+                              # cppf.env,
+							  target.parameters = NULL, verbose=TRUE ) {
   
   # MH 0.0.2 2022-02-14 
   # require( Rcpp )
@@ -16,7 +16,7 @@ compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
   # mmm <- get( "mmm", envir = cppf.env, mode = "function", inherits = FALSE)
   # mmmm <- get( "mmmm", envir = cppf.env, mode = "function", inherits = FALSE)
   # minv <- get( "minv", envir = cppf.env, mode = "function", inherits = FALSE)
-  
+
   # console output
   if( verbose ) {
   	  cat( "checking for resp. defining Rcpp functions\n" )
@@ -26,6 +26,7 @@ compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
   # start time cppf
   start.time.cppf <- Sys.time()		
 
+  # check for Rcpp functions
   if( ! all( sapply( c("mm","mmm","mmmm","minv"), function(f)
 											exists( f, mode="function" ) ) ) ){
   
@@ -155,7 +156,7 @@ compute_se_oertzen <- function(N, timepoints, n_ov, n_process, matrices,
   # Bm <- B %*% RAM_m_values
   Bm <- mm( B, RAM_m_values )
   # E <- B %*% RAM_S_values %*% t(B)
-  E <- mm( mm( B, RAM_S_values ), t(B) )
+  E <- mmm( B, RAM_S_values, t(B) )
   # FB <- RAM_F_values %*% B
   FB <- mm( RAM_F_values, B )
   # EFt <- E %*% t(RAM_F_values)
