@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.7 2022-01-20
 # MH 0.0.6 2022-01-20
 # MH 0.0.4 2022-01-15: renamed calc.power. to kickstart.optimizer
 # MH 0.0.3 2022-01-10:
@@ -15,7 +16,11 @@
 #' @keywords internal
 
 ## Function definition
-kickstart.optimizer <- function( optimize, study, constraints, genoud, model, target.parameters, envs, verbose=TRUE ){
+kickstart.optimizer <- function( input, verbose=TRUE ){
+
+		# put elements from input list on this environment
+		do <- paste0( names( input ), " <- input$", names( input ) )
+		eval( parse( text=do ) )
 
 # browser()
 		# initialize output as NA
@@ -57,7 +62,7 @@ kickstart.optimizer <- function( optimize, study, constraints, genoud, model, ta
 				# call genoud optimizer
 				res.opt <- try( genoud( fn = fn,
 								   nvars = 1,
-								   lexical = length( target.parameters ),
+								   lexical = length( model$target.parameters ),
 								   max = max,
 								   data.type.int = constraints$N.integer,
 								   Domains = matrix( c( constraints$N.min.set, constraints$N.max.set ), 1, 2 ),
@@ -72,7 +77,6 @@ kickstart.optimizer <- function( optimize, study, constraints, genoud, model, ta
 								   study = study,
 								   constraints = constraints,
 								   model = model,
-								   target.parameters = target.parameters,
 								   envs = envs,
 								   verbose = verbose ) )
 				if( c(inherits(res.opt,"try-error") ) ){
@@ -82,7 +86,7 @@ kickstart.optimizer <- function( optimize, study, constraints, genoud, model, ta
 					N.opt <- res.opt$par
 					# optimal value
 					values.opt <- res.opt$value
-					names( values.opt ) <- target.parameters
+					names( values.opt ) <- model$target.parameters
 				}
 			}
 			
