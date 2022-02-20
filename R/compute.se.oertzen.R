@@ -10,7 +10,7 @@ compute.se.oertzen <- function(N, timepoints, n_ov, n_process, matrices,
   # require( Rcpp )
   # require( RcppArmadillo )
 
-  ## function definition mm, mmm, mmmm, minv in maximize.power() >= 0.0.3 2022-01-10
+  ## function definition mm, mmm, mmmm, minv in optmze() >= 0.0.3 2022-01-10
   ## cppf.env contains all Rcpp functions, get them
   # ls(name, envir = cppf.env, all.names = FALSE, pattern, sorted = TRUE)
   # mm <- get( "mm", envir = cppf.env, mode = "function", inherits = FALSE)
