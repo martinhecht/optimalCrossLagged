@@ -15,19 +15,30 @@
 #' @keywords internal
 
 ## Function definition
-fn <- function( N, optimize, study, constraints, model, envs, verbose=TRUE ){
-		
+fn <- function( pr, optimize, study, constraints, model, envs, verbose=TRUE ){
+
 		# start time
 		start.time <- Sys.time()
+		
+		# either N or T
+		par <- optimize$par
+		oth <- c("N","T")[! c("N","T") %in% optimize$par ]
+		
+		# parameter value
+		eval( parse( text=paste0( par, ' <- pr' ) ) )
 		
 		# number of optimizer runs
 		optimizer.runs.current <- get( "optimizer.runs", envir=envs$optmz.env )
 		optimizer.runs.new <- optimizer.runs.current + 1
 		assign( "optimizer.runs", optimizer.runs.new, envir=envs$optmz.env, inherits=FALSE, immediate=TRUE )
-		
+
 		# Constraint / Cost function: compute T from N
-		T <- calculate.from.cost.function( budget=study$budget, l2.cost=study$l2.cost, l1.cost=study$l1.cost, N=N )
-		if( constraints$T.integer ) T <- as.integer( round( T ) )
+		#                                   or
+		#                             compute N from T
+		eval( parse( text=paste0( oth, ' <- calculate.from.cost.function( what="',oth,'", budget=study$budget, l2.cost=study$l2.cost, l1.cost=study$l1.cost, ',par,'=',par,' )' ) ) )
+		
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',oth,'.integer ) ',oth,' <- as.integer( round( ',oth,' ) )' ) ) )
 		
 		# console output
 		if ( verbose ) {
@@ -45,7 +56,7 @@ fn <- function( N, optimize, study, constraints, model, envs, verbose=TRUE ){
 		if( optimize$via %in% c("se^2","se") ) {
 		
 				# compute standard error
-				if( optimize$se.function %in% "compute.se.oertzen" ){
+				if( optimize$via.function %in% "compute.se.oertzen" ){
 					se <- compute.se.oertzen( 	N=round(N),
 												timepoints=round(T),
 												n_ov=model$specification$n_ov,
@@ -58,15 +69,28 @@ fn <- function( N, optimize, study, constraints, model, envs, verbose=TRUE ){
 												verbose=verbose )
 				}
 				
-				# console output
-				if ( verbose ) {
-					cat( paste0( optimize$via, " of target parameters: ", paste( round( se, 5), collapse=", " ), "\n" ) )
-					cat( "run time: ", Sys.time() - start.time, "\n" )
-					flush.console()
-				}
+		}
 		
-				# prepare return
-				value <- eval( parse( text=optimize$via ) )
+		### TODO: Manuels Power function implementieren
+		# via power
+		if( optimize$via %in% c("power") ) {
+				
+				# compute power
+				if( optimize$via.function %in% "power_satorra" ){
+						
+						power <- 99999999
+				
+				}
+		}
+
+		# prepare return
+		value <- eval( parse( text=optimize$via ) )
+
+		# console output
+		if ( verbose ) {
+			cat( paste0( optimize$via, " of target parameters: ", paste( round( value, 5), collapse=", " ), "\n" ) )
+			cat( "run time: ", Sys.time() - start.time, "\n" )
+			flush.console()
 		}
 		
 		# return

@@ -12,10 +12,10 @@
 ## Function definition
 prepare.input <- function( optimize, study,	constraints, model, genoud, verbose=TRUE ){
 
-		# handle optimize$what $direction $via $se.function $optimizer
+		# handle optimize$what $direction $via $par $via.function $optimizer
 		# i.e. if more than one value is given, take the first one
-		optimize[c("what","direction","via","se.function","optimizer")] <- 
-			sapply( optimize[c("what","direction","via","se.function","optimizer")],
+		optimize[c("what","direction","via","par","via.function","optimizer")] <- 
+			sapply( optimize[c("what","direction","via","par","via.function","optimizer")],
 			function( x ){
 				if( length( x ) > 1 ) x[1] else x
 			} )
@@ -76,113 +76,127 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, verbose=
 		T.min <- constraints$T.min
 		T.max <- constraints$T.max
 
+	
+		### boundaries for parameter over which optimization runs
+		# either N or T
+		par <- optimize$par
+		oth <- c("N","T")[! c("N","T") %in% optimize$par ]
+
 		# maximal N possible by budget and T.min
-		N.max.bound <- calculate.from.cost.function( what="N",
-													 budget=study$budget, T=T.min,
+		#                  or
+		# maximal T possible by budget and N.min
+		eval( parse( text=paste0( par,'.max.bound <- calculate.from.cost.function( what="',par,'",
+													 budget=study$budget, ',oth,'=',oth,'.min,
 													 l2.cost=study$l2.cost,
-													 l1.cost=study$l1.cost )
-		if( constraints$N.integer ) N.max.bound <- floor( N.max.bound )
+													 l1.cost=study$l1.cost )' ) ) )
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',par,'.integer ) ',par,'.max.bound <- as.integer( floor( ',par,'.max.bound ) )' ) ) )
 		
 		# if user N.min is greater than maximal possible N.max.bound
 		# warning and set N.min to N.max.bound
-		if( N.min > N.max.bound ){
-			msg <- paste0( "user-specified N.min (",N.min,") is greater than maximal possible N.max.bound (",N.max.bound,") determined by T.min;\n N.min set equal to N.max.bound, this however will result in the optimized N = N.min;\n set N.min to lower value than ",N.max.bound,"." )
+		#                  or
+		#          [other way around]
+		eval( parse( text=paste0( '
+		if( ',par,'.min > ',par,'.max.bound ){
+			msg <- paste0( "user-specified ',par,'.min (",',par,'.min,") is greater than maximal possible ',par,'.max.bound (",',par,'.max.bound,") determined by ',oth,'.min;\n ',par,'.min set equal to ',par,'.max.bound, this however will result in the optimized ',par,' = ',par,'.min;\n set ',par,'.min to lower value than ",',par,'.max.bound,"." )
 			if( verbose ) cat( paste0( msg, "\n" ) ); flush.console()
 			warning( msg )
-			N.min <- N.max.bound
-		}
+			',par,'.min <- ',par,'.max.bound
+		}'
+		) ) )
 		
 		# set maximal N based on user input and boundaries
-		N.max.set <- min( c(N.max, N.max.bound) )
-		## => T.min has priority over N.max
-		if( constraints$N.integer ) N.max.set <- floor( N.max.set )
+		#                  or
+		#          [other way around]
+		eval( parse( text=paste0( par,'.max.set <- min( c(',par,'.max, ',par,'.max.bound) )' ) ) )
+		## => T.min has priority over N.max [or other way around]
+		
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',par,'.integer ) ',par,'.max.set <- as.integer( floor( ',par,'.max.set ) )' ) ) )
 		
 		# minimal N allowed by budget and T.max
-		# N.min.bound <- study$budget/(study$l2.cost+study$l1.cost*T.max)
-		N.min.bound <-  calculate.from.cost.function( what="N",
-													  budget=study$budget, T=T.max,
+		#                  or
+		#          [other way around]				
+		eval( parse( text=paste0( par, '.min.bound <-  calculate.from.cost.function( what="',par,'",
+													  budget=study$budget, ',oth,'=',oth,'.max,
 													  l2.cost=study$l2.cost,
-													  l1.cost=study$l1.cost )
-		if( constraints$N.integer ) N.min.bound <- ceiling( N.min.bound )
+													  l1.cost=study$l1.cost )' ) ) )
+		
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',par,'.integer ) ',par,'.min.bound <- as.integer( ceiling( ',par,'.min.bound ) )' ) ) )
 
 		# set minimal N based on user input and boundaries
-		N.min.set <- max( c(N.min, N.min.bound) )
-		## => N.min has priority over T.max
-		if( constraints$N.integer ) N.min.set <- ceiling( N.min.set )
+		#                  or
+		#          [other way around]				
+		eval( parse( text=paste0( par,'.min.set <- max( c(',par,'.min, ',par,'.min.bound) )' ) ) )
+		## => N.min has priority over T.max [or other way around]
+		
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',par,'.integer ) ',par,'.min.set <- as.integer( ceiling( ',par,'.min.set ) )' ) ) )
 		
 		## for checking
 		# maximal T possible by budget and N.min.set
-		# T.max.bound <- (study$budget/N.min.set-study$l2.cost)/(study$l1.cost)
-		T.max.bound <- calculate.from.cost.function( what="T",
-													 budget=study$budget, N=N.min.set,
+		#                  or
+		#          [other way around]				
+		eval( parse( text=paste0( oth, '.max.bound <- calculate.from.cost.function( what="',oth,'",
+													 budget=study$budget, ',par,'=',par,'.min.set,
 													 l2.cost=study$l2.cost,
-													 l1.cost=study$l1.cost )
-		if( constraints$T.integer ) T.max.bound <- floor( T.max.bound )
+													 l1.cost=study$l1.cost )' ) ) )
+		
+		# if integer is required, make integer				
+		eval( parse( text=paste0( 'if( constraints$',oth,'.integer ) ',oth,'.max.bound <- as.integer( floor( ',oth,'.max.bound ) )' ) ) )
 		
 		# minimal T possible by budget and N.max.set
-		# T.min.bound <- (study$budget/N.max.set-study$l2.cost)/(study$l1.cost)
-		T.min.bound <- calculate.from.cost.function( what="T",
-													 budget=study$budget, N=N.max.set,
+		#                  or
+		#          [other way around]				
+		eval( parse( text=paste0( oth,'.min.bound <- calculate.from.cost.function( what="',oth,'",
+													 budget=study$budget, ',par,'=',par,'.max.set,
 													 l2.cost=study$l2.cost,
-													 l1.cost=study$l1.cost )
-		if( constraints$T.integer ) T.min.bound <- ceiling( T.min.bound )
-		
-		# maximal T possible by budget and N.min
-		# ( T.max.bound <- floor((study$budget-study$l2.cost*N.min)/(study$l1.cost*N.min)) )
+													 l1.cost=study$l1.cost )' ) ) )
 
-		# set 
-		# ( N.max.set <- min( c(N.max, N.max.bound) ) )			
-
-		# determine necessary T (not used further, only for checks)
-		# ( T.max.set <- max( c(T.max, T.max.bound) ) )
-		
-		# enforce.T.max <- FALSE
-		# if( !enforce.T.max ){
-			# if user T.max is smaller than the T.max boundary, warning
-			# if( T.max < T.max.bound ) warning( paste0( "user input T.max=",T.max," is smaller than the T.max.bound (",T.max.bound,") necessary by N.min (",N.min,"). ") )
-		# } else {
-			# if user T.max should be enforced then N.min needs to be lifted
-			
-		# }
-
-		# set minimal N/T allowed by budget and T/N.max.set
-		# ( N.min.set <- ceiling(study$budget/((study$l2.cost+study$l1.cost)*T.max.set)) )
-		# ( T.min.set <- ceiling((study$budget-study$l2.cost*N.max.set)/(study$l1.cost*N.max.set)) )
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',oth,'.integer ) ',oth,'.min.bound <- as.integer( ceiling( ',oth,'.min.bound ) )' ) ) )
 		
 		# console output
 		if( verbose ) {
-			cat( paste0( "N.min: ",N.min,"\n" ) )
-			cat( paste0( "N.max: ",N.max,"\n" ) )
-			cat( paste0( "T.min: ",T.min,"\n" ) )
-			cat( paste0( "T.max: ",T.max,"\n" ) )
-			cat( paste0( "N.max.bound: ",N.max.bound,"\n" ) )
-			cat( paste0( "N.max.set: "  ,N.max.set,"\n" ) )
-			cat( paste0( "N.min.bound: ",N.min.bound,"\n" ) )
-			cat( paste0( "N.min.set: "  ,N.min.set,"\n" ) )
-			cat( paste0( "   Note:  T.min has priority over N.max\n" ) )
-			cat( paste0( "          N.min has priority over T.max\n" ) )
-			cat( paste0( "   fyi:\n" ) )
-			cat( paste0( "   T.max.bound: "  ,T.max.bound,"\n" ) )
-			cat( paste0( "   T.min.bound: "  ,T.min.bound,"\n" ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.min: ",',par,'.min,"\n" ) )                       ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.max: ",',par,'.max,"\n" ) )                       ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',oth,'.min: ",',oth,'.min,"\n" ) )                       ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',oth,'.max: ",',oth,'.max,"\n" ) )                       ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.max.bound: ",',par,'.max.bound,"\n" ) )           ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.max.set: "  ,',par,'.max.set,"\n" ) )             ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.min.bound: ",',par,'.min.bound,"\n" ) )           ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "',par,'.min.set: "  ,',par,'.min.set,"\n" ) )             ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "   Note:  ',oth,'.min has priority over ',par,'.max\n" ) )') ) )
+			eval( parse( text=paste0( 'cat( paste0( "          ',par,'.min has priority over ',oth,'.max\n" ) )') ) )
+			eval( parse( text=paste0( 'cat( paste0( "   fyi:\n" ) )                                ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "   ',oth,'.max.bound: "  ,',oth,'.max.bound,"\n" ) )      ') ) )
+			eval( parse( text=paste0( 'cat( paste0( "   ',oth,'.min.bound: "  ,',oth,'.min.bound,"\n" ) )      ') ) )
 			flush.console()
 		}
 
 		# put into constraints list
-		constraints$N.max.bound <- N.max.bound
-		constraints$N.max.set <- N.max.set
-		constraints$N.min.bound <- N.min.bound
-		constraints$N.min.set <- N.min.set
-		constraints$T.max.bound <- T.max.bound
-		constraints$T.min.bound <- T.min.bound
-	
+		eval( parse( text=paste0( 'constraints$',par,'.max.bound <- ',par,'.max.bound ') ) )
+		eval( parse( text=paste0( 'constraints$',par,'.max.set   <- ',par,'.max.set   ') ) )
+		eval( parse( text=paste0( 'constraints$',par,'.min.bound <- ',par,'.min.bound ') ) )
+		eval( parse( text=paste0( 'constraints$',par,'.min.set   <- ',par,'.min.set   ') ) )
+		eval( parse( text=paste0( 'constraints$',oth,'.max.bound <- ',oth,'.max.bound ') ) )
+		eval( parse( text=paste0( 'constraints$',oth,'.min.bound <- ',oth,'.min.bound ') ) )
+		
 		## starting value for N
 		# if character, try to evaluate
 		if( is.character( optimize$starting.values ) ){
+			# substitute "par" for par
+			optimize$starting.values <- gsub( "par", par, optimize$starting.values )
 			# save equation for documentation
 			optimize$starting.values.equation <- optimize$starting.values
+			# calculate starting values
 			optimize$starting.values <- eval(parse(text=optimize$starting.values))
 		}
-	
+		# if integer is required, make integer
+		eval( parse( text=paste0( 'if( constraints$',par,'.integer ) optimize$starting.values <- as.integer( optimize$starting.values )' ) ) )
+
+		
 		# environment to track statistics of optimizer (e.g., number of optim runs)
 		optmz.env <- new.env()
 		assign( "optimizer.runs", 0, pos = optmz.env,

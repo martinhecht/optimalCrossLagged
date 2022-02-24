@@ -17,7 +17,7 @@
 ## Function definition
 calculate.power <- function( N, T, model,
 									se.target.parameters=NULL,
-									se.function="compute.se.oertzen",
+									via.function="compute.se.oertzen",
 									# , cppf.env
 									verbose=TRUE	){
 # browser()
@@ -31,7 +31,7 @@ calculate.power <- function( N, T, model,
 
 		# se of target parameter
 		if( is.null( se.target.parameters ) ){
-			if( se.function %in% "compute.se.oertzen" ){
+			if( via.function %in% "compute.se.oertzen" ){
 			
 				se.target.parameters <- compute.se.oertzen(	N=round(N),
 														timepoints=round(T),

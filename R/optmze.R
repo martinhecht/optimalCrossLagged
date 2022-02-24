@@ -18,16 +18,17 @@
 ## Function definition
 optmze <- function( optimize=list(	"what"=c("power"),
 									"direction"=c("max","min"),
-									"via"=c("se","se^2"),
-									"se.function"=c("compute.se.oertzen"),
+									"via"=c("se","se^2","power"),
+									"par"=c("T","N"),
+									"via.function"=c("compute.se.oertzen"),
 									"optimizer"=c("genoud"),
-									"starting.values"="round(mean(c(N.min.set,N.max.set)))",
+									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									"set.seed.value"="random"
 									),
 					study=list("budget"=20000, "l2.cost"=10, "l1.cost"=10),
-					constraints=list("N.min"=250, "N.max"=300, "T.min"=3, "T.max"=300,
-									 "N.integer"=TRUE,
-									 "T.integer"=TRUE ),
+					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
+									 "T.integer"=TRUE,
+									 "N.integer"=FALSE ),
 					model=list("class"=c("SEM"), "name"=NULL,
 								specification=NULL, target.parameters=NULL),
 					genoud=list("pop.size"=20,"max.generations"=10,"wait.generations"=1,
@@ -55,10 +56,6 @@ optmze <- function( optimize=list(	"what"=c("power"),
 								genoud=genoud,
 								verbose=verbose )
 
-		# put returns from prepare.input on this environment
-		# do <- paste0( names( input ), " <- input$", names( input ) )
-		# eval( parse( text=do ) )
-		
 		# optimize with timeout (or not)
 		wt <- !is.na( timeout ) && !is.null( timeout ) && is.numeric( timeout ) && timeout > 0 
 
