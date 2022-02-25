@@ -90,12 +90,12 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 											se.target.parameters=se.target.parameters,
 											via.function=optimize$via.function,
 											verbose=verbose
-											# cppf.env=envs$cppf.env
 										)
 		}
-		### TODO if via is power than power is the value returned from the optimizer
-	
-	
+		# via power
+		if( optimize$what %in% "power" && optimize$via %in% c("power") ) {
+			power.opt <- values.opt
+		}
 	
 		### results list
 		

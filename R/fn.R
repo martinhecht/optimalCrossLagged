@@ -71,15 +71,21 @@ fn <- function( pr, optimize, study, constraints, model, envs, verbose=TRUE ){
 				
 		}
 		
-		### TODO: Manuels Power function implementieren
 		# via power
 		if( optimize$via %in% c("power") ) {
 				
 				# compute power
-				if( optimize$via.function %in% "power_satorra" ){
+				if( optimize$via.function %in% "calculate.power.LRT" ){
 						
-						power <- 99999999
-				
+						power <- calculate.power.LRT( alpha=0.05,
+													  N=N,
+													  timepoints=T,
+									n_ov=model$specification$n_ov,
+									n_process=model$specification$n_process,
+									matrices=model$specification$matrices, 
+									target.parameters=model$target.parameters,
+									pwrLRT.env=envs$pwrLRT.env,
+									verbose=verbose )
 				}
 		}
 

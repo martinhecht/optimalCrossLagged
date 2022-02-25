@@ -18,9 +18,11 @@
 ## Function definition
 optmze <- function( optimize=list(	"what"=c("power"),
 									"direction"=c("max","min"),
-									"via"=c("se","se^2","power"),
+									# "via"=c("se","se^2","power"),
+									"via"=c("power"),
 									"par"=c("T","N"),
-									"via.function"=c("compute.se.oertzen"),
+									# "via.function"=c("compute.se.oertzen"),
+									"via.function"=c("calculate.power.LRT"),
 									"optimizer"=c("genoud"),
 									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									"set.seed.value"="random"
@@ -100,7 +102,6 @@ optmze <- function( optimize=list(	"what"=c("power"),
 # }
 
 
-# example 2
 # specs <- generate.model.example.2()
 # specs$N <- NULL
 # specs$timepoints <- NULL

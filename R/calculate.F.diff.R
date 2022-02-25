@@ -12,7 +12,7 @@
 #' @keywords internal
 
 calculate.F.diff <- function(timepoints, n_ov, n_process, matrices, 
-                             target_parameters = NULL) {
+                             target.parameters = NULL) {
   
   # Assemble SEM of the Building Blocks ----
   
@@ -105,13 +105,13 @@ calculate.F.diff <- function(timepoints, n_ov, n_process, matrices,
   
   # Loop over free parameters ----
   
-  if (is.null(target_parameters)) {target_parameters <- RAM_unique_labels}
+  if (is.null(target.parameters)) {target.parameters <- RAM_unique_labels}
   
   # prepare empty outcome
-  n_target_parameters <- length(target_parameters)
+  n_target_parameters <- length(target.parameters)
   F_diff <- list(values = rep(NA, times = n_target_parameters),
                  df = df_H1)
-  names(F_diff$values) <- target_parameters
+  names(F_diff$values) <- target.parameters
   
   
   for (i in seq_len(n_target_parameters)) {
@@ -121,9 +121,9 @@ calculate.F.diff <- function(timepoints, n_ov, n_process, matrices,
     RAM_S_values_H0 <- RAM_S_values
     RAM_m_values_H0 <- RAM_m_values
     
-    RAM_A_values_H0[RAM_A_labels == target_parameters[i]] <- 0
-    RAM_S_values_H0[RAM_S_labels == target_parameters[i]] <- 0
-    RAM_m_values_H0[RAM_m_labels == target_parameters[i]] <- 0
+    RAM_A_values_H0[RAM_A_labels == target.parameters[i]] <- 0
+    RAM_S_values_H0[RAM_S_labels == target.parameters[i]] <- 0
+    RAM_m_values_H0[RAM_m_labels == target.parameters[i]] <- 0
     
     F_inv_I_A_H0 <- RAM_F_values %*% solve(identity_matrix - RAM_A_values_H0)
     Sigma_H0 <- F_inv_I_A_H0 %*% RAM_S_values_H0 %*% t(F_inv_I_A_H0)

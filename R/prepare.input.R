@@ -201,10 +201,13 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, verbose=
 		optmz.env <- new.env()
 		assign( "optimizer.runs", 0, pos = optmz.env,
 											  inherits = FALSE, immediate=TRUE)
+
+		# environment for calculate.power.LRT
+		pwrLRT.env <- new.env()
 		
 		# environments lists
-		envs <- list( optmz.env )
-		names( envs ) <- c( "optmz.env" )
+		envs <- list( optmz.env, pwrLRT.env )
+		names( envs ) <- c( "optmz.env", "pwrLRT.env" )
 
 		# return list
 		list.elements <- c( "optimize", "study", "constraints", "model", "envs" )
