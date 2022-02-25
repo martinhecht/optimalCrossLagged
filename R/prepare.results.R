@@ -15,46 +15,54 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 		# put elements from input list on this environment
 		do <- paste0( names( input ), " <- input$", names( input ) )
 		eval( parse( text=do ) )
-
+		
+		# either N or T
+		par <- optimize$par
+		oth <- c("N","T")[! c("N","T") %in% optimize$par ]
+		
 		# if timeouted or error, results are NA
 		if( c(inherits(res,"try-error") ) ){
-			N.opt. <- as.numeric(NA)
+			eval( parse( text=paste0( par,'.opt. <- as.numeric(NA)' ) ) )
 			values.opt <- rep( as.numeric(NA), length( target.parameters ) )
 		} else {
-			N.opt. <- res$N.opt
+			eval( parse( text=paste0( par,'.opt. <- res$par.opt' ) ) )
 			values.opt <- res$values.opt
 		}
 
 		
 		# rounding of N.opt and calculating of T.opt
-		if( !is.na(N.opt.) ){
-			if( constraints$N.integer ){
-				# N.opt as integer
-				N.opt <- as.integer( N.opt. )
+		#                  or
+		# rounding of T.opt and calculating of N.opt
+		eval( parse( text=paste0('
+		if( !is.na(',par,'.opt.) ){
+			if( constraints$',par,'.integer ){
+				# <X>.opt as integer
+				',par,'.opt <- as.integer( ',par,'.opt. )
 				# warning if not integer
 				# (because optimizer should have returned an integer)
-				if( !N.opt == N.opt. ) warning( "N.opt seems not to be integer" )
+				if( !',par,'.opt == ',par,'.opt. ) warning( "',par,'.opt seems not to be integer" )
 			} else {
-				N.opt <- N.opt.
+				',par,'.opt <- ',par,'.opt.
 			}
 			
-			# optimal T
-			T.opt. <- calculate.from.cost.function( what="T",
-													budget=study$budget, N=N.opt,
+			# optimal <Y>
+			',oth,'.opt. <- calculate.from.cost.function( what="',oth,'",
+													budget=study$budget, ',par,'=',par,'.opt,
 													l2.cost=study$l2.cost,
 													l1.cost=study$l1.cost )
-			if( constraints$T.integer ){
-				# if T should be integer then round it (floor)
-				T.opt <- as.integer( floor( T.opt. ) )
+			if( constraints$',oth,'.integer ){
+				# if <Y> should be integer then round it (floor)
+				',oth,'.opt <- as.integer( floor( ',oth,'.opt. ) )
 			} else {
-				T.opt <- T.opt.
+				',oth,'.opt <- ',oth,'.opt.
 			}
 		} else {
-			# N.opt is also NA as N.opt.
-			N.opt <- N.opt.
-			# T.opt defined as NA
-			T.opt <- as.numeric(NA)
+			# <X>.opt is also NA as <X>.opt.
+			',par,'.opt <- ',par,'.opt.
+			# <Y>.opt defined as NA
+			',oth,'.opt <- as.numeric(NA)
 		}
+		' ) ) )
 		
 		# maximal power
 		# (if power optimization was with se (or se^2), max power needs to be calculated) 
@@ -80,22 +88,15 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 											T=T.opt,
 											model=model,
 											se.target.parameters=se.target.parameters,
-											se.function=optimize$se.function,
+											via.function=optimize$via.function,
 											verbose=verbose
 											# cppf.env=envs$cppf.env
 										)
 		}
+		### TODO if via is power than power is the value returned from the optimizer
 	
-		# results vector for checking
-		# v <- c( N.opt, T.opt, power.max )
-		
-		# if( any(is.na(v)) || any(v[1:2]<1) || v[3]<0 || v[3]>100 ){
-				#nothing
-		# } else {
-
-		# }
-		
-		
+	
+	
 		### results list
 		
 		# N.opt/T.opt
