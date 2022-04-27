@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.11 2022-04-25: disabled seed values
 # MH 0.0.7 2022-01-20
 # MH 0.0.6 2022-01-20
 # MH 0.0.4 2022-01-15: renamed calc.power. to kickstart.optimizer
@@ -27,6 +28,8 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 
 		# set seed
 		set.seed( optimize$set.seed.value )
+		if( verbose ) { cat( "seed: ",.Random.seed,"\n" ); flush.console() }
+		# cat( "seed: ",.Random.seed,"\n" ); flush.console()
 		
 		# for the case that the optimizer has no verbosity
 		# argument (as genoud), manual shutoff
@@ -56,7 +59,9 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 			Domains <- eval( parse( text=paste0('matrix( c( as.numeric(constraints$',optimize$par,'.min.set), as.numeric(constraints$',optimize$par,'.max.set) ), 1, 2 )' ) ) )
 
 			# call genoud optimizer
-			res.opt <- try( genoud( fn = fn,
+			res.opt <- try( 
+			# res.opt <- withr::with_seed( optimize$set.seed.value,
+							genoud( fn = fn,
 							   nvars = 1,
 							   lexical = length( model$target.parameters ),
 							   max = max,
@@ -69,6 +74,8 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 							   boundary.enforcement = genoud$boundary.enforcement,
 							   solution.tolerance = genoud$solution.tolerance,
 							   starting.values = optimize$starting.values,
+							   # unif.seed = sample( 1:999999, 1 ),
+							   # int.seed =  sample( 1:999999, 1 ),
 							   # ... fn arguments
 							   optimize = optimize,
 							   study = study,

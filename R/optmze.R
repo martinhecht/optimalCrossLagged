@@ -18,11 +18,9 @@
 ## Function definition
 optmze <- function( optimize=list(	"what"=c("power"),
 									"direction"=c("max","min"),
-									# "via"=c("se","se^2","power"),
-									"via"=c("power"),
+									"via"=c("power","se","se^2"),
 									"par"=c("T","N"),
-									# "via.function"=c("compute.se.oertzen"),
-									"via.function"=c("calculate.power.LRT"),
+									"via.function"=c("calculate.power.LRT","compute.se.oertzen"),
 									"optimizer"=c("genoud"),
 									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									"set.seed.value"="random"
@@ -33,7 +31,7 @@ optmze <- function( optimize=list(	"what"=c("power"),
 									 "N.integer"=FALSE ),
 					model=list("class"=c("SEM"), "name"=NULL,
 								specification=NULL, target.parameters=NULL),
-					genoud=list("pop.size"=20,"max.generations"=10,"wait.generations"=1,
+					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 					timeout=60, verbose=TRUE ){
 		
@@ -91,6 +89,8 @@ optmze <- function( optimize=list(	"what"=c("power"),
 # optimalclpm needs to be loaded for compiled C++ functions
 # else they are defined locally in compute.se.oertzen()
 # library( optimalclpm ); mm( matrix(1:4,2,2), matrix(1:4,2,2) )
+# installed.packages()["optimalclpm",]["Version"]
+
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
@@ -109,16 +109,28 @@ optmze <- function( optimize=list(	"what"=c("power"),
 # specs$names_process <- NULL
 
 
+# while(TRUE){
 # res <- optmze( model=list("class"=c("SEM"),
 						  # "name"=NULL,
 					      # "specification"=specs,
 						  # "target.parameters"=c("arcl_eta1eta2","arcl_eta2eta1")),
-						  # verbose=TRUE )
+						  # optimize=list(	"what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"=1111111
+									# ),
+						  # genoud=list("pop.size"=1,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001	),
+						  # verbose=FALSE )
 
 
-# print( res )
+# print( res ); flush.console()
 # str( res )
-
+# }
 
 
 
