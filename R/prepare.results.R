@@ -96,6 +96,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 			power.opt <- calculate.power( 	N=N.opt,
 											T=T.opt,
 											model=model,
+											alpha=study$alpha,
 											se.target.parameters=se.target.parameters,
 											via.function=optimize$via.function,
 											verbose=verbose
@@ -105,7 +106,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 		# then power is calculated to be outputted fyi (to see whether target power was achieved)
 		if( optimize$what %in% c("budget","target.power") ) {
 				if( optimize$via.function %in% "calculate.power.LRT" ){
-						power.opt <- calculate.power.LRT( 	alpha=0.05,
+						power.opt <- calculate.power.LRT( 	alpha=study$alpha,
 															N=N.opt,
 															timepoints=T.opt,
 															n_ov=model$specification$n_ov,
@@ -119,6 +120,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 						power.opt <- calculate.power( 	N=N.opt,
 														T=T.opt,
 														model=model,
+														alpha=study$alpha,
 														se.target.parameters=se.target.parameters,
 														via.function=optimize$via.function,
 														verbose=verbose
@@ -223,6 +225,9 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 		# add run time and optimizer runs to results list
 		res <- c( res, list( "run.time.optimizer.secs"=run.time.optimizer.secs,
 							 "optimizer.runs"=optimizer.runs ) )
+
+		# add constraints
+		res <- c( res, list( "constraints"=constraints ) )
 
 		# return
 		return( res )

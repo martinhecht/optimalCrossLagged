@@ -1,4 +1,6 @@
 ## Changelog:
+# MH 0.0.20 2022-07-04: alpha as input implemented, constraints are outputted
+# MH 0.0.19 2022-07-04: budget/target.power optimization implemented
 # MH 0.0.7 2022-01-20
 # MH 0.0.6 2022-01-20
 # MH 0.0.5 2022-01-19: renamed maximize.power to optmze
@@ -25,15 +27,14 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									"set.seed.value"="random"
 									),
-					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, N=NULL, T=NULL),
+					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=NULL),
 					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
-					model=list("class"=c("SEM"), "name"=NULL,
-								specification=NULL, target.parameters=NULL),
-					genoud=list("pop.size"=30,"max.generations"=100,"wait.generations"=1,
+					model=list(specification=NULL, target.parameters=NULL),
+					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
-					timeout=60, verbose=TRUE ){
+								timeout=60, verbose=TRUE ){
 		
 		# packages
 		pkgs <- "require( R.utils ); # withTimeout()
@@ -111,36 +112,33 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 
 # while(TRUE){
-# res <- optmze( model=list("class"=c("SEM"),
-						  # "name"=NULL,
-					      # "specification"=specs,
+# res <- optmze( model=list("specification"=specs,
 						  # "target.parameters"=c("arcl_eta1eta2","arcl_eta2eta1")),
-						  ###"target.parameters"=c("arcl_eta1eta2")),
-						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, T=6 ),
+						  ### "target.parameters"=c("arcl_eta1eta2")),
+						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
 						  # optimize=list(
-									###"what"=c("power"),
-									###"what"=c("budget"),
-									# "what"=c("target.power"),
-									###"direction"=c("max"),
-									# "direction"=c("min"),
+									# "what"=c("power"),
+									### "what"=c("budget"),
+									### "what"=c("target.power"),
+									# "direction"=c("max"),
+									### "direction"=c("min"),
 									# "via"=c("power"),
-									###"par"=c("T"),
-									# "par"=c("N"),
-									# "via.function"=c("calculate.power.LRT"),
+									# "par"=c("T"),
+									### "par"=c("N"),
+									### "via.function"=c("calculate.power.LRT"),
 									# "optimizer"=c("genoud"),
 									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									# "set.seed.value"="random"
 									# ),
-							###vconstraints for testing target.power
+							### constraints
 							# constraints=list("T.min"=3, "T.max"=40, "N.min"=3, "N.max"=1000,
 											# "T.integer"=TRUE,
 											# "N.integer"=FALSE ),									
-						  # genoud=list("pop.size"=15,"max.generations"=100,"wait.generations"=1,
+						  # genoud=list("pop.size"=16,"max.generations"=100,"wait.generations"=1,
 						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
-						  # verbose=TRUE )
+						  # verbose=FALSE )
 
-# print( res ); flush.console()
-# str( res )
+# str( res ); flush.console()
 # }
 
 

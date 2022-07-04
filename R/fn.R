@@ -86,7 +86,7 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 						# compute power
 						if( optimize$via.function %in% "calculate.power.LRT" ){
 								
-								power <- calculate.power.LRT( alpha=0.05,
+								power <- calculate.power.LRT( alpha=study$alpha,
 															  N=N,
 															  timepoints=T,
 											n_ov=model$specification$n_ov,
@@ -111,9 +111,13 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 				## optimize N to achieve target power
 				# set T (current T as varied by optimizer)
 				study$T <- T
-				# current budget (for constraining N)
-				# study$budget <- calculate.from.cost.function( "what"="budget", N=N, T=T, l2.cost=study$l2.cost, l1.cost=study$l1.cost )
-				
+
+				## starting value for N
+				# get current budget
+				budget.current <- get( "budget.current", envir=envs$optmz.env )
+				N.start <- calculate.from.cost.function( "what"="N", budget=budget.current, T=T, l2.cost=study$l2.cost, l1.cost=study$l1.cost )
+				if( N.start > constraints$N.max.bound ) N.start <- constraints$N.max.bound
+				if( N.start < constraints$N.min.bound ) N.start <- constraints$N.min.bound
 				
 				# optimize N
 				res <- optmze(	optimize=list(
@@ -123,7 +127,7 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 									"par"=c("N"),
 									"via.function"=optimize$via.function,
 									"optimizer"=c("genoud"),
-									"starting.values"=optimize$starting.values,
+									"starting.values"=N.start,
 									"set.seed.value"=optimize$set.seed.value
 									),
 								study=study,
@@ -142,6 +146,9 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 				# calculate the budget based on T (varied by optimizer (outer run))
 				# and N (optimized to achieve target power (inner run))
 				value <- calculate.from.cost.function( "what"="budget", N=N, T=T, l2.cost=study$l2.cost, l1.cost=study$l1.cost )
+				
+				# write current budget to envs$optmz.env
+				assign( "budget.current", value, envir=envs$optmz.env )
 		}
 
 		# console output

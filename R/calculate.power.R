@@ -15,7 +15,7 @@
 #' @keywords internal
 
 ## Function definition
-calculate.power <- function( N, T, model,
+calculate.power <- function( N, T, model, alpha,
 									se.target.parameters=NULL,
 									via.function="compute.se.oertzen",
 									# , cppf.env
@@ -50,7 +50,7 @@ calculate.power <- function( N, T, model,
 		if( !is.null( names( se.target.parameters ) ) ) se.target.parameters <- se.target.parameters[ model$target.parameters ]
 		
 		# power according to the formula by Kelcey et al. (2017)
-		power <- 100*(1-pnorm( qnorm(0.975) - value.target.parameters/se.target.parameters, 0, 1) + pnorm( qnorm(0.025) - value.target.parameters/se.target.parameters, 0, 1))
+		power <- 100*(1-pnorm( qnorm(1-alpha/2) - value.target.parameters/se.target.parameters, 0, 1) + pnorm( qnorm(alpha/2) - value.target.parameters/se.target.parameters, 0, 1))
 		
 		# return
 		return( power )

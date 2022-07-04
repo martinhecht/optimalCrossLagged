@@ -214,6 +214,8 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 		optmz.env <- new.env()
 		assign( "optimizer.runs", 0, pos = optmz.env,
 											  inherits = FALSE, immediate=TRUE)
+		assign( "budget.current", study$budget, pos = optmz.env,
+											  inherits = FALSE, immediate=TRUE)
 
 		# environment for calculate.power.LRT
 		pwrLRT.env <- new.env()

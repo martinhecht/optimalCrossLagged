@@ -64,9 +64,9 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 			# for budget optimization: 1
 			if( ( optimize$what %in% c("power","target.power") ) && ( (ltp <- length( model$target.parameters ) ) > 1 ) ){
 					lexical <- ltp }
-			else if( optimize$what %in% c("budget") ){
-					lexical <- length( model$target.parameters ) + 1
-			} else{
+			# else if( optimize$what %in% c("budget") ){
+					# lexical <- length( model$target.parameters ) + 1 }
+			else{
 					lexical <- FALSE
 			}
 
