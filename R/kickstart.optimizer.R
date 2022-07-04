@@ -58,12 +58,24 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 			# Domains
 			Domains <- eval( parse( text=paste0('matrix( c( as.numeric(constraints$',optimize$par,'.min.set), as.numeric(constraints$',optimize$par,'.max.set) ), 1, 2 )' ) ) )
 
+			# number of optimization values (length of return vector of objective function)
+			# in genoud: argument "lexical"
+			# for power optimization: number of target parameters (for each parameter the power)
+			# for budget optimization: 1
+			if( ( optimize$what %in% c("power","target.power") ) && ( (ltp <- length( model$target.parameters ) ) > 1 ) ){
+					lexical <- ltp }
+			else if( optimize$what %in% c("budget") ){
+					lexical <- length( model$target.parameters ) + 1
+			} else{
+					lexical <- FALSE
+			}
+
 			# call genoud optimizer
 			res.opt <- try( 
 			# res.opt <- withr::with_seed( optimize$set.seed.value,
 							genoud( fn = fn,
 							   nvars = 1,
-							   lexical = length( model$target.parameters ),
+							   lexical = lexical,
 							   max = max,
 							   data.type.int = data.type.int,
 							   # seems to be bug/inconsistent, although when data.type.int==TRUE, Domains need to be numeric (not integer)
@@ -81,7 +93,9 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 							   study = study,
 							   constraints = constraints,
 							   model = model,
+							   genoud = genoud,
 							   envs = envs,
+							   timeout = timeout,
 							   verbose = verbose ) )
 			if( c(inherits(res.opt,"try-error") ) ){
 				par.opt <- as.numeric(NA)
@@ -90,7 +104,11 @@ kickstart.optimizer <- function( input, verbose=TRUE ){
 				par.opt <- res.opt$par
 				# optimal value
 				values.opt <- res.opt$value
-				names( values.opt ) <- model$target.parameters
+				# name(s) of optimal value(s)
+				
+				if( optimize$what %in% "power" )        names( values.opt ) <- model$target.parameters
+			    if( optimize$what %in% "budget" )       names( values.opt ) <- "budget"
+			    if( optimize$what %in% "target.power" ) names( values.opt ) <- paste0( "quadraticLoss.", model$target.parameters )
 			}
 		}
 		

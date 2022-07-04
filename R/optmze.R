@@ -16,7 +16,7 @@
 #' @return
 
 ## Function definition
-optmze <- function( optimize=list(	"what"=c("power"),
+optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									"direction"=c("max","min"),
 									"via"=c("power","se","se^2"),
 									"par"=c("T","N"),
@@ -25,13 +25,13 @@ optmze <- function( optimize=list(	"what"=c("power"),
 									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									"set.seed.value"="random"
 									),
-					study=list("budget"=20000, "l2.cost"=10, "l1.cost"=10),
+					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, N=NULL, T=NULL),
 					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
 					model=list("class"=c("SEM"), "name"=NULL,
 								specification=NULL, target.parameters=NULL),
-					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
+					genoud=list("pop.size"=30,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 					timeout=60, verbose=TRUE ){
 		
@@ -54,6 +54,7 @@ optmze <- function( optimize=list(	"what"=c("power"),
 								constraints=constraints,
 								model=model,
 								genoud=genoud,
+								timeout=timeout,
 								verbose=verbose )
 
 		# optimize with timeout (or not)
@@ -114,19 +115,29 @@ optmze <- function( optimize=list(	"what"=c("power"),
 						  # "name"=NULL,
 					      # "specification"=specs,
 						  # "target.parameters"=c("arcl_eta1eta2","arcl_eta2eta1")),
-						  # optimize=list(	"what"=c("power"),
-									# "direction"=c("max"),
+						  ###"target.parameters"=c("arcl_eta1eta2")),
+						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, T=6 ),
+						  # optimize=list(
+									###"what"=c("power"),
+									###"what"=c("budget"),
+									# "what"=c("target.power"),
+									###"direction"=c("max"),
+									# "direction"=c("min"),
 									# "via"=c("power"),
-									# "par"=c("T"),
+									###"par"=c("T"),
+									# "par"=c("N"),
 									# "via.function"=c("calculate.power.LRT"),
 									# "optimizer"=c("genoud"),
 									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
-									# "set.seed.value"=1111111
+									# "set.seed.value"="random"
 									# ),
-						  # genoud=list("pop.size"=1,"max.generations"=100,"wait.generations"=1,
-						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001	),
-						  # verbose=FALSE )
-
+							###vconstraints for testing target.power
+							# constraints=list("T.min"=3, "T.max"=40, "N.min"=3, "N.max"=1000,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=15,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
 
 # print( res ); flush.console()
 # str( res )

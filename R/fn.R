@@ -15,7 +15,7 @@
 #' @keywords internal
 
 ## Function definition
-fn <- function( pr, optimize, study, constraints, model, envs, verbose=TRUE ){
+fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, verbose=TRUE ){
 
 		# start time
 		start.time <- Sys.time()
@@ -32,13 +32,20 @@ fn <- function( pr, optimize, study, constraints, model, envs, verbose=TRUE ){
 		optimizer.runs.new <- optimizer.runs.current + 1
 		assign( "optimizer.runs", optimizer.runs.new, envir=envs$optmz.env, inherits=FALSE, immediate=TRUE )
 
-		# Constraint / Cost function: compute T from N
-		#                                   or
-		#                             compute N from T
-		eval( parse( text=paste0( oth, ' <- calculate.from.cost.function( what="',oth,'", budget=study$budget, l2.cost=study$l2.cost, l1.cost=study$l1.cost, ',par,'=',par,' )' ) ) )
+		# calculate other (<Y>) with cost function
+		if( optimize$what %in% c("power","budget") ){
+			# Constraint / Cost function: compute T from N
+			#                                   or
+			#                             compute N from T
+			eval( parse( text=paste0( oth, ' <- calculate.from.cost.function( what="',oth,'", budget=study$budget, l2.cost=study$l2.cost, l1.cost=study$l1.cost, ',par,'=',par,' )' ) ) )
 		
-		# if integer is required, make integer
-		eval( parse( text=paste0( 'if( constraints$',oth,'.integer ) ',oth,' <- as.integer( round( ',oth,' ) )' ) ) )
+			# if integer is required, make integer
+			eval( parse( text=paste0( 'if( constraints$',oth,'.integer ) ',oth,' <- as.integer( round( ',oth,' ) )' ) ) )
+		}
+		if( optimize$what %in% c("target.power") ){
+			# T is set by user
+			T <- study$T
+		}
 		
 		# console output
 		if ( verbose ) {
@@ -48,49 +55,94 @@ fn <- function( pr, optimize, study, constraints, model, envs, verbose=TRUE ){
 				flush.console()
 		}
 
-# browser()
 		# initialize default return
 		value <- NULL
 		
-		# via se/se^2
-		if( optimize$via %in% c("se^2","se") ) {
+		# power optimization
+		if( optimize$what %in% c("power","target.power") ){
 		
-				# compute standard error
-				if( optimize$via.function %in% "compute.se.oertzen" ){
-					se <- compute.se.oertzen( 	N=round(N),
-												timepoints=round(T),
-												n_ov=model$specification$n_ov,
-												#names_ov=model$specification$names_ov,
-												n_process=model$specification$n_process,
-												#names_process=model$specification$names_process,
-												matrices=model$specification$matrices,
-												target.parameters=model$target.parameters,
-												# cppf.env=envs$cppf.env, 
-												verbose=verbose )
-				}
+				# via se/se^2
+				if( optimize$via %in% c("se^2","se") ) {
 				
-		}
-		
-		# via power
-		if( optimize$via %in% c("power") ) {
-				
-				# compute power
-				if( optimize$via.function %in% "calculate.power.LRT" ){
+						# compute standard error
+						if( optimize$via.function %in% "compute.se.oertzen" ){
+							se <- compute.se.oertzen( 	N=round(N),
+														timepoints=round(T),
+														n_ov=model$specification$n_ov,
+														#names_ov=model$specification$names_ov,
+														n_process=model$specification$n_process,
+														#names_process=model$specification$names_process,
+														matrices=model$specification$matrices,
+														target.parameters=model$target.parameters,
+														# cppf.env=envs$cppf.env, 
+														verbose=verbose )
+						}
 						
-						power <- calculate.power.LRT( alpha=0.05,
-													  N=N,
-													  timepoints=T,
-									n_ov=model$specification$n_ov,
-									n_process=model$specification$n_process,
-									matrices=model$specification$matrices, 
-									target.parameters=model$target.parameters,
-									pwrLRT.env=envs$pwrLRT.env,
-									verbose=verbose )
 				}
-		}
+				
+				# via power
+				if( optimize$via %in% c("power") ) {
+						
+						# compute power
+						if( optimize$via.function %in% "calculate.power.LRT" ){
+								
+								power <- calculate.power.LRT( alpha=0.05,
+															  N=N,
+															  timepoints=T,
+											n_ov=model$specification$n_ov,
+											n_process=model$specification$n_process,
+											matrices=model$specification$matrices, 
+											target.parameters=model$target.parameters,
+											pwrLRT.env=envs$pwrLRT.env,
+											verbose=verbose )
+						}
+				}
 
-		# prepare return
-		value <- eval( parse( text=optimize$via ) )
+				## prepare return
+				# if power is optimized, then return power of target parameters
+				if( optimize$what %in% "power" ) value <- eval( parse( text=optimize$via ) )
+				# if target.power should be achieved, then return is quadratic loss
+				if( optimize$what %in% "target.power" ) value <- ( power - study$target.power )^2
+		}
+		
+		# budget optimization
+		if( optimize$what %in% "budget" ){
+
+				## optimize N to achieve target power
+				# set T (current T as varied by optimizer)
+				study$T <- T
+				# current budget (for constraining N)
+				# study$budget <- calculate.from.cost.function( "what"="budget", N=N, T=T, l2.cost=study$l2.cost, l1.cost=study$l1.cost )
+				
+				
+				# optimize N
+				res <- optmze(	optimize=list(
+									"what"=c("target.power"),
+									"direction"=c("min"),
+									"via"=optimize$via,
+									"par"=c("N"),
+									"via.function"=optimize$via.function,
+									"optimizer"=c("genoud"),
+									"starting.values"=optimize$starting.values,
+									"set.seed.value"=optimize$set.seed.value
+									),
+								study=study,
+								constraints=constraints,
+								model=model,
+								genoud=genoud,
+								timeout=timeout,
+								verbose=verbose )
+				# new N what closest achieves target power
+				N <- res$N.opt
+				if ( verbose ) {
+						cat( "optimized N to achieve target power: ", N, "\n" )
+						flush.console()
+				}
+				
+				# calculate the budget based on T (varied by optimizer (outer run))
+				# and N (optimized to achieve target power (inner run))
+				value <- calculate.from.cost.function( "what"="budget", N=N, T=T, l2.cost=study$l2.cost, l1.cost=study$l1.cost )
+		}
 
 		# console output
 		if ( verbose ) {
