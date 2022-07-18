@@ -21,7 +21,6 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
   if (!is.null(input_H1$Theta_A)) {n_parameters <- n_parameters + n_ov_symm}
   if (!is.null(input_H1$Theta_B)) {n_parameters <- n_parameters + n_ov_symm}
   if (!is.null(input_H1$Theta_AB)) {n_parameters <- n_parameters + n_ov_sqr}
-  if (!is.null(input_H1$Gamma_star)) {n_parameters <- n_parameters + n_ov_sqr}
   
   
   # Indices
@@ -37,6 +36,7 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
   
   # Identity matrices
   I_n_ov <- diag(1, nrow = n_ov)
+  I_n_ov2 <- diag(1, nrow = n_ov^2)
   I_n_ov_time <- diag(1, nrow = n_ov_time)
   I_n_all <- diag(1, nrow = n_all)
   
@@ -67,8 +67,11 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
   # Omega
   # TOVAR
   if (!is.null(input_H1$Omega)) {
-    RAM_S[id_f_star[1:n_ov], id_f_star[1:n_ov]]  <- solve(
-      I_n_ov - input_H1$Gamma %*% input_H1$Gamma) %*% input_H1$Omega
+    RAM_S[id_f_star[1:n_ov], id_f_star[1:n_ov]]  <- 
+      matrix(as.vector(solve(I_n_ov2 -
+                               kronecker(input_H1$Gamma, input_H1$Gamma)) %*%
+                         t(t(as.vector(input_H1$Omega)))),
+             nrow = n_ov, ncol = n_ov, byrow = TRUE) 
     for (i in 2:n_timepoints) {
       select <- id_f_star[(n_ov*(i-1)+1):(n_ov*i)]
       RAM_S[select, select] <- input_H1$Omega
@@ -117,33 +120,34 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
   # Theta_A
   if (!is.null(input_H1$Theta_A)) {
     # Loadings
+    # First time point
+    RAM_A[(2*n_ov_time+1):(2*n_ov_time+n_ov), id_A] <- solve(I_n_ov - input_H1$Gamma)
     for (i in seq_along((id_A))) {
       # This is probably only correct for univariate models
-      RAM_A[2*n_ov_time+i, id_A[i]] <- 1 / (1 - diag(input_H1$Gamma)[i])
       loadings <- rep(0, times = n_ov)
       loadings[i] <- 1
       loadings <- rep(loadings, times = n_timepoints - 1)
       RAM_A[id_f_star[-c(1:n_ov)], id_A[i]] <- loadings
     }
     # Covariance matrix
-    RAM_S[id_A, id_A] <- input_H1$Theta_I
+    RAM_S[id_A, id_A] <- input_H1$Theta_A
   }
   
   # Theta_B 
-  if (!is.null(input_H1$Theta_S)) {
+  if (!is.null(input_H1$Theta_B)) {
     # Loadings
     # This is probably only correct for univariate models
+    RAM_A[(2*n_ov_time+1):(2*n_ov_time+n_ov), id_S] <- -input_H1$Gamma %*%
+      solve((I_n_ov - input_H1$Gamma) %*% (I_n_ov - input_H1$Gamma)) 
     for (i in seq_along((id_S))) {
-      RAM_A[2*n_ov_time+i, id_S[i]] <- -input_H1$Gamma[i, i] / 
-        (1 - input_H1$Gamma[i, i])^2
       loadings <- rep(0, times = n_ov_time)
       for (j in seq_len(n_timepoints - 1)) {
         loadings[i+n_ov*j] <- j
       }
-      RAM_A[(n_ov_time+1):(2*n_ov_time), id_B[i]] <- loadings
+      RAM_A[id_f_star, id_B[i]] <- loadings
     }
     # Covariance matrix
-    RAM_S[id_S, id_S] <- input_H1$Theta_S
+    RAM_S[id_B, id_B] <- input_H1$Theta_B
     
     # Theta_AB
     RAM_S[id_A, id_B] <- input_H1$Theta_AB
@@ -190,23 +194,31 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
       }
       
       # T0VAR
-      RAM_S_H0[id_f_star[1:n_ov], id_f_star[1:n_ov]]  <- solve(
-        I_n_ov - input_H0$matrices[[par]] %*% input_H0$matrices[[par]]) %*%
-        input_H1$Omega
+      if (!is.null(input_H1$Omega)) {
+        RAM_S_H0[id_f_star[1:n_ov], id_f_star[1:n_ov]] <-   
+          matrix(as.vector(solve(
+            I_n_ov2 - 
+              kronecker(input_H0$matrices[[par]], input_H0$matrices[[par]])) %*%
+              t(t(as.vector(input_H1$Omega)))),
+            nrow = n_ov, ncol = n_ov, byrow = TRUE) 
+        }
       
       # Effect of A on the first measurement
       if (!is.null(input_H1$Theta_A)) {
         for (i in seq_along((id_A))) {
-          # This is probably only correct for univariate models
-          RAM_A_H0[2*n_ov_time+i, id_A[i]] <- 1 / (1 - diag(input_H0$matrices[[par]])[i])
+          # First time point
+          RAM_A_H0[(2*n_ov_time+1):(2*n_ov_time+n_ov), id_A] <-
+            solve(I_n_ov - input_H0$matrices[[par]])
         }
       }
       
       # Effect of B on the first measurement
       if (!is.null(input_H1$Theta_B)) {
         for (i in seq_along((id_S))) {
-          RAM_A_H0[2*n_ov_time+i, id_S[i]] <- -input_H0$matrices[[par]][i, i] / 
-            (1 - input_H0$matrices[[par]][i, i])^2
+          RAM_A_H0[(2*n_ov_time+1):(2*n_ov_time+n_ov), id_S] <-
+            -input_H0$matrices[[par]] %*%
+            solve((I_n_ov - input_H0$matrices[[par]]) %*% 
+                    (I_n_ov - input_H0$matrices[[par]])) 
         }
       }
       
@@ -216,8 +228,11 @@ compute_chisq <- function(input_H1, input_H0, alpha) {
     # TOVAR
     if (input_H0$building_block[[par]] == "Omega") {
       # T0VAR
-      RAM_S_H0[id_f_star[1:n_ov], id_f_star[1:n_ov]]  <- solve(
-        I_n_ov - input_H1$Gamma %*% input_H1$Gamma) %*% input_H0$matrices[[par]]
+      RAM_S_H0[id_f_star[1:n_ov], id_f_star[1:n_ov]] <-   
+        matrix(as.vector(solve(
+          I_n_ov2 - kronecker(input_H1$Gamma, input_H1$Gamma)) %*%
+            t(t(as.vector(input_H0$matrices[[par]])))),
+          nrow = n_ov, ncol = n_ov, byrow = TRUE) 
       for (i in 2:n_timepoints) {
         select <- id_f_star[(n_ov*(i-1)+1):(n_ov*i)]
         RAM_S_H0[select, select] <- input_H0$matrices[[par]]
