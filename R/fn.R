@@ -86,15 +86,15 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 						# compute power
 						if( optimize$via.function %in% "calculate.power.LRT" ){
 								
-								power <- calculate.power.LRT( alpha=study$alpha,
-															  N=N,
-															  timepoints=T,
-											n_ov=model$specification$n_ov,
-											n_process=model$specification$n_process,
-											matrices=model$specification$matrices, 
-											target.parameters=model$target.parameters,
-											pwrLRT.env=envs$pwrLRT.env,
-											verbose=verbose )
+						  power <- calculate.power.LRT(
+						    alpha=study$alpha,
+						    N=N,
+						    timepoints=T,
+						    input_H1 = model$specification$input_H1,
+						    target.parameters = model$target.parameters,
+						    target.parameters.values.H0 = model$target.parameters.values.H0,
+						    pwrLRT.env = envs$pwrLRT.env,
+						    verbose=verbose)
 						}
 				}
 

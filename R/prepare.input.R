@@ -36,9 +36,7 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 		### target parameters
 		
 		# all possible target parameters from model specification
-		all.tp.named <- do.call( "c", sapply( model$specification$matrices, "[[", "labels" ))
-		all.tp.named <- all.tp.named[!is.na( all.tp.named )]
-		all.tp <- unname( all.tp.named )
+		all.tp <- get_all_labels(model$specification$input_H1)
 		
 		# get target parameters from model list
 		target.parameters <- model$target.parameters

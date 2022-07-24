@@ -12,10 +12,11 @@
 #' @return
 #' @keywords internal
 
-calculate.power.LRT <- function(alpha, N, timepoints, n_ov, n_process,
-										  matrices, target.parameters=NULL,
-										  pwrLRT.env=NULL,
-										  verbose=TRUE ) {
+calculate.power.LRT <- function(alpha, N, timepoints, input_H1,
+                                target.parameters = NULL,
+                                target.parameters.values.H0 = NULL,
+                                pwrLRT.env = NULL,
+                                verbose = TRUE) {
 
   # MH 0.0.2 2022-02-25
   # default F_diff
@@ -44,12 +45,13 @@ calculate.power.LRT <- function(alpha, N, timepoints, n_ov, n_process,
   #    (and put it into env, if caching is desired)
   if( is.null( F_diff ) ){
 	  
-	  # calculate F_diff
-	  F_diff <- calculate.F.diff( timepoints=timepoints,
-								  n_ov=n_ov,
-								  n_process=n_process,
-								  matrices=matrices, 
-								  target.parameters=target.parameters )
+    # calculate F_diff
+    F_diff <- calculate.F.diff(
+      timepoints = timepoints,
+      input_H1 = input_H1,
+      target.parameters = target.parameters,
+      target.parameters.values.H0 = target.parameters.values.H0
+    )
 
 	  
 	  # if env exists (=caching is desired)

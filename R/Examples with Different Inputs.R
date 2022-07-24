@@ -1,64 +1,59 @@
-# Set up ----
-rm(list = ls())
-setwd("C:/Users/manue/OneDrive/Forschung/Projekte/Optimal Cross Lagged/Unified Framework")
-
-# load functions
-source("compute_chisq.R")
-source("compute_power.R")
-
-
 # Factor CLPM ----
 
 input_H1 <- list(
   model = " Factor CLPM",
-  alpha = 0.05,
-  timepoints = 5,
   n_ov = 2, # number of repeatedly observed manifest variable (single indicators)
-  Gamma = matrix(c(0.5, 0.1, 0.1, 0.5), nrow = 2, ncol = 2),
-  Omega = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2),
-  Psi = matrix(c(0.25, 0, 0, 0.25), nrow = 2, ncol = 2),
-  Theta_I = NULL,
-  Theta_S = NULL,
-  Theta_IS = NULL,
-  Theta_A = NULL,
-  Theta_B = NULL,
-  Theta_AB = NULL
+  Gamma = list(values = matrix(c(0.5, 0.1, 0.1, 0.5), nrow = 2, ncol = 2),
+               labels = matrix(c("ARCL_1_1", "ARCL_2_1", "ARCL_1_2",
+                                 "ARCL_2_2"), nrow = 2, ncol = 2)),
+  Omega = list(values = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2),
+               labels = matrix(c("RES_1_1", "RES_2_1", "RES_2_1", "RES_2_2"),
+                               nrow = 2, ncol = 2)),
+  Psi = list(values = matrix(c(0.25, 0, 0, 0.25), nrow = 2, ncol = 2),
+             labels = matrix(c("UNIQ_1_1", "UNIQ_2_1", "UNIQ_2_1", "UNIQ_2_2"),
+                             nrow = 2, ncol = 2)),
+  Theta_I = NULL, # I
+  Theta_S = NULL, # S
+  Theta_IS = NULL, # IS
+  Theta_A = NULL, # A
+  Theta_B = NULL, # B
+  Theta_AB = NULL # AB
 )
 
-input_H0 <- list(
-  building_block = c("Gamma", "Omega"),
-  matrices = list(
-    Gamma = matrix(c(0.5, 0, 0.1, 0.5), nrow = 2, ncol = 2),
-    Omega = matrix(c(0.75, 0, 0, 0.75), nrow = 2, ncol = 2)
-  )
-)
+timepoints <- 5
+target.parameters <- c("ARCL_2_1", "RES_2_1")
+target.parameters.values.H0 <- c(0, 0)
 
-chisq_values <- compute_chisq(input_H1 = input_H1, input_H0 = input_H0,
-                              alpha = 0.05)
+res <- calculate.F.diff(timepoints = timepoints,
+                        input_H1 = input_H1,
+                        target.parameters = target.parameters,
+                        target.parameters.values.H0 = target.parameters.values.H0
+)
 
 # Covariance matrix under H1
-round(chisq_values$H1$Sigma_H1, digits = 3)
+round(res$Sigma_H1, digits = 3)
 # Covariance matrix under H0 (first constraint)
-round(chisq_values$H0$Sigma_H0[[1]], digits = 3)
+round(res$Sigma_H0[[1]], digits = 3)
 # Covariance matrix under H0 (second constraint)
-round(chisq_values$H0$Sigma_H0[[2]], digits = 3)
+round(res$Sigma_H0[[2]], digits = 3)
 
-res <- compute_power(N = 100, chisq_values = chisq_values)
-
-res
 
 
 # RI-CLPM ----
 
 input_H1 <- list(
   model = "RI-CLPM",
-  alpha = 0.05,
-  timepoints = 5,
   n_ov = 2, # number of repeatedly observed manifest variable (single indicators)
-  Gamma = matrix(c(0.5, 0.1, 0.1, 0.5), nrow = 2, ncol = 2),
-  Omega = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2),
+  Gamma = list(values = matrix(c(0.5, 0.1, 0.1, 0.5), nrow = 2, ncol = 2),
+               labels = matrix(c("ARCL_1_1", "ARCL_2_1", "ARCL_1_2",
+                                 "ARCL_2_2"), nrow = 2, ncol = 2)),
+  Omega = list(values = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2),
+               labels = matrix(c("RES_1_1", "RES_2_1", "RES_2_1", "RES_2_2"),
+                               nrow = 2, ncol = 2)),
   Psi = NULL,
-  Theta_I = matrix(c(0.5, 0.25, 0.25, 0.5), nrow = 2, ncol = 2),
+  Theta_I = list(values = matrix(c(0.5, 0.25, 0.25, 0.5), nrow = 2, ncol = 2),
+                 labels = matrix(c("I_1_1", "I_2_1", "I_2_1", "I_2_2"),
+                                 nrow = 2, ncol = 2)),
   Theta_S = NULL,
   Theta_IS = NULL,
   Theta_A = NULL,
@@ -66,66 +61,15 @@ input_H1 <- list(
   Theta_AB = NULL
 )
 
-input_H0 <- list(
-  building_block = c("Gamma", "Theta_I", "Omega"),
-  matrices = list(
-    Gamma = matrix(c(0.5, 0, 0.1, 0.5), nrow = 2, ncol = 2),
-    Theta_I = matrix(c(0.5, 0, 0, 0.5), nrow = 2, ncol = 2),
-    Omega = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2)
-  )
-)
-
-chisq_values <- compute_chisq(input_H1 = input_H1, input_H0 = input_H0,
-                              alpha = 0.05)
+timepoints <- 5
+target.parameters <- c("ARCL_2_1", "I_2_1", "RES_2_1")
+target.parameters.values.H0 <- c(0, 0, 0)
 
 # Covariance matrix under H1
-round(chisq_values$H1$Sigma_H1, digits = 3)
+round(res$Sigma_H1, digits = 3)
 # Covariance matrix under H0 (first constraint)
-round(chisq_values$H0$Sigma_H0[[1]], digits = 3)
+round(res$Sigma_H0[[1]], digits = 3)
 # Covariance matrix under H0 (second constraint)
-round(chisq_values$H0$Sigma_H0[[2]], digits = 3)
-
-res <- compute_power(N = 100, chisq_values = chisq_values)
-
-res
-
-
-# ALT  ----
-
-input_H1 <- list(
-  model = "ALT",
-  alpha = 0.05,
-  timepoints = 5,
-  n_ov = 2, # number of repeatedly observed manifest variable (single indicators)
-  Gamma = matrix(c(0.5, 0.1, 0.1, 0.5), nrow = 2, ncol = 2),
-  Omega = matrix(c(0.75, 0.25, 0.25, 0.75), nrow = 2, ncol = 2),
-  Psi = NULL,
-  Theta_I = NULL,
-  Theta_S = NULL,
-  Theta_IS = NULL,
-  Theta_A = matrix(c(0.5, 0.15, 0.15, 0.4), nrow = 2, ncol = 2),
-  Theta_B = matrix(c(0.1, 0, 0, 0.1), nrow = 2, ncol = 2),
-  Theta_AB = matrix(c(0.01, 0, 0, 0.001), nrow = 2, ncol = 2)
-)
-
-input_H0 <- list(
-  building_block = c("Gamma", "Theta_A"),
-  matrices = list(
-    Gamma = matrix(c(0.5, 0, 0.1, 0.5), nrow = 2, ncol = 2),
-    Theta_A = matrix(c(0.5, 0, 0, 0.4), nrow = 2, ncol = 2)
-  )
-)
-
-chisq_values <- compute_chisq(input_H1 = input_H1, input_H0 = input_H0,
-                              alpha = 0.05)
-
-# Covariance matrix under H1
-round(chisq_values$H1$Sigma_H1, digits = 3)
-# Covariance matrix under H0 (first constraint)
-round(chisq_values$H0$Sigma_H0[[1]], digits = 3)
-# Covariance matrix under H0 (second constraint)
-round(chisq_values$H0$Sigma_H0[[2]], digits = 3)
-
-res <- compute_power(N = 100, chisq_values = chisq_values)
-
-res
+round(res$Sigma_H0[[2]], digits = 3)
+# Covariance matrix under H0 (third constraint)
+round(res$Sigma_H0[[3]], digits = 3)
