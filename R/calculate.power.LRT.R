@@ -1,4 +1,5 @@
 ## Changelog:
+# MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
 # MH 0.0.3 2022-04-22: more lean T-specific F_diff calculations
 # MH 0.0.2 2022-02-25: added caching of T-specific F_diff calculations
 # MA 0.0.1 2022-02-24: initial programming
@@ -44,15 +45,16 @@ calculate.power.LRT <- function(alpha, N, timepoints, input_H1,
   # if F_diff for timepoint has not yet been calculated, do it
   #    (and put it into env, if caching is desired)
   if( is.null( F_diff ) ){
-	  
-    # calculate F_diff
-    F_diff <- calculate.F.diff(
-      timepoints = timepoints,
-      input_H1 = input_H1,
-      target.parameters = target.parameters,
-      target.parameters.values.H0 = target.parameters.values.H0
-    )
 
+	# calculate F_diff
+	## MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
+      F_diff <- calculate.F.diff(
+          timepoints = timepoints,
+          input_H1 = input_H1,
+          target.parameters = target.parameters,
+          target.parameters.values.H0 = target.parameters.values.H0,
+		  return.Sigma=FALSE
+      )
 	  
 	  # if env exists (=caching is desired)
 	  if( !is.null( pwrLRT.env ) ){

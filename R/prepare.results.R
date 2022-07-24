@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.21 2022-07-24: now returns Sigma_H1/Sigma_H0
 # MH 0.0.1 2022-01-20: copied chunks from optmze
 
 ## Documentation
@@ -229,6 +230,16 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 		# add constraints
 		res <- c( res, list( "constraints"=constraints ) )
 
+		## MH 0.0.21 2022-07-24: covariance matrice of optimized model
+		F_diff <- calculate.F.diff(
+          timepoints = res$T.opt,
+          input_H1 = model$specification$input_H1,
+          target.parameters = model$target.parameters,
+          target.parameters.values.H0 = model$target.parameters.values.H0,
+		  return.Sigma=TRUE
+        )[c("Sigma_H1","Sigma_H0")]
+		res <- c( res, F_diff )
+		
 		# return
 		return( res )
 

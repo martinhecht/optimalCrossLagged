@@ -1,4 +1,5 @@
 ## Changelog:
+# MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
 # MH 0.0.20 2022-07-04: alpha as input implemented, constraints are outputted
 # MH 0.0.19 2022-07-04: budget/target.power optimization implemented
 # MH 0.0.7 2022-01-20
@@ -31,11 +32,11 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
-					model=list(specification=NULL, target.parameters=NULL),
+					model=list("specification"=NULL, "target.parameters"=NULL, "target.parameters.values.H0"=NULL ),
 					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 								timeout=60, verbose=TRUE ){
-		
+
 		# packages
 		pkgs <- "require( R.utils ); # withTimeout()
 				 require( rgenoud ); # genoud()
@@ -96,9 +97,10 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
-                                    # "Dropbox/84_optimalclpm/04_martinhecht/R" )
+                                    ## "Dropbox/84_optimalclpm/04_martinhecht/R" )
+                                    # "Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
-# Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R") ]
+# Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R","Examples with Different Inputs.R","Try to Optimize.R") ]
 # for( Rfile in Rfiles ){
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
@@ -110,22 +112,25 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 # specs$names_ov <- NULL
 # specs$names_process <- NULL
 
+# specs <- generate.model.example.3()
+
 
 # while(TRUE){
 # res <- optmze( model=list("specification"=specs,
-						  # "target.parameters"=c("arcl_eta1eta2","arcl_eta2eta1")),
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
 						  ### "target.parameters"=c("arcl_eta1eta2")),
 						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
 						  # optimize=list(
 									# "what"=c("power"),
-									### "what"=c("budget"),
-									### "what"=c("target.power"),
+									# "what"=c("budget"),
+									# "what"=c("target.power"),
 									# "direction"=c("max"),
-									### "direction"=c("min"),
+									# "direction"=c("min"),
 									# "via"=c("power"),
 									# "par"=c("T"),
-									### "par"=c("N"),
-									### "via.function"=c("calculate.power.LRT"),
+									# "par"=c("N"),
+									# "via.function"=c("calculate.power.LRT"),
 									# "optimizer"=c("genoud"),
 									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									# "set.seed.value"="random"
@@ -136,7 +141,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 											# "N.integer"=FALSE ),									
 						  # genoud=list("pop.size"=16,"max.generations"=100,"wait.generations"=1,
 						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
-						  # verbose=FALSE )
+						  # verbose=TRUE )
 
 # str( res ); flush.console()
 # }
