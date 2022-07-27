@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.23 2022-07-27: bugfix, model$target.parameters
 # MH 0.0.21 2022-07-24: now returns Sigma_H1/Sigma_H0
 # MH 0.0.1 2022-01-20: copied chunks from optmze
 
@@ -24,7 +25,8 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
 		# if timeouted or error, results are NA
 		if( c(inherits(res,"try-error") ) ){
 			eval( parse( text=paste0( par,'.opt. <- as.numeric(NA)' ) ) )
-			values.opt <- rep( as.numeric(NA), length( target.parameters ) )
+			# MH 0.0.23 2022-07-27: bugfix, _model$_target.parameters
+			values.opt <- rep( as.numeric(NA), length( model$target.parameters ) )
 		} else {
 			eval( parse( text=paste0( par,'.opt. <- res$par.opt' ) ) )
 			values.opt <- res$values.opt

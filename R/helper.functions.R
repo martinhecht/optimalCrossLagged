@@ -1,3 +1,4 @@
+# MH: 0.0.23 2022-07-27: disabled browser in line 411
 # JW: 0.0.22 2022-07-25
 
 # for labels of target parameter input widgets; output: list
@@ -406,7 +407,8 @@ compute_results <- function(budget,
   S[upper.tri(S)] <- t(S)[upper.tri(S)]
   IS <- matrix(as.numeric(IS), ncol=nP*nP)
   IS[upper.tri(IS)] <- t(IS)[upper.tri(IS)]
-  browser()
+# MH: 0.0.23 2022-07-27: disabled browser  
+  # browser()
   diag(IS) <- 0
   A <- matrix(as.numeric(A), ncol=nP)
   A[upper.tri(A)] <- t(A)[upper.tri(A)]

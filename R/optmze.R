@@ -97,7 +97,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
-                                    ## "Dropbox/84_optimalclpm/04_martinhecht/R" )
+                                    #### "Dropbox/84_optimalclpm/04_martinhecht/R" )
                                     # "Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
 # Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R","Examples with Different Inputs.R","Try to Optimize.R") ]
