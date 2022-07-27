@@ -1,3 +1,4 @@
+# MH: 0.0.24 2022-07-27: new version of helper.functions.R (2022-07-27 14:50)
 # MH: 0.0.23 2022-07-27: disabled browser in line 411
 # JW: 0.0.22 2022-07-25
 
@@ -405,16 +406,15 @@ compute_results <- function(budget,
   I[upper.tri(I)] <- t(I)[upper.tri(I)]
   S <- matrix(as.numeric(S), ncol=nP)
   S[upper.tri(S)] <- t(S)[upper.tri(S)]
-  IS <- matrix(as.numeric(IS), ncol=nP*nP)
+  IS <- matrix(as.numeric(IS), ncol=nP*2)
   IS[upper.tri(IS)] <- t(IS)[upper.tri(IS)]
-# MH: 0.0.23 2022-07-27: disabled browser  
   # browser()
   diag(IS) <- 0
   A <- matrix(as.numeric(A), ncol=nP)
   A[upper.tri(A)] <- t(A)[upper.tri(A)]
   B <- matrix(as.numeric(B), ncol=nP)
   B[upper.tri(B)] <- t(B)[upper.tri(B)]
-  AB <- matrix(as.numeric(AB), ncol=nP*nP)
+  AB <- matrix(as.numeric(AB), ncol=nP*2)
   AB[upper.tri(AB)] <- t(AB)[upper.tri(AB)]
   diag(AB) <- 0
   
@@ -441,29 +441,29 @@ compute_results <- function(budget,
   # how to use switch with code blocks: https://stackoverflow.com/questions/7825501/switch-statement-usage
   switch(modelClass,
          "fclpm" = {
-           input_H1$Psi = list(input = UNIQ,
+           input_H1$Psi <- list(input = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
            target.parameters <- c(target.parameters, targetUNIQ)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "ri-clpm" = {
-           input_H1$Theta_I = list(input = I,
+           input_H1$Theta_I <- list(input = I,
                                    labels = labelsM(procNames_List, "I"))
            target.parameters <- c(target.parameters, targetI)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "starts" = {
-           input_H1$Psi = list(input = UNIQ,
+           input_H1$Psi <- list(input = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_I = list(input = I,
+           input_H1$Theta_I <- list(input = I,
                                    labels = labelsM(procNames_List, "I"))
            target.parameters <- c(target.parameters, targetUNIQ, targetI)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "lcm-sr" = {
-           input_H1$Theta_I = list(input = I,
+           input_H1$Theta_I <- list(input = I,
                                    labels = labelsM(procNames_List, "I"))
-           input_H1$Theta_S = list(input = S,
+           input_H1$Theta_S <- list(input = S,
                                    labels = labelsM(procNames_List, "S"))
            input_H1$Theta_IS = list(input = IS,
                                     labels = labelsM(procNames_List, "IS"))
@@ -471,19 +471,19 @@ compute_results <- function(budget,
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "alt" = {
-           input_H1$Theta_A = list(input = A,
+           input_H1$Theta_A <- list(input = A,
                                    labels = labelsM(procNames_List, "A"))
-           input_H1$Theta_B = list(input = B,
+           input_H1$Theta_B <- list(input = B,
                                    labels = labelsM(procNames_List, "B"))
-           input_H1$Theta_AB = list(input = AB,
+           input_H1$Theta_AB <- list(input = AB,
                                     labels = labelsM(procNames_List, "AB"))
            target.parameters <- c(target.parameters, targetA, targetB, targetAB)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "lcs" = {
-           input_H1$Psi = list(input = UNIQ,
+           input_H1$Psi <- list(input = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_A = list(input = A,
+           input_H1$Theta_A <- list(input = A,
                                    labels = labelsM(procNames_List, "A"))
            target.parameters <- c(target.parameters, targetUNIQ, targetA)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
