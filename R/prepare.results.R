@@ -12,7 +12,8 @@
 #' @return
 
 ## Function definition
-prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE ){
+prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
+                             error_codes){
 
 		# put elements from input list on this environment
 		do <- paste0( names( input ), " <- input$", names( input ) )
@@ -240,7 +241,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE )
           target.parameters.values.H0 = model$target.parameters.values.H0,
 		  return.Sigma=TRUE
         )[c("Sigma_H1","Sigma_H0")]
-		res <- c( res, F_diff )
+		res <- c( res, F_diff, error_codes )
 		
 		# return
 		return( res )

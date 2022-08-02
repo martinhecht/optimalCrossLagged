@@ -1,4 +1,5 @@
 ## Changelog:
+# MA 0.0.25 2022-07-28: added plausability checks of inputs
 # MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
 # MH 0.0.20 2022-07-04: alpha as input implemented, constraints are outputted
 # MH 0.0.19 2022-07-04: budget/target.power optimization implemented
@@ -36,6 +37,15 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 								timeout=60, verbose=TRUE ){
+  
+  # MA 0.0.25 2022-07-28: added plausability checks of inputs
+  # plausability checks
+  error_codes <- check_plausability(constraints = constraints, model = model)
+  
+  # if errors are detected: return output with error codes
+  if (length(error_codes) > 0) {
+    return(make_output(error_codes = error_codes))
+  }
 
 		# packages
 		pkgs <- "require( R.utils ); # withTimeout()
@@ -82,7 +92,8 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 		results <- prepare.results( res=res,
 									run.time.optimizer.secs=run.time.optimizer.secs,
 									input=input,
-									verbose=verbose )
+									verbose=verbose,
+									error_codes = error_codes)
 		
 		# return
 		return( results )
