@@ -5,9 +5,9 @@ account: psychtools
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 6704232
-bundleId: 6259559
+bundleId: 6259805
 url: https://psychtools.shinyapps.io/OptDynMo/
-when: 1662044371.75276
-lastSyncTime: 1662044371.75277
+when: 1662048814.24274
+lastSyncTime: 1662048814.24275
 asMultiple: FALSE
 asStatic: FALSE

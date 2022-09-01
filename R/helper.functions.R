@@ -1,3 +1,4 @@
+# JW: 0.0.26 2022-08-31: error in labelsM removed
 # MH: 0.0.24 2022-07-27: new version of helper.functions.R (2022-07-27 14:50)
 # MH: 0.0.23 2022-07-27: disabled browser in line 411
 # JW: 0.0.22 2022-07-25
@@ -138,16 +139,16 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            # indNames <- c()
            # for (i in seq(measModelNb)) {
            #   indNb <- get("input")[[paste0("indicat_", measMod[i])]] 
-           #   temp <- c()
+           #   tmp <- c()
            #    for (n in 1:indNb){
-           #     temp[n] <- paste0(measMod[i], "_", n)
+           #     tmp[n] <- paste0(measMod[i], "_", n)
            #    }
-           #   indNames <- append(indNames, temp)
+           #   indNames <- append(indNames, tmp)
            # }
            # indNames <- indNames[-1] # otherwise first element is primitive("c")
            # indNb <- length(indNames)
            indNb <- measModelNb
-           indNames <<- measMod
+           indNames <- measMod
            # diagonal (var)
            for (i in 1:indNb){
                  count <- count + 1
@@ -291,24 +292,23 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
          },
          
          "UNIQ" = { # andere dimension!
-           measModelNb <- length(measMod) 
+           measModelNb <- length(measMod) # names of processes with measurement model
            indNames <- c()
            for (i in seq(measModelNb)) {
              indNb <- 1
              #indNb <- get("input")[[paste0("indicat_", measMod[i])]] 
-             temp <- c()
+             tmp <- c()
              for (n in 1:indNb){
-               temp[n] <- paste0(measMod[i], "_", n)
+               tmp[n] <- paste0(measMod[i], "_", n)
              }
-             indNames <- append(indNames, temp)
+             indNames <- append(indNames, tmp)
            }
            indNames <- indNames[-1] # otherwise first element is primitive("c")
            indNb <- length(indNames)
-           labels <- matrix("", nrow=indNb, ncol=indNb)
+           labels <- matrix("", nrow=indNb, ncol=indNb) # other dimensions thatn first initialization!
            for (i in 1:indNb){
              for (j in 1:indNb){
                if (i == j){ # diagonal (var)
-                 count <- count + 1
                  labels[i, j] <- indNames[i]
                } else { # off-diagonal (cov)
                  labels[i, j] <- paste0(indNames[i], " - ", indNames[j])
@@ -408,7 +408,6 @@ compute_results <- function(budget,
   S[upper.tri(S)] <- t(S)[upper.tri(S)]
   IS <- matrix(as.numeric(IS), ncol=nP*2)
   IS[upper.tri(IS)] <- t(IS)[upper.tri(IS)]
-  # browser()
   diag(IS) <- 0
   A <- matrix(as.numeric(A), ncol=nP)
   A[upper.tri(A)] <- t(A)[upper.tri(A)]
@@ -423,9 +422,9 @@ compute_results <- function(budget,
     model = modelClass,
     alpha = alpha,
     n_ov = nP,
-    Gamma = list(input = ARCL, 
+    Gamma = list(values = ARCL, 
                  labels = labelsM(procNames_List, "ARCL")),
-    Omega = list(input = RES,
+    Omega = list(values = RES,
                  labels = labelsM(procNames_List, "RES")),
     Psi = NULL,
     Theta_I = NULL,
@@ -441,49 +440,49 @@ compute_results <- function(budget,
   # how to use switch with code blocks: https://stackoverflow.com/questions/7825501/switch-statement-usage
   switch(modelClass,
          "fclpm" = {
-           input_H1$Psi <- list(input = UNIQ,
+           input_H1$Psi <- list(values = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
            target.parameters <- c(target.parameters, targetUNIQ)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "ri-clpm" = {
-           input_H1$Theta_I <- list(input = I,
+           input_H1$Theta_I <- list(values = I,
                                    labels = labelsM(procNames_List, "I"))
            target.parameters <- c(target.parameters, targetI)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "starts" = {
-           input_H1$Psi <- list(input = UNIQ,
+           input_H1$Psi <- list(values = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_I <- list(input = I,
+           input_H1$Theta_I <- list(values = I,
                                    labels = labelsM(procNames_List, "I"))
            target.parameters <- c(target.parameters, targetUNIQ, targetI)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "lcm-sr" = {
-           input_H1$Theta_I <- list(input = I,
+           input_H1$Theta_I <- list(values = I,
                                    labels = labelsM(procNames_List, "I"))
-           input_H1$Theta_S <- list(input = S,
+           input_H1$Theta_S <- list(values = S,
                                    labels = labelsM(procNames_List, "S"))
-           input_H1$Theta_IS = list(input = IS,
+           input_H1$Theta_IS = list(values = IS,
                                     labels = labelsM(procNames_List, "IS"))
            target.parameters <- c(target.parameters, targetI, targetS, targetIS)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "alt" = {
-           input_H1$Theta_A <- list(input = A,
+           input_H1$Theta_A <- list(values = A,
                                    labels = labelsM(procNames_List, "A"))
-           input_H1$Theta_B <- list(input = B,
+           input_H1$Theta_B <- list(values = B,
                                    labels = labelsM(procNames_List, "B"))
-           input_H1$Theta_AB <- list(input = AB,
+           input_H1$Theta_AB <- list(values = AB,
                                     labels = labelsM(procNames_List, "AB"))
            target.parameters <- c(target.parameters, targetA, targetB, targetAB)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "lcs" = {
-           input_H1$Psi <- list(input = UNIQ,
+           input_H1$Psi <- list(values = UNIQ,
                                labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_A <- list(input = A,
+           input_H1$Theta_A <- list(values = A,
                                    labels = labelsM(procNames_List, "A"))
            target.parameters <- c(target.parameters, targetUNIQ, targetA)
            target.parameters.values.h0 <- rep(0, length(target.parameters))
@@ -509,7 +508,7 @@ compute_results <- function(budget,
         "l2.cost" = costN,
         "l1.cost" = costT,
         alpha = alpha,
-        T = 8
+        T = 8 ######### vorher: T = 8
       ),
       optimize = list(
         "what" = c("power"),
@@ -541,5 +540,9 @@ compute_results <- function(budget,
   } else {
     res <- NULL
   }
-  return(res)
+  
+  testing <- list(specs=specs,
+                  res=res)
+  
+  return(testing)
 }
