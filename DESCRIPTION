@@ -1,8 +1,8 @@
 Package: optimalclpm
 Type: Package
 Title: What the Package Does in One 'Title Case' Line
-Version: 0.0.26
-Date: 2022-08-31
+Version: 0.0.27
+Date: 2022-09-01
 Author: Your Name
 Maintainer: Your Name <your@email.com>
 Description: One paragraph description of what the package does as one or more full sentences.
