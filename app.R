@@ -1,42 +1,31 @@
-# MH 2022-09-01, commented out
+# JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css
+
 # only for local run
-#setwd("/Users/julia/Documents/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
+setwd("/Users/julia/Documents/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
 
 # (install and) load packages
-#packages <- c("shiny", # basic
-        #      "shinyjs", # for delay in code execution
-       #       "icons", # fa icons
-      #        "magrittr", # pipe operator
-     #         "devtools", # for shinyMatrix on github
-    #          "shinyWidgets", # for pickerInput widget
-   #           "dplyr", # for case_when
+packages <- c("shiny", # basic
+              "shinyjs", # for delay in code execution
+              "icons", # fa icons
+              "magrittr", # pipe operator
+              "devtools", # for shinyMatrix on github
+              "shinyWidgets", # for pickerInput widget
+              "dplyr", # for case_when
               #"lavaan", # path diagram
               #"semPlot" # path diagram; till here frontend
-  #            "R.utils",
- #             "rgenoud",
-#              "RcppArmadillo"
-#)
-#newPackages <-
-#  packages[!(packages %in% installed.packages()[, "Package"])]
-#if (length(newPackages))
-#  install.packages(newPackages)
-#lapply(packages, require, character.only = TRUE)
+              "R.utils",
+              "rgenoud",
+              "RcppArmadillo"
+)
+newPackages <-
+  packages[!(packages %in% installed.packages()[, "Package"])]
+if (length(newPackages))
+  install.packages(newPackages)
+lapply(packages, require, character.only = TRUE)
 #if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
-#install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
+install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
 #}
-
-# MH 2022-09-01, explicit package requirements
-require("shiny")
-require("shinyjs")
-require("icons")
-require("magrittr")
-require("devtools")
-require("shinyWidgets")
-require("dplyr")
-require("R.utils")
-require("rgenoud")
-require("RcppArmadillo")
-require("shinyMatrix")
+require(shinyMatrix)
 
 # source all relevant functions
 source("R/calculate.F.diff.R")
@@ -60,9 +49,7 @@ source("R/RcppExports.R")
 ui <-
   # include file-based css in shiny: https://shiny.rstudio.com/articles/css.html
   navbarPage(tags$link(rel = "stylesheet", type = "text/css", href = "ui.css"),
-             title = HTML(
-               "<b>OptDynMo: Optimal Design for Dynamic Longitudinal Models</b>"
-             ),
+             title = "OptDynMo: Optimal Design for Dynamic Longitudinal Models",
              
              tabPanel(
                title = HTML("Calculate <b>Power</b>"),
@@ -718,8 +705,6 @@ ui <-
                            )
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "IS_Output")),
-                         tags$span(style = "font-weight:normal; font-size:small;",
-                                   "Please only fill in the lower triangular matrix."),
                          tags$br(),
                          tags$br(),
                          uiOutput(outputId = "targetIS_Output")
@@ -782,8 +767,6 @@ ui <-
                            HTML("<strong>Covariance Accumulating Factors A and B</strong>")
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "AB_Output")),
-                         tags$span(style = "font-weight:normal; font-size:small;",
-                                   "Please only fill in the lower triangular matrix."),
                          tags$br(),
                          tags$br(),
                          uiOutput(outputId = "targetAB_Output")
@@ -1682,24 +1665,19 @@ server <- function(input, output, session) {
     procNames_List <-
       as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| ")))
     procNb <- length(procNames_List)
-    ISNames <- c()
-    count <- 0
+    INames <- c()
+    SNames <- c()
     for (i in 1:procNb){
-      count <- count + 1
-      ISNames[count] <- paste("I_", procNames_List[i])
-      count <- count + 1
-      ISNames[count] <- paste("S_", procNames_List[i])
+      INames[i] <- paste("I_", procNames_List[i])
+      SNames[i] <- paste("S_", procNames_List[i])
     }
-    ISall <- length(ISNames)
     preCovmat <-
       matrix(
-        0.5,
-        nrow = ISall,
-        ncol = ISall,
-        dimnames = list(ISNames, ISNames)
+        0,
+        nrow = procNb,
+        ncol = procNb,
+        dimnames = list(INames, SNames)
       )
-    diag(preCovmat) <- ""
-    preCovmat[upper.tri(preCovmat)] <- ""
     matrixInput(inputId = "IS",
                 value = preCovmat)
   })
@@ -1820,24 +1798,19 @@ server <- function(input, output, session) {
     procNames_List <-
       as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| ")))
     procNb <- length(procNames_List)
-    ABNames <- c()
-    count <- 0
+    ANames <- c()
+    BNames <- c()
     for (i in 1:procNb){
-      count <- count + 1
-      ABNames[count] <- paste("A_", procNames_List[i])
-      count <- count + 1
-      ABNames[count] <- paste("B_", procNames_List[i])
+      ANames[i] <- paste("A_", procNames_List[i])
+      BNames[i] <- paste("B_", procNames_List[i])
     }
-    ABall <- length(ABNames)
     preCovmat <-
       matrix(
-        0.5,
-        nrow = ABall,
-        ncol = ABall,
-        dimnames = list(ABNames, ABNames)
+        0,
+        nrow = procNb,
+        ncol = procNb,
+        dimnames = list(ANames, BNames)
       )
-    diag(preCovmat) <- ""
-    preCovmat[upper.tri(preCovmat)] <- ""
     matrixInput(inputId = "AB",
                 value = preCovmat)
   })
