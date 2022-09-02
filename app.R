@@ -1,4 +1,4 @@
-# JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css
+# JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
 
 # only for local run
 setwd("/Users/julia/Documents/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
@@ -32,6 +32,7 @@ source("R/calculate.F.diff.R")
 source("R/calculate.from.cost.function.R")
 source("R/calculate.power.LRT.R")
 source("R/calculate.power.R")
+source("R/check_plausability.R")
 source("R/compute.se.oertzen.R")
 # source("R/compute_chisq.R")
 # source("R/compute_power.R")
