@@ -1,17 +1,17 @@
-# JW: 0.0.26 2022-08-31: error in labelsM removed
+# JW: 0.0.29 2022-09-02: error in IS and AB matrices, and RES, corrected (i.e., labelsL and labelsM); for testing, target.params and their values also in output 
+# JW: 0.0.26 2022-08-31: error in labelsM corrected
 # MH: 0.0.24 2022-07-27: new version of helper.functions.R (2022-07-27 14:50)
 # MH: 0.0.23 2022-07-27: disabled browser in line 411
 # JW: 0.0.22 2022-07-25
 
 # for labels of target parameter input widgets; output: list
 labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procNames_List, measMod=input$measModel
-  nP<- length(procNames)
+  procNb <- length(procNames)
   labels <- list()
   count <- 0
     switch(paramClass,
            
          "ARCL" = {
-           procNb <- nP
            # diagonal
            for (i in 1:procNb){
              for (j in 1:procNb){
@@ -35,7 +35,6 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          },
          
          "RES" = { 
-           procNb <- nP
            # diagonal (var)
            for (i in 1:procNb){
                  count <- count + 1
@@ -55,7 +54,6 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          },
          
          "I" = { 
-           procNb <- nP
            # diagonal (var)
            for (i in 1:procNb){
                  count <- count + 1
@@ -75,7 +73,6 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          },
          
          "S" = { 
-           procNb <- nP
            # diagonal (var)
            for (i in 1:procNb){
                  count <- count + 1
@@ -95,7 +92,6 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          },
          
          "A" = { 
-           procNb <- nP
            # diagonal (var)
            for (i in 1:procNb){
                  count <- count + 1
@@ -115,7 +111,6 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          },
          
          "B" = { 
-           procNb <- nP
            # diagonal (var)
            for (i in 1:procNb){
                  count <- count + 1
@@ -152,7 +147,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            # diagonal (var)
            for (i in 1:indNb){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, indNames[i])
+                 labels[[count]] <- paste0(paramClass, "_", indNames[i])
                  names(labels)[[count]] <- unlist(indNames[i])
            }
            # off-diagonal (cov)
@@ -168,48 +163,36 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
          }, 
          
          "AB" = {
-           procNb <- nP
-           preNames <- c()
+           ANames <- c()
+           BNames <- c()
            for (i in 1:procNb){
-             count <- count + 1
-             preNames[count] <- paste0("A_", procNames[i])
-             count <- count + 1
-             preNames[count] <- paste0("B_", procNames[i])
+             ANames[i] <- paste0("A_", procNames[i])
+             BNames[i] <- paste0("B_", procNames[i])
            }
-           count <- 0
-           ABNb <- length(preNames)
-           for (i in 1:ABNb){
-             for (j in i:ABNb){
-               if (i != j){ # only off-diagonal
+           for (i in 1:procNb){
+             for (j in 1:procNb){
                  count <- count + 1
-                 labels[[count]] <- paste0(preNames[i], "_", preNames[j])
-                 names(labels)[[count]] <- paste0(preNames[i], " ↔ ", preNames[j]) 
-               }
+                 labels[[count]] <- paste0(ANames[i], "_", BNames[j])
+                 names(labels)[[count]] <- paste0(ANames[i], " ↔ ", BNames[j]) 
              }
            }
          }, 
          
          "IS" = {
-           procNb <- nP
-           preNames <- c()
+           INames <- c()
+           SNames <- c()
            for (i in 1:procNb){
-             count <- count + 1
-             preNames[count] <- paste0("I_", procNames[i])
-             count <- count + 1
-             preNames[count] <- paste0("S_", procNames[i])
+             INames[i] <- paste0("I_", procNames[i])
+             SNames[i] <- paste0("S_", procNames[i])
            }
-           count <- 0
-           ISNb <- length(preNames)
-           for (i in 1:ISNb){
-             for (j in i:ISNb){
-               if (i != j){ # only off-diagonal
-                 count <- count + 1
-                 labels[[count]] <- paste0(preNames[i], "_", preNames[j])
-                 names(labels)[[count]] <- paste0(preNames[i], " ↔ ", preNames[j])
-               }
+           for (i in 1:procNb){
+             for (j in 1:procNb){
+               count <- count + 1
+               labels[[count]] <- paste0(INames[i], "_", SNames[j])
+               names(labels)[[count]] <- paste0(INames[i], " ↔ ", SNames[j]) 
              }
            }
-           })
+         })
     return(labels)
 }
 
@@ -294,72 +277,62 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
          "UNIQ" = { # andere dimension!
            measModelNb <- length(measMod) # names of processes with measurement model
            indNames <- c()
-           for (i in seq(measModelNb)) {
-             indNb <- 1
+           # for (i in seq(measModelNb)) {
+           #   indNb <- 1
+             ### for later use with diff nb of indicators
              #indNb <- get("input")[[paste0("indicat_", measMod[i])]] 
-             tmp <- c()
-             for (n in 1:indNb){
-               tmp[n] <- paste0(measMod[i], "_", n)
-             }
-             indNames <- append(indNames, tmp)
-           }
-           indNames <- indNames[-1] # otherwise first element is primitive("c")
-           indNb <- length(indNames)
+             # tmp <- c()
+             # for (n in 1:indNb){
+             #   tmp[n] <- paste0(measMod[i], "_", n)
+             # }
+             # indNames <- append(indNames, tmp)
+           # }
+           # indNames <- indNames[-1] # otherwise first element is primitive("c") 
+           # indNb <- length(indNames)
+          
+         indNb <- measModelNb
+         indNames <- measMod
            labels <- matrix("", nrow=indNb, ncol=indNb) # other dimensions thatn first initialization!
            for (i in 1:indNb){
              for (j in 1:indNb){
                if (i == j){ # diagonal (var)
-                 labels[i, j] <- indNames[i]
+                 labels[i, j] <- paste0(paramClass, "_", indNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(indNames[i], " - ", indNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", indNames[i], "_", indNames[j])
                }
              }
            }
          }, 
          
          "AB" = {
-           count <- 0
-           preNames <- c()
+           ANames <- c()
+           BNames <- c()
            for (i in 1:procNb){
-             count <- count + 1
-             preNames[count] <- paste0("A_", procNames[i])
-             count <- count + 1
-             preNames[count] <- paste0("B_", procNames[i])
+             ANames[i] <- paste0("A_", procNames[i])
+             BNames[i] <- paste0("B_", procNames[i])
            }
-           ABNb <- length(preNames)
-           labels <- matrix("", nrow=ABNb, ncol=ABNb)
-           for (i in 1:ABNb){
-             for (j in 1:ABNb){
-               if (i == j){ # diagonal
-                 labels[i, j] <- preNames[i]
-               } else { # off-diagonal
-                 labels[i, j] <- paste0(preNames[i], "_", preNames[j])
-               }
+           labels <- matrix("", nrow=procNb, ncol=procNb)
+           for (i in 1:procNb){
+             for (j in 1:procNb){
+               labels[i, j] <- paste0(ANames[i], "_", BNames[j])
              }
            }
          }, 
          
          "IS" = {
-           count <- 0
-           preNames <- c()
+           INames <- c()
+           SNames <- c()
            for (i in 1:procNb){
-             count <- count + 1
-             preNames[count] <- paste0("I_", procNames[i])
-             count <- count + 1
-             preNames[count] <- paste0("S_", procNames[i])
+             INames[i] <- paste0("I_", procNames[i])
+             SNames[i] <- paste0("S_", procNames[i])
            }
-           ISNb <- length(preNames)
-           labels <- matrix("", nrow=ISNb, ncol=ISNb)
-           for (i in 1:ISNb){
-             for (j in 1:ISNb){
-               if (i == j){ # diagonal
-                 labels[i, j] <- preNames[i]
-               } else { # off-diagonal
-                 labels[i, j] <- paste0(preNames[i], "_", preNames[j])
-               }
+           labels <- matrix("", nrow=procNb, ncol=procNb)
+           for (i in 1:procNb){
+             for (j in 1:procNb){
+               labels[i, j] <- paste0(INames[i], "_", SNames[j])
              }
            }
-         })
+         },)
   return(labels)
 }
 
@@ -495,6 +468,9 @@ compute_results <- function(budget,
                 names_process = NULL,
                 names_ov = NULL)
   
+  # for debugging uncomment "browser()" and press Continue (eg after you changes settings in App)
+  # browser()
+  
   if (length(target.parameters.values.h0) != 0){
     res <- optmze(
       model = list(
@@ -542,6 +518,8 @@ compute_results <- function(budget,
   }
   
   testing <- list(specs=specs,
+                  target.parameters=target.parameters,
+                  target.parameters.values.h0=target.parameters.values.h0,
                   res=res)
   
   return(testing)
