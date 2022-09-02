@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.30 2022-09-02: modification for stability checks
 # MH 0.0.23 2022-07-27: bugfix, model$target.parameters
 # MH 0.0.21 2022-07-24: now returns Sigma_H1/Sigma_H0
 # MH 0.0.1 2022-01-20: copied chunks from optmze
@@ -172,7 +173,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
 		### results list
 		
 		# N.opt/T.opt
-		res <- list( "N.opt"=N.opt, "T.opt"=T.opt )
+		res2 <- list( "N.opt"=N.opt, "T.opt"=T.opt )
 		
 		# power
 		if( optimize$what %in% c("power","budget","target.power") ){
@@ -183,7 +184,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
 				res.power.name <- "power.opt"
 			}
 			names( res.power ) <- res.power.name
-			res <- c( res, res.power )
+			res2 <- c( res2, res.power )
 		}
 		
 		# se
@@ -202,7 +203,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
 				res.se.name <- "se.opt"
 			}
 			names( res.se ) <- res.se.name
-			res <- c( res, res.se )
+			res2 <- c( res2, res.se )
 		}
 		
 		# optimal budget
@@ -214,36 +215,49 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
 				res.budget.name <- "budget.opt"
 			}
 			names( res.budget ) <- res.budget.name
-			res <- c( res, res.budget )
+			res2 <- c( res2, res.budget )
 		}
 		# optimal budget power enforced
 		# if( optimize$what %in% c("budget") ){
 			# res2.budget <- list( N.opt.pwr.enforced, budget.opt.pwr.enforced )
 			# names( res2.budget ) <- c( "N.opt.pwr.enforced", paste0( res.budget.name, ".pwr.enforced" ) )
-			# res <- c( res, res2.budget )
+			# res2 <- c( res2, res2.budget )
 		# }
 		
 		# number of optimizer runs
 		optimizer.runs <- get( "optimizer.runs", pos=envs$optmz.env )
 		
 		# add run time and optimizer runs to results list
-		res <- c( res, list( "run.time.optimizer.secs"=run.time.optimizer.secs,
+		res2 <- c( res2, list( "run.time.optimizer.secs"=run.time.optimizer.secs,
 							 "optimizer.runs"=optimizer.runs ) )
 
+		# MH 0.0.30 2022-09-02
+		# add optimized parameter values from runs and stability check result
+		res2 <- c( res2, list( "par.opts"=res$par.opts,
+							   "stable.solution"=res$stable.solution ) )
+
 		# add constraints
-		res <- c( res, list( "constraints"=constraints ) )
+		res2 <- c( res2, list( "constraints"=constraints ) )
 
 		## MH 0.0.21 2022-07-24: covariance matrice of optimized model
 		F_diff <- calculate.F.diff(
-          timepoints = res$T.opt,
+          timepoints = res2$T.opt,
           input_H1 = model$specification$input_H1,
           target.parameters = model$target.parameters,
           target.parameters.values.H0 = model$target.parameters.values.H0,
 		  return.Sigma=TRUE
         )[c("Sigma_H1","Sigma_H0")]
-		res <- c( res, F_diff, error_codes )
+		res2 <- c( res2, F_diff )
+		
+		# MH 0.0.30 2022-09-02:
+
+		# add stability error (code: 12)
+		if( !is.na(res$stable.solution) && !res$stable.solution ) error_codes <- c( error_codes, 12 ) 
+		
+		# add error_codes to results list
+		res2 <- c( res2, list( "error_codes"=error_codes ) )
 		
 		# return
-		return( res )
+		return( res2 )
 
 }

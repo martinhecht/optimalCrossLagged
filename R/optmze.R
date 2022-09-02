@@ -1,4 +1,11 @@
 ## Changelog:
+# MH 0.0.30 2022-09-02:
+#    added stability checks
+#    new function parameters: stability.check (default: TRUE) ... whether stability check is performed
+#                             runs (default: 1 if stability.check==FALSE, 2 if stability.check==TRUE ) ... number of optimizer runs
+#    new elements of output list: par.opts ... vector of optimized parameter values of runs
+#                                 stable.solution (logical) ... TRUE if no variance over optimized parameter values
+#                                 par.opts/stable solution is NA if runs==1 or stability.check==FALSE
 # MA 0.0.25 2022-07-28: added plausability checks of inputs
 # MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
 # MH 0.0.20 2022-07-04: alpha as input implemented, constraints are outputted
@@ -36,7 +43,8 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 					model=list("specification"=NULL, "target.parameters"=NULL, "target.parameters.values.H0"=NULL ),
 					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
-								timeout=60, verbose=TRUE ){
+								# MH 0.0.30 2022-09-02 new argument stability.check
+								timeout=60, stability.check=TRUE, runs=ifelse(stability.check,2,1), verbose=TRUE ){
   
   # MA 0.0.25 2022-07-28: added plausability checks of inputs
   # plausability checks
@@ -67,6 +75,9 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 								model=model,
 								genoud=genoud,
 								timeout=timeout,
+								# MH 0.0.30 2022-09-02 new argument stability.check
+								stability.check=stability.check,
+								runs=runs,
 								verbose=verbose )
 
 		# optimize with timeout (or not)
@@ -108,7 +119,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
-                                    #### "Dropbox/84_optimalclpm/04_martinhecht/R" )
+                                    ## "Dropbox/84_optimalclpm/04_martinhecht/R" )
                                     # "Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
 # Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R","Examples with Different Inputs.R","Try to Optimize.R") ]
@@ -130,7 +141,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 # res <- optmze( model=list("specification"=specs,
 						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
 						  # "target.parameters.values.H0"=rep(0,2)),
-						  ### "target.parameters"=c("arcl_eta1eta2")),
+						  # "target.parameters"=c("arcl_eta1eta2")),
 						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
 						  # optimize=list(
 									# "what"=c("power"),
@@ -146,7 +157,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									# "set.seed.value"="random"
 									# ),
-							### constraints
+							# constraints
 							# constraints=list("T.min"=3, "T.max"=40, "N.min"=3, "N.max"=1000,
 											# "T.integer"=TRUE,
 											# "N.integer"=FALSE ),									
@@ -156,7 +167,6 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # str( res ); flush.console()
 # }
-
 
 
 
