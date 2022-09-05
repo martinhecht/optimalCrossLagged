@@ -1,4 +1,6 @@
 ## Changelog:
+# MH 0.0.31 2022-09-05: added argument pop.size.max in genoud list
+#                       error code 13 (warning) is thrown if pop.size>=pop.size.max
 # MH 0.0.30 2022-09-02:
 #    added stability checks
 #    new function parameters: stability.check (default: TRUE) ... whether stability check is performed
@@ -41,7 +43,10 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
 					model=list("specification"=NULL, "target.parameters"=NULL, "target.parameters.values.H0"=NULL ),
-					genoud=list("pop.size"=20,"max.generations"=100,"wait.generations"=1,
+					genoud=list("pop.size"=20,
+								# MH 0.0.31 2022-09-05: pop.size.max
+								"pop.size.max"=1000,
+								"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 								# MH 0.0.30 2022-09-02 new argument stability.check
 								timeout=60, stability.check=TRUE, runs=ifelse(stability.check,2,1), verbose=TRUE ){
@@ -119,7 +124,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
-                                    ## "Dropbox/84_optimalclpm/04_martinhecht/R" )
+                                    "Dropbox/84_optimalclpm/04_martinhecht/R" )
                                     # "Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
 # Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R","Examples with Different Inputs.R","Try to Optimize.R") ]
@@ -141,7 +146,6 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 # res <- optmze( model=list("specification"=specs,
 						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
 						  # "target.parameters.values.H0"=rep(0,2)),
-						  # "target.parameters"=c("arcl_eta1eta2")),
 						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
 						  # optimize=list(
 									# "what"=c("power"),
@@ -151,13 +155,11 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									# "direction"=c("min"),
 									# "via"=c("power"),
 									# "par"=c("T"),
-									# "par"=c("N"),
 									# "via.function"=c("calculate.power.LRT"),
 									# "optimizer"=c("genoud"),
 									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
 									# "set.seed.value"="random"
 									# ),
-							# constraints
 							# constraints=list("T.min"=3, "T.max"=40, "N.min"=3, "N.max"=1000,
 											# "T.integer"=TRUE,
 											# "N.integer"=FALSE ),									

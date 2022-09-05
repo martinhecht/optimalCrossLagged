@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.31 2022-09-05: error code 13 implementation
 # MH 0.0.30 2022-09-02: modification for stability checks
 # MH 0.0.23 2022-07-27: bugfix, model$target.parameters
 # MH 0.0.21 2022-07-24: now returns Sigma_H1/Sigma_H0
@@ -249,10 +250,16 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
         )[c("Sigma_H1","Sigma_H0")]
 		res2 <- c( res2, F_diff )
 		
+		# MH 0.0.31 2022-09-05:
+		pop.size.max.reached <- genoud$pop.size>=genoud$pop.size.max
+		
 		# MH 0.0.30 2022-09-02:
-
 		# add stability error (code: 12)
-		if( !is.na(res$stable.solution) && !res$stable.solution ) error_codes <- c( error_codes, 12 ) 
+		if( !is.na(res$stable.solution) && !res$stable.solution && !pop.size.max.reached ) error_codes <- c( error_codes, 12 ) 
+		
+		# MH 0.0.31 2022-09-05:
+		# stability error if pop.size is max (code: 13)
+		if( !is.na(res$stable.solution) && !res$stable.solution && pop.size.max.reached ) error_codes <- c( error_codes, 13 ) 
 		
 		# add error_codes to results list
 		res2 <- c( res2, list( "error_codes"=error_codes ) )
