@@ -1,3 +1,6 @@
+## Changelog:
+# MH 0.0.33 2022-09-12: further variables added
+# MH 0.0.32 2022-09-11: initial programming
 
 # install.packages("RMariaDB")
 library("RMariaDB")
@@ -22,15 +25,67 @@ dbExecute(con,
     logid BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
 	datetimestr CHAR(23),
 	datetime DATETIME,
-	year TINYINT UNSIGNED,
+	year SMALLINT UNSIGNED,
 	month TINYINT UNSIGNED,
 	day TINYINT UNSIGNED,
 	hour TINYINT UNSIGNED,
 	min TINYINT UNSIGNED,
-	sec TINYINT UNSIGNED
+	sec TINYINT UNSIGNED,
+	optimalclpm_version_str VARCHAR(11),
+	version TINYINT UNSIGNED,
+	subversion TINYINT UNSIGNED,
+	subsubversion TINYINT UNSIGNED,
+    optimalclpm_version_date_str CHAR(10),
+    optimalclpm_version_date DATE,
+    optimalclpm_version_year SMALLINT UNSIGNED,
+    optimalclpm_version_month TINYINT UNSIGNED,
+    optimalclpm_version_day TINYINT UNSIGNED,
+	what VARCHAR(12),
+	direction VARCHAR(3),
+	via VARCHAR(5),
+	par CHAR(1),
+	via_function VARCHAR(19),
+	optimizer VARCHAR(6),
+	starting_values SMALLINT UNSIGNED,
+	set_seed_value BIGINT,
+	direction_optimizer VARCHAR(3),
+	starting_values_equation VARCHAR(50),
+	budget INT UNSIGNED,
+	target_power DEC(3,2) UNSIGNED,
+	l2_cost FLOAT(24) UNSIGNED,
+	l1_cost FLOAT(24) UNSIGNED,
+	alpha DEC(3,2) UNSIGNED,
+	T TINYINT UNSIGNED,
+	T_min FLOAT(24) UNSIGNED,
+	T_max FLOAT(24) UNSIGNED,
+	N_min FLOAT(24) UNSIGNED,
+	N_max FLOAT(24) UNSIGNED,
+	T_integer BOOL,
+	N_integer BOOL,
+	T_max_bound FLOAT(24) UNSIGNED,
+	T_max_set FLOAT(24) UNSIGNED,
+	T_min_bound FLOAT(24) UNSIGNED,
+	T_min_set FLOAT(24) UNSIGNED,
+	N_max_bound FLOAT(24) UNSIGNED,
+	N_min_bound FLOAT(24) UNSIGNED,
+	model VARCHAR(200),
+	timeout SMALLINT UNSIGNED,
+	stability_check BOOL,
+	runs TINYINT UNSIGNED,
+	pop_size SMALLINT UNSIGNED,
+	max_generations SMALLINT UNSIGNED,
+	wait_generations TINYINT UNSIGNED,
+	boundary_enforcement TINYINT UNSIGNED,
+	solution_tolerance FLOAT(24) UNSIGNED,
+	N_opt FLOAT(24) UNSIGNED,
+	T_opt FLOAT(24) UNSIGNED,
+	budget_opt INT UNSIGNED,
+	run_time_optimizer_secs FLOAT(24) UNSIGNED,
+	optimizer_runs SMALLINT UNSIGNED,
+	stable_solution BOOL
 );"
 )  
-				  
+
 # Run query to get results as dataframe
 ( d <- dbGetQuery(con, "SELECT * FROM logs") )
 

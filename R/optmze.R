@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.33 2022-09-12: added comments on max nchar (corresponding to db) for some input variables
 # MH 0.0.32 2022-09-11: development of logging data, new argument log.data (current default: FALSE)
 # MH 0.0.31 2022-09-05: added argument pop.size.max in genoud list
 #                       error code 13 (warning) is thrown if pop.size>=pop.size.max
@@ -30,14 +31,14 @@
 #' @return
 
 ## Function definition
-optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
-									"direction"=c("max","min"),
-									"via"=c("power","se","se^2"),
-									"par"=c("T","N"),
-									"via.function"=c("calculate.power.LRT","compute.se.oertzen"),
-									"optimizer"=c("genoud"),
-									"starting.values"="round(mean(c(par.min.set,par.max.set)))",
-									"set.seed.value"="random"
+optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # max nchar: 12
+									"direction"=c("max","min"),                # max nchar: 3
+									"via"=c("power","se","se^2"),			   # max nchar: 5
+									"par"=c("T","N"),						   # nchar: 1
+									"via.function"=c("calculate.power.LRT","compute.se.oertzen"), # max nchar: 19
+									"optimizer"=c("genoud"),				   # max nchar: 6
+									"starting.values"="round(mean(c(par.min.set,par.max.set)))", # max nchar: 50
+									"set.seed.value"="random"				   # max nchar: 10
 									),
 					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=NULL),
 					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
