@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.32 2022-09-11: development of logging data, new argument log.data (current default: FALSE)
 # MH 0.0.31 2022-09-05: added argument pop.size.max in genoud list
 #                       error code 13 (warning) is thrown if pop.size>=pop.size.max
 # MH 0.0.30 2022-09-02:
@@ -49,7 +50,9 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 								"max.generations"=100,"wait.generations"=1,
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 								# MH 0.0.30 2022-09-02 new argument stability.check
-								timeout=60, stability.check=TRUE, runs=ifelse(stability.check,2,1), verbose=TRUE ){
+								timeout=60, stability.check=TRUE, runs=ifelse(stability.check,2,1), 
+								log.data=FALSE, # MH 0.0.32 2022-09-11: log.data
+								verbose=TRUE ){
   
   # MA 0.0.25 2022-07-28: added plausability checks of inputs
   # plausability checks
@@ -64,7 +67,9 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 		pkgs <- "require( R.utils ); # withTimeout()
 				 require( rgenoud ); # genoud()
 				 require( Rcpp );
-				 require( RcppArmadillo )"
+				 require( RcppArmadillo );
+				 require( RMariaDB ) # MH 0.0.32 2022-09-11
+				"   
 		
 		# suppress package loading outputs or not
 		if( !verbose ) {
@@ -111,6 +116,18 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 									verbose=verbose,
 									error_codes = error_codes)
 		
+		# MH 0.0.32 2022-09-11, log data
+		if( log.data ){
+				logid <- eval( parse( text=paste0( ifelse(wt,'withTimeout(',""),
+													'try(log.data(
+														 input=input,
+														 results=results,
+														 verbose=verbose ) )',
+														 ifelse(wt,',
+														 timeout = timeout,
+														 onTimeout = "error" )', "" ) ) ) )		
+		}
+		
 		# return
 		return( results )
 }
@@ -124,7 +141,6 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 
 # user.profile <- shell( "echo %USERPROFILE%", intern=TRUE )
 # Rfiles.folder <- file.path( user.profile,
-                                    "Dropbox/84_optimalclpm/04_martinhecht/R" )
                                     # "Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged/R" )
 # Rfiles <- list.files( Rfiles.folder , pattern="*.R" )
 # Rfiles <- Rfiles[ !Rfiles %in% c("optmze.R","RcppExports.R","Examples with Different Inputs.R","Try to Optimize.R") ]
@@ -149,10 +165,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 						  # study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
 						  # optimize=list(
 									# "what"=c("power"),
-									# "what"=c("budget"),
-									# "what"=c("target.power"),
 									# "direction"=c("max"),
-									# "direction"=c("min"),
 									# "via"=c("power"),
 									# "par"=c("T"),
 									# "via.function"=c("calculate.power.LRT"),
@@ -165,6 +178,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"),
 											# "N.integer"=FALSE ),									
 						  # genoud=list("pop.size"=16,"max.generations"=100,"wait.generations"=1,
 						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # log.data=TRUE,
 						  # verbose=TRUE )
 
 # str( res ); flush.console()

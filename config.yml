@@ -1,0 +1,8 @@
+default:
+  datawarehouse:
+    driver: 'RMariaDB::MariaDB()' 
+    server: 'pikepi12.duckdns.org'
+    port:  3306
+    uid: 'optimalclpm'
+    pwd: 'P%7p5rjc%*)hKj$mmteysRdbgMR6yq94'  
+    database: 'optimalclpm'
