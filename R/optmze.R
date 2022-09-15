@@ -1,4 +1,9 @@
 ## Changelog:
+# MH 0.0.34 2022-09-15: new argument: timeout.log.data
+#						changed default of log.data from FALSE to TRUE
+#                       new results list entries: log.data.status (character) ..."ok", "error" or "error or timed out"
+#												  logid (integer) ... id of entry in db
+#												  run.time.log.data.secs (numeric) ... time in seconds for logging data
 # MH 0.0.33 2022-09-12: added comments on max nchar (corresponding to db) for some input variables
 # MH 0.0.32 2022-09-11: development of logging data, new argument log.data (current default: FALSE)
 # MH 0.0.31 2022-09-05: added argument pop.size.max in genoud list
@@ -44,7 +49,8 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
-					model=list("specification"=NULL, "target.parameters"=NULL, "target.parameters.values.H0"=NULL ),
+					model=list("specification"=NULL, "target.parameters"=NULL, # max nchar: 50
+							   "target.parameters.values.H0"=NULL ),
 					genoud=list("pop.size"=20,
 								# MH 0.0.31 2022-09-05: pop.size.max
 								"pop.size.max"=1000,
@@ -52,7 +58,9 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 								"boundary.enforcement"=2,"solution.tolerance"=0.001	),
 								# MH 0.0.30 2022-09-02 new argument stability.check
 								timeout=60, stability.check=TRUE, runs=ifelse(stability.check,2,1), 
-								log.data=FALSE, # MH 0.0.32 2022-09-11: log.data
+								log.data=TRUE, # MH 0.0.32 2022-09-11: log.data
+											   # MH 0.0.34 2022-09-15: changed default of log.data from FALSE to TRUE
+								timeout.log.data=5, # MH 0.0.34 2022-09-15
 								verbose=TRUE ){
   
   # MA 0.0.25 2022-07-28: added plausability checks of inputs
@@ -86,6 +94,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 								model=model,
 								genoud=genoud,
 								timeout=timeout,
+								timeout.log.data=timeout.log.data,
 								# MH 0.0.30 2022-09-02 new argument stability.check
 								stability.check=stability.check,
 								runs=runs,
@@ -119,14 +128,35 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 		
 		# MH 0.0.32 2022-09-11, log data
 		if( log.data ){
-				logid <- eval( parse( text=paste0( ifelse(wt,'withTimeout(',""),
+				
+				# MH 0.0.34 2022-09-15
+				# with timeout (or not)
+				wt2 <- !is.na( timeout.log.data ) && !is.null( timeout.log.data ) && is.numeric( timeout.log.data ) && timeout.log.data > 0 
+				
+				logret <- eval( parse( text=paste0( ifelse(wt2,'withTimeout(',""),
 													'try(log.data(
 														 input=input,
 														 results=results,
 														 verbose=verbose ) )',
-														 ifelse(wt,',
-														 timeout = timeout,
-														 onTimeout = "error" )', "" ) ) ) )		
+														 ifelse(wt2,',
+														 timeout = timeout.log.data,
+														 onTimeout = "error" )', "" ) ) ) )
+														 
+				# log.data.status
+				if( !inherits( logret, "try-error" ) ){
+					log.data.status <- "ok"
+					logid <- logret$logid
+					run.time.log.data.secs <- logret$run.time.log.data.secs
+				} else {
+					if( wt2 ) log.data.status <- "error or timed out" else log.data.status <- "error"
+					logid <- as.integer( NA )
+					run.time.log.data.secs <- as.numeric( NA )
+				}
+		
+				# add log.data.status to results
+				results <- c( results, list( "log.data.status"=log.data.status, "logid"=logid, "run.time.log.data.secs"=run.time.log.data.secs ) )
+		} else {
+				
 		}
 		
 		# return
@@ -179,7 +209,6 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 											# "N.integer"=FALSE ),									
 						  # genoud=list("pop.size"=16,"max.generations"=100,"wait.generations"=1,
 						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
-						  # log.data=TRUE,
 						  # verbose=TRUE )
 
 # str( res ); flush.console()

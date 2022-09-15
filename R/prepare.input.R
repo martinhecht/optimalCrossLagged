@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.34 2022-09-15: timeout.log.data
 # MH 0.0.30 2022-09-02: modification for stability checks
 # MH 0.0.1 2022-01-20: copied chunks from optmze
 
@@ -12,7 +13,7 @@
 
 ## Function definition
 # MH 0.0.30 2022-09-02 new argument stability.check
-prepare.input <- function( optimize, study,	constraints, model, genoud, timeout, stability.check=TRUE, runs, verbose=TRUE ){
+prepare.input <- function( optimize, study,	constraints, model, genoud, timeout, timeout.log.data, stability.check=TRUE, runs, verbose=TRUE ){
 
 		# handle optimize$what $direction $via $par $via.function $optimizer
 		# i.e. if more than one value is given, take the first one
@@ -225,7 +226,8 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 		names( envs ) <- c( "optmz.env", "pwrLRT.env" )
 
 		# return list
-		list.elements <- c( "optimize", "study", "constraints", "model", "envs", "timeout", "stability.check", "runs" )
+		#                                                             MH 0.0.34 2022-09-15: timeout.log.data
+		list.elements <- c( "optimize", "study", "constraints", "model", "envs", "timeout", "timeout.log.data", "stability.check", "runs" )
 		if( optimize$optimizer %in% "genoud" ) list.elements <- c( list.elements, "genoud" )
 		ret <- eval( parse( text=paste0("list(",paste(list.elements,collapse=","),")" ) ) )
 		names( ret ) <- list.elements

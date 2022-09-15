@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.34 2022-09-15: further variables added
 # MH 0.0.33 2022-09-12: further variables added
 # MH 0.0.32 2022-09-11: initial programming
 
@@ -12,6 +13,9 @@
 
 ## Function definition
 log.data <- function( input, results, verbose=TRUE ){
+	
+	# start time 
+	start.time.log.data <- Sys.time()	
 	
 	# get config file
 	dw <- config::get("datawarehouse")
@@ -57,6 +61,9 @@ log.data <- function( input, results, verbose=TRUE ){
 	hour <-   as.integer( strftime(posix, format="%H") )
 	min <-    as.integer( strftime(posix, format="%M") )
 	sec <-    as.integer( strftime(posix, format="%S") )
+	
+	
+	########### logs ###########
 	
 	# create insert command
 	insert <- paste0(
@@ -106,7 +113,9 @@ log.data <- function( input, results, verbose=TRUE ){
 						   "N_max_bound,",
 						   "N_min_bound,",
 						   "model,",
+						   "n_ov,",
 						   "timeout,",
+						   "timeout_log_data,",
 						   "stability_check,",
 						   "runs,",
 						   "pop_size,",
@@ -167,7 +176,9 @@ log.data <- function( input, results, verbose=TRUE ){
 				   ,input$constraints$N.max.bound,","
 				   ,input$constraints$N.min.bound,","
 				   ,'"',input$model$specification$input_H1$model,'"',","
+				   ,input$model$specification$input_H1$n_ov,","
 				   ,input$timeout,","
+				   ,input$timeout.log.data,","
 				   ,input$stability.check,","
 				   ,input$runs,","
 				   ,input$genoud$pop.size,","
@@ -190,10 +201,109 @@ log.data <- function( input, results, verbose=TRUE ){
 	# ( d <- dbGetQuery(con, "SELECT * FROM logs") )	
 
 	# get current logid
-	logid <- dbGetQuery(con, "SELECT LAST_INSERT_ID();")[,1]
+	logid <- dbGetQuery(con, "SELECT LAST_INSERT_ID();")[,1]	
+	
+	
+	########### target_parameters ###########
+
+	# create insert command
+	insert2 <- paste0(
+		"INSERT INTO target_parameters (logid,",
+						   "target_parameters,",
+						   "power_max",
+						   ") ",
+		"VALUES (" ,logid,","
+				   ,paste0( '"', names( results$power.max ), '"' ),","
+				   ,unname( results$power.max ),
+		 ");"
+	)	
+	
+	# execute
+	sapply( insert2, function( ins ) dbExecute(con, ins) )
+	# check
+	# ( d2 <- dbGetQuery(con, "SELECT * FROM target_parameters") )
+
+
+	########### par_opts ###########
+
+	# create insert command
+	insert3 <- paste0(
+		"INSERT INTO par_opts (logid,",
+						   "par_opts",
+						   ") ",
+		"VALUES (" ,logid,","
+				   ,results$par.opts,
+		 ");"
+	)
+	
+	# execute
+	sapply( insert3, function( ins ) dbExecute(con, ins) )
+	# check
+	# ( d3 <- dbGetQuery(con, "SELECT * FROM par_opts") )
+
+
+	########### error_codes ###########
+
+	# create insert command
+	insert4 <- paste0(
+		"INSERT INTO error_codes (logid,",
+						   "error_codes",
+						   ") ",
+		"VALUES (" ,logid,","
+				   ,if( is.null(results$error_codes) ) "NULL" else results$error_codes,
+		 ");"
+	)
+	
+	# execute
+	sapply( insert4, function( ins ) dbExecute(con, ins) )
+	# check
+	# ( d4 <- dbGetQuery(con, "SELECT * FROM error_codes") )
+
+
+	########### model_matrices ###########
+
+	# create insert command
+	do.insert5 <- function( matr, input ){
+		insert5 <- paste0(
+			"INSERT INTO model_matrices (logid,",
+							   "matrix,",
+							   "value,",
+							   "labels",
+							   ") ",
+			"VALUES (" ,logid,","
+					   ,'"',matr,'"',","
+					   ,as.vector(input$model$specification$input_H1[[matr]]$values),","
+					   ,paste0( '"', input$model$specification$input_H1[[matr]]$labels, '"'),
+			 ");"
+		)
+	
+		# execute
+		sapply( insert5, function( ins ) dbExecute(con, ins) )
+	}
+	
+	# matrices
+	matrices <- names(input$model$specification$input_H1)
+	# delete not matrices names
+	matrices <- matrices[!matrices %in% c("model","n_ov")]
+	# delete all NULL matrices
+	matrices <- matrices[!sapply( matrices, function( matr ) is.null( input$model$specification$input_H1[[matr]] ) )]
+
+	# do insert
+	if( length( matrices ) > 0 ) sapply( matrices, do.insert5, input )
+	
+	# check
+	# ( d5 <- dbGetQuery(con, "SELECT * FROM model_matrices") )
+
+	# runtime in seconds
+	run.time.log.data.difftime <- Sys.time() - start.time.log.data
+	run.time.log.data.secs <- as.double( run.time.log.data.difftime, units="secs" )
+
+	# write runtime into db
+	# dbExecute(con, paste0( "INSERT INTO logs (run_time_log_data_secs) VALUES (",run.time.log.data.secs,") WHERE (logid=",logid,"));" ) )
+	dbExecute(con, paste0( "UPDATE logs SET run_time_log_data_secs=",run.time.log.data.secs," WHERE logid=",logid,";" ) )
 	
 	# disconnect db
 	dbDisconnect(con)
 	
-	return( logid )
+	return( list("logid"=logid,"run.time.log.data.secs"=run.time.log.data.secs ) )
 }
