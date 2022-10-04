@@ -1,16 +1,21 @@
+# JW: 0.0.30 2022-10-04: coherent labeling in off-diags of labelsM in symmetrical matrices 
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices, and RES, corrected (i.e., labelsL and labelsM); for testing, target.params and their values also in output 
 # JW: 0.0.26 2022-08-31: error in labelsM corrected
 # MH: 0.0.24 2022-07-27: new version of helper.functions.R (2022-07-27 14:50)
 # MH: 0.0.23 2022-07-27: disabled browser in line 411
 # JW: 0.0.22 2022-07-25
 
-# for labels of target parameter input widgets; output: list
-labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procNames_List, measMod=input$measModel
+## frontend & backend
+# for labels of target parameter input widgets in frontend
+# output: list
+# form: e.g. user see's "proc" (frontend) but saved as "AR_proc1" (backend)
+labelsL <- function(procNames, paramClass, measMod){ 
   procNb <- length(procNames)
   labels <- list()
   count <- 0
     switch(paramClass,
            
+         ## Gamma
          "ARCL" = {
            # diagonal
            for (i in 1:procNb){
@@ -34,6 +39,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Omega
          "RES" = { 
            # diagonal (var)
            for (i in 1:procNb){
@@ -53,6 +59,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Theta_i
          "I" = { 
            # diagonal (var)
            for (i in 1:procNb){
@@ -72,6 +79,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Theta_S
          "S" = { 
            # diagonal (var)
            for (i in 1:procNb){
@@ -91,6 +99,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Theta_A
          "A" = { 
            # diagonal (var)
            for (i in 1:procNb){
@@ -110,6 +119,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Theta_B
          "B" = { 
            # diagonal (var)
            for (i in 1:procNb){
@@ -129,6 +139,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          },
          
+         ## Psi
          "UNIQ" = { # only single-indicator for now
            measModelNb <- length(measMod) 
            # indNames <- c()
@@ -162,6 +173,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          }, 
          
+         ## Theta_AB
          "AB" = {
            ANames <- c()
            BNames <- c()
@@ -178,6 +190,7 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
            }
          }, 
          
+         ## Theta_IS
          "IS" = {
            INames <- c()
            SNames <- c()
@@ -196,12 +209,16 @@ labelsL <- function(procNames, paramClass, measMod){ #  procNames=input$procName
     return(labels)
 }
 
-# for names of params in backend; output: matrix
-labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
-  procNb <- length(procNames) # all quadratic matrices, but not all symmetric´
+## backend
+# for names of params in backend; 
+# output: matrix
+# form: e.g. "AR_proc1"
+labelsM <- function(procNames, paramClass, measMod){ 
+  procNb <- length(procNames) 
   labels <- matrix("", nrow=procNb, ncol=procNb) # später modifizieren wenn multiple indicators!
   switch(paramClass,
          
+         ## Gamma
          "ARCL" = {
            for (i in 1:procNb){
              for (j in 1:procNb){
@@ -214,66 +231,77 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
            }
          },
          
+         ## Omega
          "RES" = {
            for (i in 1:procNb){
-             for (j in 1:procNb){
+             for (j in i:procNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", procNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          },
          
+         ## Theta_I
          "I" = {
            for (i in 1:procNb){
-             for (j in 1:procNb){
+             for (j in i:procNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", procNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          },
          
+         ## Theta_S
          "S" = {
            for (i in 1:procNb){
-             for (j in 1:procNb){
+             for (j in i:procNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", procNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          },
          
+         ## Theta_A
          "A" = {
            for (i in 1:procNb){
-             for (j in 1:procNb){
+             for (j in i:procNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", procNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          },
          
+         ## Theta_B
          "B" = {
            for (i in 1:procNb){
-             for (j in 1:procNb){
+             for (j in i:procNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", procNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          },
          
+         ## Psi
          "UNIQ" = { # andere dimension!
            measModelNb <- length(measMod) # names of processes with measurement model
            indNames <- c()
@@ -292,18 +320,20 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
           
          indNb <- measModelNb
          indNames <- measMod
-           labels <- matrix("", nrow=indNb, ncol=indNb) # other dimensions thatn first initialization!
+           labels <- matrix("", nrow=indNb, ncol=indNb) # other dimensions than first initialization!
            for (i in 1:indNb){
-             for (j in 1:indNb){
+             for (j in i:indNb){
                if (i == j){ # diagonal (var)
                  labels[i, j] <- paste0(paramClass, "_", indNames[i])
                } else { # off-diagonal (cov)
-                 labels[i, j] <- paste0(paramClass, "_", indNames[i], "_", indNames[j])
+                 labels[i, j] <- paste0(paramClass, "_", indNames[j], "_", indNames[i])
                }
              }
            }
+           labels[lower.tri(labels)] <- t(labels)[lower.tri(labels)]
          }, 
          
+         ## Theta_AB
          "AB" = {
            ANames <- c()
            BNames <- c()
@@ -319,6 +349,7 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
            }
          }, 
          
+         ## Theta_IS
          "IS" = {
            INames <- c()
            SNames <- c()
@@ -336,6 +367,7 @@ labelsM <- function(procNames, paramClass, measMod){ # use names, not numbers!
   return(labels)
 }
 
+# frontend - backend connection
 compute_results <- function(budget,
                             alpha,
                             costN,
