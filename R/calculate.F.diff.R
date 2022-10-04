@@ -252,6 +252,15 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Omega_H0 <- input_H1$Omega$values
       Omega_H0[input_H1$Omega$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Omega$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Omega$labels))
+        Omega_H0[pos_par, ] <- Omega_H0[, pos_par] <- 0
+        Omega_H0[pos_par, pos_par] <- 0.001
+      }
+      
+      
       # T0VAR
       RAM_S_H0[id_f_star[1:n_ov], id_f_star[1:n_ov]] <-   
         matrix(as.vector(solve(
@@ -269,6 +278,14 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Psi_H0 <- input_H1$Psi$values
       Psi_H0[input_H1$Psi$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Psi$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Psi$labels))
+        Psi_H0[pos_par, ] <- Psi_H0[, pos_par] <- 0
+        Psi_H0[pos_par, pos_par] <- 0.001
+      }
+      
       for (i in seq_len(n_timepoints)) {
         select <- id_ov_time[(n_ov*(i-1)+1):(n_ov*i)]
         RAM_S_H0[select, select] <- Psi_H0
@@ -280,6 +297,14 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_I_H0 <- input_H1$Theta_I$values
       Theta_I_H0[input_H1$Theta_I$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_I$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_I$labels))
+        Theta_I_H0[pos_par, ] <- Theta_I_H0[, pos_par] <- 0
+        Theta_I_H0[pos_par, pos_par] <- 0.001
+      }
+      
       # Covariance matrix
       RAM_S_H0[id_I, id_I] <- Theta_I_H0
     }
@@ -289,6 +314,14 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_S_H0 <- input_H1$Theta_S$values
       Theta_S_H0[input_H1$Theta_S$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_S$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_S$labels))
+        Theta_S_H0[pos_par, ] <- Theta_S_H0[, pos_par] <- 0
+        Theta_S_H0[pos_par, pos_par] <- 0.001
+      }
+      
       # Covariance matrix
       RAM_S_H0[id_S, id_S] <- Theta_S_H0
     }
@@ -298,6 +331,17 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_IS_H0 <- input_H1$Theta_IS$values
       Theta_IS_H0[input_H1$Theta_IS$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_I$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_I$labels))
+        Theta_IS_H0[pos_par, ] <- 0
+      }
+      if (target.parameters[par] %in% diag(input_H1$Theta_S$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_S$labels))
+        Theta_IS_H0[, pos_par] <- 0
+      }
+      
       RAM_S_H0[id_I, id_S] <- Theta_IS_H0
       RAM_S_H0[id_S, id_I] <- t(Theta_IS_H0)
     }
@@ -307,6 +351,14 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_A_H0 <- input_H1$Theta_A$values
       Theta_A_H0[input_H1$Theta_A$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_A$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_A$labels))
+        Theta_A_H0[pos_par, ] <- Theta_A_H0[, pos_par] <- 0
+        Theta_A_H0[pos_par, pos_par] <- 0.001
+      }
+      
       RAM_S_H0[id_A, id_A] <- Theta_A_H0
     }
     
@@ -315,6 +367,14 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_B_H0 <- input_H1$Theta_B$values
       Theta_B_H0[input_H1$Theta_B$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_B$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_B$labels))
+        Theta_B_H0[pos_par, ] <- Theta_B_H0[, pos_par] <- 0
+        Theta_B_H0[pos_par, pos_par] <- 0.001
+      }
+      
       RAM_S_H0[id_S, id_S] <- Theta_B_H0
     }
     
@@ -323,6 +383,17 @@ calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
       Theta_AB_H0 <- input_H1$Theta_AB$values
       Theta_AB_H0[input_H1$Theta_AB$labels == target.parameters[par]] <-
         target.parameters.values.H0[par]
+      
+      # Adjustment for testing a variance parameter
+      if (target.parameters[par] %in% diag(input_H1$Theta_A$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_A$labels))
+        Theta_AB_H0[pos_par, ] <- 0
+      }
+      if (target.parameters[par] %in% diag(input_H1$Theta_B$labels)) {
+        pos_par <- which(target.parameters[par] == diag(input_H1$Theta_B$labels))
+        Theta_AB_H0[, pos_par] <- 0
+      }
+      
       RAM_S_H0[id_A, id_B] <- Theta_AB_H0
       RAM_S_H0[id_B, id_A] <- t(Theta_AB_H0)
     }
