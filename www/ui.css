@@ -1,69 +1,4 @@
 @import url(https://use.fontawesome.com/releases/v6.1.1/css/all.css);
-
-        /* falls budget, alpha und model class text und input felder allein sein werden:
-        input[id^='alpha'] {
-          display: table-cell; 
-          text-align: center;
-          vertical-align: middle; 
-          display: table-row;
-        }
-        */
-        
-        /*input[id^='label']{ /* hovertext numericinput weg... */
-          display:none;
-        }*/
-        
-        /*
-        input#minT.form-control.shiny-bound-input,
-        input#maxT.form-control.shiny-bound-input,
-        input#minN.form-control.shiny-bound-input,
-        input#maxN.form-control.shiny-bound-input{
-          width: 30% !important;
-        } */
-        
-        /*
-        minT.form-control,
-        maxT.form-control,
-        minN.form-control,
-        maxT.form-control {
-          width: 30% !important;
-        }
-        */
-        
-        /*
-        #popSize.form-control {
-          width: 20%;
-        }
-        */
-        
-        /*
-        #budget,
-        #costN,
-        #costT {
-          width: 100%;
-        }
-        */
-        
-        #alpha.form-control {
-          width: 60%;
-        }
-        
-        /*
-        #procNames.form-control {
-        width: 100%;
-        }
-        */
-        
-        
-        .main-box {
-          min-height: 20px; 
-          padding: 19px; 
-          margin-bottom: 20px; 
-          background-color: #f5f5f5; 
-          border: 1px solid #e3e3e3; 
-          border-radius: 4px; 
-          box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
-        }
         
         .matrixWidget {
           background-color: white !important; 
@@ -72,20 +7,21 @@
         }
         
         /* no pointer when matrixWidget not editable; in matrix-input.css .vue-input td */
-  #ARfixT1.vue-input td,
-  #CLfixT1.vue-input td,
-  #ARCLfixT1.vue-input td,
-  #RESfixT1.vue-input td,
-  /* #LOADfixT1_Output.vue-input td, */
-  #UNIQfixT1.vue-input td,
-  #IfixT1.vue-input td,
-  #SfixT1.vue-input td,
-  #ISfixT1.vue-input td,
-  #AfixT1.vue-input td,
-  #BfixT1.vue-input td,
-  #ABfixT1.vue-input td { /* nur td funktioniert; tag: td; class: value-input, id: input[id^='fix'] */
-  cursor: default !important;
-}
+        /* not implemented yet */
+        #ARfixT1.vue-input td,
+        #CLfixT1.vue-input td,
+        #ARCLfixT1.vue-input td,
+        #RESfixT1.vue-input td,
+        /* #LOADfixT1_Output.vue-input td, */
+        #UNIQfixT1.vue-input td,
+        #IfixT1.vue-input td,
+        #SfixT1.vue-input td,
+        #ISfixT1.vue-input td,
+        #AfixT1.vue-input td,
+        #BfixT1.vue-input td,
+        #ABfixT1.vue-input td { /* nur td funktioniert; tag: td; class: value-input, id: input[id^='fix'] */
+        cursor: default !important;
+       }
         
         .vue-input[id^='fix'] {
           cursor: default !important;
@@ -117,7 +53,7 @@
         .heading {
         font-variant: small-caps;
         font-size: 17px;
-        color: #7000a8;
+        /*color: #7000a8;*/
         font-weight: bold;
         }
 
@@ -160,40 +96,46 @@
         opacity: 1;
         visibility: visible;
         }
+        
+        .main-box {
+        min-height: 20px; 
+        padding: 19px; 
+        margin-bottom: 20px; 
+        /*background-color: #f5f5f5; 
+        border: 1px solid #e3e3e3; 
+        border-radius: 4px; 
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.05);*/
+        }
 
         .input-box {
         min-height: 20px;
-        padding: 19px;
+        padding: 19px ;
         margin-bottom: 20px;
-        background-color: #e3e3e3;
-        border: 1px solid #e3e3e3;
-        border-radius: 4px;
+        background-color: #f7e6ff;/*#e3e3e3;*/
+        border: 1px solid #f7e6ff;/*#e3e3e3;*/
+        border-radius: 20px;
         box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
         }
         
-        .opt-input-box {
+        .output-box {
         min-height: 20px;
         padding: 19px;
         margin-bottom: 20px;
-        color: #777777;
-        border: 1px solid #e3e3e3;
-        border-radius: 4px;
+        background-color: #fef9e6;
+        border: 1px solid #fef9e6;
+        border-radius: 20px;
         box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
         }
         
-        /*
-        # .param-input {
-        # display: inline-block;
-        # vertical-align:top;
-        # }
-        */
-        
-        /*
-        .form-control {
-        width: 7vw;
+        .warn-box {
+        min-height: 20px;
+        padding: 19px;
+        margin-bottom: 20px;
+        background-color: #fdb5c7;
+        border: 1px solid #fdb5c7;
+        border-radius: 20px;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
         }
-        */
-
 
         .selectize-input {
         width: 11vw;
@@ -203,11 +145,6 @@
         #alpha::-webkit-outer-spin-button,
         #alpha::-webkit-inner-spin-button {
         -webkit-appearance: none;
-        }
-        
-        /* disable arrows in alpha widget */
-        /*#alpha::{
-          -moz-appearance:textfield; 
         }
         
         #alpha.control-label:hover{
@@ -230,21 +167,4 @@
         padding: 6px 12px;
         margin-top: 25px;
         }
-        
-        /*
-        # .input {
-        # position: relative;
-        # z-index: 99999;
-        # }
-        # 
-        # .shiny-bound-input {
-        # position: relative;
-        # z-index: 99999;
-        # }
-        # 
-        # 
-        # input[type=checkbox] {
-        # z-index: 99999;
-        # }
-        # */
         
