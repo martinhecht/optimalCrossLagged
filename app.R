@@ -1,31 +1,41 @@
+# JW: 0.0.30 2022-10-05: diverse things added and bugs fixed
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
+# JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-setwd("/Users/julia/Documents/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
+setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
               "shinyjs", # for delay in code execution
-              "icons", # fa icons
               "magrittr", # pipe operator
               "devtools", # for shinyMatrix on github
               "shinyWidgets", # for pickerInput widget
               "dplyr", # for case_when
-              #"lavaan", # path diagram
-              #"semPlot" # path diagram; till here frontend
               "R.utils",
               "rgenoud",
-              "RcppArmadillo"
+              "RcppArmadillo",
+              "matrixcalc", # check_plausability()
+              "RMariaDB", # for data log
+              "config" # same
 )
 newPackages <-
   packages[!(packages %in% installed.packages()[, "Package"])]
 if (length(newPackages))
   install.packages(newPackages)
+packages <- packages[-length(packages)] # prevent config from loading; otherwise base::get() masked
 lapply(packages, require, character.only = TRUE)
-#if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
+if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
 install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
-#}
+}
 require(shinyMatrix)
+if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
+  install_github("mitchelloharawild/icons") # does not appear in "Packages"
+  download_fontawesome()
+}
+require(icons)
+
+
 
 # source all relevant functions
 source("R/calculate.F.diff.R")
@@ -59,7 +69,7 @@ ui <-
                  fluidRow(
                    column(
                      id = "one",
-                     width = 3,
+                     width = 4,
                      #tags$details(
                      #'open' = "TRUE",
                      #tags$summary(
@@ -103,83 +113,92 @@ ui <-
                        fluidRow(
                          column(
                            width = 6,
-                           div(
+                           div(id="boxN",
                              class = "input-box",
                              tags$span(
                                class = "hovertext",
-                               'data-hover' = "You can specify minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other.",
+                               'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other.",
                                icon("circle-question")
                              )  %>% tagAppendAttributes(style = "left: 101%;"),
-                             p(HTML("<strong><i>Persons</i></strong>")),
+                             p(HTML("<strong><i>Persons N</i></strong>")),
                              numericInput(
                                inputId = "costN",
-                               label = HTML("Costs per unit"),
+                               label = HTML("Costs"),
                                value = 10,
                                min = 1,
                                max = 10000000,
                                step = 20
                              ),
                              splitLayout(
-                               cellWidths = c("75%", "25%"),
+                               #cellWidths = c("75%", "25%"),
                                numericInput(
                                  inputId = "minN",
-                                 label = HTML("Min units"),
+                                 label = HTML("Min"),
                                  value = 3,
                                  min = 2,
                                  max = 10000,
                                  step = 1
                                ),
+                               conditionalPanel(
+                               condition = "output.errorCond == false", 
                                div(class = "unit", uiOutput(outputId = "minN_Output"))
+                             )
                              ),
                              splitLayout(
-                               cellWidths = c("75%", "25%"),
                                numericInput(
                                  inputId = "maxN",
-                                 label = HTML("Max units"),
+                                 label = HTML("Max"),
                                  value = 300,
                                  min = 2,
                                  max = 10000,
                                  step = 1
                                ),
+                               conditionalPanel(
+                               condition = "output.errorCond == false", 
                                div(class = "unit", uiOutput(outputId = "maxN_Output"))
+                             )
                              )
                            ) ### div input-box N
                          ), ### column N
                          
                          column(
                            width = 6,
-                           div(
+                           div(id="boxT",
                              class = "input-box",
                              tags$span(
                                class = "hovertext",
-                               'data-hover' = "You can specify minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other. The default for the minimum number of units reflects the minimum number of units (given the number of parameters) that is required for model identification.",
+                               'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other. The default for the minimum number of units reflects the minimum number of units (given the number of parameters) that is required for model identification.",
                                icon("circle-question")
                              )  %>% tagAppendAttributes(style = "left: 101%;"),
-                             p(HTML("<strong><i>Time Points</i></strong>")),
+                             p(HTML("<strong><i>Time Points T</i></strong>")),
                              numericInput(
                                inputId = "costT",
-                               label = HTML("Costs per unit"),
+                               label = HTML("Costs"),
                                value = 10,
                                min = 1,
                                max = 10000000,
                                step = 1
                              ),
                              splitLayout(
-                               cellWidths = c("75%", "25%"),
                                uiOutput(outputId = "minTidentify_Output"),
+                               conditionalPanel(
+                                 condition = "output.errorCond == false", 
                                div(class = "unit", uiOutput(outputId = "minT_Output"))
+                               )
                              ),
                              splitLayout(
-                               cellWidths = c("75%", "25%"),
                                numericInput(
                                  inputId = "maxT",
-                                 label = HTML("Max units"),
+                                 label = HTML("Max"),
                                  value = 10,
                                  min = 1,
                                  max = 10000,
                                  step = 1
                                ),
+                               conditionalPanel(
+                               condition = "output.errorCond == false", 
                                div(class = "unit", uiOutput(outputId = "maxT_Output"))
+                             )
                              )
                            ) ### div input-box T
                          ) #### column T
@@ -228,21 +247,10 @@ ui <-
                          div(class = "input-box",
                              uiOutput(outputId = "measModel_Output")
                          )
-                       ),
+                       )
                        # conditionalPanel(condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
                        #                  tags$br(),
                        #                  uiOutput(outputId = "indicat_Output"))
-                       
-                       div(class = "opt-input-box", style="width:50%;",
-                           numericInput(
-                             inputId = "popSize",
-                             label = "Population Size for Optimizer",
-                             value = 16,
-                             min = 1,
-                             max = 100,
-                             step = 1
-                           )
-                       )
                      ) ### div model characteristics
                    ),
                    ### column one
@@ -578,7 +586,7 @@ ui <-
                          icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
                        ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                        p(
-                         HTML("<strong>Autoregressive and Cross-Lagged Effects</strong>")
+                         HTML("<strong>Autoregressive and Cross-Lagged Effects (AR & CL)</strong>")
                        ),
                        div(class = "matrixWidget", uiOutput(outputId = "ARCL_Output")),
                        tags$span(
@@ -597,7 +605,7 @@ ui <-
                          'data-hover' = "The dynamic residuals ... . They affect future scores through the lagged regression effects (i.e., AR and CL effects).",
                          icon("circle-question")
                        ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                       p(HTML("<strong>Dynamic Residuals</strong>")),
+                       p(HTML("<strong>Dynamic Residuals (RES)</strong>")),
                        p(style = "font-weight:normal;", "Variances and Covariances"),
                        div(class = "matrixWidget", uiOutput(outputId = "RES_Output")),
                        tags$span(
@@ -631,7 +639,7 @@ ui <-
                            'data-hover' = "The unique residuals are the measurement errors which are unique for each time point. In contrast to dynamic residuals, they do not have a temporal effect.",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Unique Residuals<strong>")),
+                         p(HTML("<strong>Unique Residuals (UNIQ)<strong>")),
                          p(style = "font-weight:normal;", "Variances and Covariances"),
                          div(class = "matrixWidget", uiOutput(outputId = "UNIQ_Output")),
                          tags$span(
@@ -654,7 +662,7 @@ ui <-
                            'data-hover' = "...",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Random Intercepts</strong>")),
+                         p(HTML("<strong>Random Intercepts (I)</strong>")),
                          p(style = "font-weight:normal;", "Variances and Covariances"),
                          div(class = "matrixWidget", uiOutput(outputId = "I_Output")),
                          tags$span(
@@ -677,7 +685,7 @@ ui <-
                            'data-hover' = "...",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Random Slopes</strong>")),
+                         p(HTML("<strong>Random Slopes (S)</strong>")),
                          p(style = "font-weight:normal;", "Variances and Covariances"),
                          div(class = "matrixWidget", uiOutput(outputId = "S_Output")),
                          tags$span(
@@ -702,7 +710,7 @@ ui <-
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
                            HTML(
-                             "<strong>Covariances Random Intercepts and Random Slopes</strong>"
+                             "<strong>Covariances of Random Intercepts and Random Slopes (IS)</strong>"
                            )
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "IS_Output")),
@@ -723,7 +731,7 @@ ui <-
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML(
-                           "<strong>Constant Accumulating Factor A</strong>"
+                           "<strong>Constant Accumulating Factor (A)</strong>"
                          )),
                          p(style = "font-weight:normal;", "Variances and Covariances"),
                          div(class = "matrixWidget", uiOutput(outputId = "A_Output")),
@@ -742,7 +750,7 @@ ui <-
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML(
-                           "<strong>Changing Accumulating Factor B</strong>"
+                           "<strong>Changing Accumulating Factor (B)</strong>"
                          )),
                          ### removed for now:
                          # p(style = "font-weight:normal;", "Means"),
@@ -765,7 +773,7 @@ ui <-
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
-                           HTML("<strong>Covariance Accumulating Factors A and B</strong>")
+                           HTML("<strong>Covariance of Accumulating Factors (AB)</strong>")
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "AB_Output")),
                          tags$br(),
@@ -778,45 +786,109 @@ ui <-
                    
                    column(
                      id = "three",
-                     width = 6,
+                     width = 5,
+                     
                      # main-box(
                      ### removed for now (not working yet, too): SEM Plot
                      # div(style = "min-height: 20px; padding: 19px; margin-bottom: 20px; background-color: #f5f5f5; border: 1px solid #e3e3e3; border-radius: 4px; box-shadow: inset 0 1px 1px rgba(0,0,0,.05);",
                      #     plotOutput("platzhalter")),
+                     
+              
                      div(
                        class = "main-box",
                        tags$p(class = "heading", "Results"),
-                       tags$span(
-                         class = "hovertext",
-                         'data-hover' = "lorem ipsum",
-                         icon("circle-question")
-                       )  %>% tagAppendAttributes(style = "left: 40%;"),
+                       # tags$span(
+                       #   class = "hovertext",
+                       #   'data-hover' = "lorem ipsum",
+                       #   icon("circle-question")
+                       # )  %>% tagAppendAttributes(style = "left: 40%;"),
+                       
+                       conditionalPanel(
+                         condition = "output.errorCond == true",
+                         div(class = "warn-box", textOutput("error", inline=T))
+                       ),
+                       
+                       div(class = "output-box",
+                           tags$span(class = "hovertext",
+                             'data-hover' = "lorem ipsum 1",
+                             icon("circle-question")
+                             )  %>% tagAppendAttributes(style = "left: 40%;"),
                        div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
-                       span(HTML("Optimal number of <i>N</i>:")),
                        tags$br(),
-                       span(HTML("Optimal number of <i>T</i>:")),
+                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of <i>N</i>:")), textOutput("optN", inline=T), 
                        tags$br(),
-                       tags$br(),
+                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of <i>T</i>:")), textOutput("optT", inline=T)
+                       ),
+
+                       div(class = "output-box",
                        tags$span(
                          class = "hovertext",
-                         'data-hover' = "lorem ipsum",
+                         'data-hover' = "lorem ipsum 2",
                          icon("circle-question")
                        )  %>% tagAppendAttributes(style = "left: 40%;"),
                        div(class = "heading", "Power Analysis for All Target Parameters"),
-                       tags$br(),
-                       span(
+                       span(style="font-weight:normal; font-variant:small-caps;",
                          HTML(
-                           "Table with Maximum Power for each Process given <i>N</i> and <i>T</i>"
+                           "Given the optimal number of <i>N</i> and <i>T</i>"
+                         )), 
+                       tags$br(),
+                       tags$br(),
+                       DT::dataTableOutput("maxPowerTable")
+                     )),
+                     
+                     div(class="main-box",
+                         tags$p(class = "heading", "Technical Details"),
+                         
+                         fluidRow(
+                           
+                           column(
+                             width = 6,
+                             div(class = "input-box", style="padding-bottom: 5px;",
+                                 sliderInput(
+                                   inputId = "popSize",
+                                   label = "Population Size for Optimizer",
+                                   value = 16,
+                                   min = 1,
+                                   max = 1000,
+                                   ticks=FALSE
+                                 )
+                             ),
+                             div(class = "input-box", style="padding-bottom: 2px; padding-top: 2px; ",
+                                 checkboxInput(
+                                   inputId = "dbLog",
+                                   label = HTML("<b>Allow us saving your results?</b>"),
+                                   value=TRUE
+                                 )
+                             )
+                           ),
+                           
+                           
+                           column(
+                             width = 6,
+                             div(class = "output-box",
+                                 span(style="font-weight:normal; font-variant:small-caps;", "Run Time (in sec):"), textOutput("runTime", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Number of Runs:"), textOutput("optRuns", inline=T),
+                                 # necessary bc https://github.com/rstudio/shiny/issues/1318
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
+                                 br(), 
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Run Time Log (in sec):"), textOutput("runTimeDB", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "LogID:"), textOutput("logID", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log:"), textOutput("logDB", inline=T)
+                             )
+                           )
+                           
                          )
-                       )
                      ),
-                     #verbatimTextOutput("value"),
-                     verbatimTextOutput("results"),
+                     
                      div(
                        class = "main-box",
                        p(class = "heading", "Citation"),
-                       p(style="font-weight:normal;", HTML("This shiny app is based on the article: ..."))
-                     )
+                       p(style="font-weight:normal;", HTML("This shiny app is based on the following article: ..."))
+                     ),
+                     tags$details(#'open' = "FALSE",
+                       tags$summary(span("Dev Ouput")),
+                       verbatimTextOutput("results")
+                     ),
                    ) ### column three
                  ) ### fluidRow POWER
                ) ### fluidpage POWER
@@ -842,13 +914,14 @@ ui <-
              #   )
              # )
              # )
-  )
+)
 
-# JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
+#################################################################################################
+#################################################################################################
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  output$value <- renderPrint({ input$IS })
+  output$value <- renderPrint({ error_messages_translation(res()$res$error_codes) })
   # in kombi mit:
   # verbatimTextOutput("value")
   
@@ -866,7 +939,7 @@ server <- function(input, output, session) {
     )
     numericInput(
       inputId = "minT",
-      label = HTML("Min units"),
+      label = HTML("Min"),
       value = minTidf,
       min = minTidf,
       max = 10000
@@ -874,30 +947,19 @@ server <- function(input, output, session) {
   })
   
   output$minT_Output <- renderText({
-    
-    # output für ui eingaben
-    #res <- results()
-    # results$constraints$N.min.bound
-    # results$constraints$N.max.bound
-    # results$constraints$T.min.set
-    # results$constraints$T.max.set
-    
-    minTad <- 5 #res$constraints$T.min.bound
+    round(res()$res$constraints$T.min.bound, 0)
   })
   
   output$maxT_Output <- renderText({
-    # ... aus funktion manuel ziehen
-    maxTad <- 5
+    round(res()$res$constraints$T.max.bound, 0)
   })
   
   output$minN_Output <- renderText({
-    # ... aus funktion manuel ziehen
-    minNad <- 5
+    round(res()$res$constraints$N.min.bound, 0)
   })
   
   output$maxN_Output <- renderText({
-    # ... aus funktion manuel ziehen
-    maxNad <- 5
+    round(res()$res$constraints$N.max.bound, 0)
   })
   
   ### for model characteristics tab
@@ -1452,12 +1514,13 @@ server <- function(input, output, session) {
   
   output$targetARCL_Output <- renderUI({
     procNames_List <-
-      as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| ")))
-    ARCLnames <- labelsL(procNames_List, "ARCL")
+      as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| "))) # 2, 3, 4
+    ARCLnames <- labelsL(procNames_List, "ARCL") # 2, 6, 12
+    ARCLsel <- ARCLnames[-c(1:length(procNames_List))]
     pickerInput(
       inputId = "targetARCL", 
       choices = ARCLnames, 
-      selected = list("CL_proc1_proc2", "CL_proc2_proc1"), # all CL effects
+      selected = ARCLsel, # all CL effects
       options = list(
         `actions-box` = TRUE, 
         size = 10,
@@ -1834,76 +1897,147 @@ server <- function(input, output, session) {
   
   ### compute results
   
-  output$results <- renderPrint({
-    
-    res <- compute_results(budget=input$budget,
-                           alpha=input$alpha,
-                           costN=input$costN,
-                           minN=input$minN,
-                           maxN=input$maxN,
-                           costT=input$costT,
-                           minT=input$minT,
-                           maxT=input$maxT,
-                           modelClass=input$modelClass,
-                           procNames=input$procNames,
-                           measModel=input$measModel,
-                           popSize=input$popSize,
-                           ARCL=input$ARCL,
-                           targetARCL=input$targetARCL,
-                           RES=input$RES,
-                           targetRES=input$targetRES,
-                           UNIQ=input$UNIQ,
-                           targetUNIQ=input$targetUNIQ,
-                           I=input$I,
-                           targetI=input$targetI,
-                           S=input$S,
-                           targetS=input$targetS,
-                           IS=input$IS,
-                           targetIS=input$targetIS,
-                           A=input$A,
-                           targetA=input$targetA,
-                           B=input$B,
-                           targetB=input$targetB,
-                           AB=input$AB,
-                           targetAB=input$targetAB
-    )
-    res
-    
-    # output for testing:
-    # res$run.time.optimizer.secs
-    # res$optimizer.runs
-    # res$Sigma_H1
-    # res$Sigma_H1 # mehrere! anzahl target.params!, name hier nutzen weil sonst weiß man nicht welcher target_param!
+  res <- reactive({compute_results(budget=input$budget,
+                                   alpha=input$alpha,
+                                   costN=input$costN,
+                                   minN=input$minN,
+                                   maxN=input$maxN,
+                                   costT=input$costT,
+                                   minT=input$minT,
+                                   maxT=input$maxT,
+                                   modelClass=input$modelClass,
+                                   procNames=input$procNames,
+                                   measModel=input$measModel,
+                                   ARCL=input$ARCL,
+                                   targetARCL=input$targetARCL,
+                                   RES=input$RES,
+                                   targetRES=input$targetRES,
+                                   UNIQ=input$UNIQ,
+                                   targetUNIQ=input$targetUNIQ,
+                                   I=input$I,
+                                   targetI=input$targetI,
+                                   S=input$S,
+                                   targetS=input$targetS,
+                                   IS=input$IS,
+                                   targetIS=input$targetIS,
+                                   A=input$A,
+                                   targetA=input$targetA,
+                                   B=input$B,
+                                   targetB=input$targetB,
+                                   AB=input$AB,
+                                   targetAB=input$targetAB,
+                                   popSize=input$popSize,
+                                   dbLog=input$dbLog
+  )})
+  
+  output$optN <- renderText({ if (!is.null(res()$res$N.opt)){res()$res$N.opt}
+    # hilft nicht, also existiert das schon aber wird noch kurz fehlermeldung hier angezeigt
+    # $ invalid operator for atomic vectors
+    }) 
+  
+  output$optT <- renderText({ res()$res$T.opt })
+  
+  maxPower <- reactive({ 
+    if (!is.null(res()$target.parameters)){ # otherwise internal error message given when no target params
+      par <- gsub("_", " ", res()$target.parameters)
+      pow <- unname(round(res()$res$power.max, 5))
+      data <- data.frame("Target Parameter" = par, "Maximum Power" = pow) # later whitespace turned to points
+    }
   })
   
-  ### deprecated bzw muss geändert werden später
-  # Platzhalter für SEM Plot
-  # output$platzhalter <- renderImage({
-  #   outfile <- tempfile(fileext = '.png')
-  #   # größe nicht verstellbar:
-  #   png(outfile,
-  #       width = 200,
-  #       height = 200,
-  #       units = "px")
-  #   list(src = "img/platzhalter.png")
-  # }, deleteFile = F) # constant img
-  #dev.off()
+  output$maxPowerTable <- DT::renderDataTable({ 
+    DT::datatable(maxPower(), options = list(pageLength=nrow(maxPower()), 
+                                             dom = 't'),
+                  class='cell-border',
+                  colnames = c('Target Parameter', 'Maximum Power')
+    )
+  })
+
+  output$errorCond <- reactive({ length(res()$res$error_codes) > 0 })
   
-  ### deprecated: selfmade ICONS
-  # output$cite <- renderImage({
-  #   outfile <- tempfile(fileext='.png')
-  #   # größe nicht verstellbar:
-  #   png(outfile, width=20, height=2000, units="px", res=120)
-  #   list(src="img/cite.png")
-  # }, deleteFile=F) # constant img
-  # dev.off()
-  # output$logo <- renderImage({
-  #   l <- tempfile(fileext='.png')
-  #   # größe nicht verstellbar:
-  #   png(l, width=20, height=20, units="px", res=120)
-  #   list(src="img/Logo.png")
-  # }, deleteFile=F) # constant img
-  #dev.off()
+  output$error <- reactive({ error_messages_translation(res()$res$error_codes) })
+  
+  output$runTime <- renderText({ res()$res$run.time.optimizer.secs
+    # if(!is.null(res()$res$run.time.optimizer.secs, 5)){
+    #   round(res()$res$run.time.optimizer.secs)
+    # } else {
+    #     ""
+    #   }
+    })
+  
+  output$optRuns <- renderText({ res()$res$optimizer.runs })
+  
+  output$runTimeDB <- renderText({ res()$res$run.time.log.data.secs })
+  
+  output$logID <- renderText({ res()$res$logid })
+  
+  output$logDB <- renderText({ res()$res$log.data.status })
+  
+  # only for testign phase:
+output$results <- renderPrint({ 
+  res()
+  # res <- compute_results(budget=input$budget,
+  #                        alpha=input$alpha,
+  #                        costN=input$costN,
+  #                        minN=input$minN,
+  #                        maxN=input$maxN,
+  #                        costT=input$costT,
+  #                        minT=input$minT,
+  #                        maxT=input$maxT,
+  #                        modelClass=input$modelClass,
+  #                        procNames=input$procNames,
+  #                        measModel=input$measModel,
+  #                        popSize=input$popSize,
+  #                        ARCL=input$ARCL,
+  #                        targetARCL=input$targetARCL,
+  #                        RES=input$RES,
+  #                        targetRES=input$targetRES,
+  #                        UNIQ=input$UNIQ,
+  #                        targetUNIQ=input$targetUNIQ,
+  #                        I=input$I,
+  #                        targetI=input$targetI,
+  #                        S=input$S,
+  #                        targetS=input$targetS,
+  #                        IS=input$IS,
+  #                        targetIS=input$targetIS,
+  #                        A=input$A,
+  #                        targetA=input$targetA,
+  #                        B=input$B,
+  #                        targetB=input$targetB,
+  #                        AB=input$AB,
+  #                        targetAB=input$targetAB
+  # )
+  # res
+})
+
+### deprecated bzw muss geändert werden später
+# Platzhalter für SEM Plot
+# output$platzhalter <- renderImage({
+#   outfile <- tempfile(fileext = '.png')
+#   # größe nicht verstellbar:
+#   png(outfile,
+#       width = 200,
+#       height = 200,
+#       units = "px")
+#   list(src = "img/platzhalter.png")
+# }, deleteFile = F) # constant img
+#dev.off()
+
+### deprecated: selfmade ICONS
+# output$cite <- renderImage({
+#   outfile <- tempfile(fileext='.png')
+#   # größe nicht verstellbar:
+#   png(outfile, width=20, height=2000, units="px", res=120)
+#   list(src="img/cite.png")
+# }, deleteFile=F) # constant img
+# dev.off()
+# output$logo <- renderImage({
+#   l <- tempfile(fileext='.png')
+#   # größe nicht verstellbar:
+#   png(l, width=20, height=20, units="px", res=120)
+#   list(src="img/Logo.png")
+# }, deleteFile=F) # constant img
+#dev.off()
 }
 
 shinyApp(ui = ui, server = server)
