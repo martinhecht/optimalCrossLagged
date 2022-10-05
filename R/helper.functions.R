@@ -1,3 +1,4 @@
+# JW: 0.0.31 2022-10-05: dbLog added, if clause around optmze() removed for error catching within
 # JW: 0.0.30 2022-10-04: coherent labeling in off-diags of labelsM in symmetrical matrices 
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices, and RES, corrected (i.e., labelsL and labelsM); for testing, target.params and their values also in output 
 # JW: 0.0.26 2022-08-31: error in labelsM corrected
@@ -7,7 +8,7 @@
 
 ## frontend & backend
 # for labels of target parameter input widgets in frontend
-# output: list
+# output: named list
 # form: e.g. user see's "proc" (frontend) but saved as "AR_proc1" (backend)
 labelsL <- function(procNames, paramClass, measMod){ 
   procNb <- length(procNames)
@@ -363,7 +364,7 @@ labelsM <- function(procNames, paramClass, measMod){
                labels[i, j] <- paste0(INames[i], "_", SNames[j])
              }
            }
-         },)
+         })
   return(labels)
 }
 
@@ -379,7 +380,6 @@ compute_results <- function(budget,
                             modelClass,
                             procNames,
                             measModel,
-                            popSize,
                             ARCL,
                             targetARCL,
                             RES,
@@ -397,7 +397,10 @@ compute_results <- function(budget,
                             B,
                             targetB,
                             AB,
-                            targetAB){
+                            targetAB,
+                            popSize,
+                            dbLog
+                            ){
   procNames_List <-
     as.list(unlist(strsplit(procNames, split = "\\, |\\,| ")))
   nP <- length(procNames_List)
@@ -493,17 +496,13 @@ compute_results <- function(budget,
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          }
   )
-  
+
   specs <- list(input_H1 = input_H1,
                 N = NULL,
                 timepoints = NULL,
                 names_process = NULL,
                 names_ov = NULL)
   
-  # for debugging uncomment "browser()" and press Continue (eg after you changes settings in App)
-  # browser()
-  
-  if (length(target.parameters.values.h0) != 0){
     res <- optmze(
       model = list(
         "specification" = specs,
@@ -541,13 +540,11 @@ compute_results <- function(budget,
         "max.generations" = 100,
         "wait.generations" = 1,
         "boundary.enforcement" = 2,
-        "solution.tolerance" = 0.001
+        "solution.tolerance" = 0.001,
+        log.data=dbLog
       ),
       verbose = FALSE
     )
-  } else {
-    res <- NULL
-  }
   
   testing <- list(specs=specs,
                   target.parameters=target.parameters,

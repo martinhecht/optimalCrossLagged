@@ -1,3 +1,5 @@
+# JW: 0.0.32 2022-10-05: added error codes 14-21
+
 check_plausability <- function (constraints = constraints, model = model) {
   
   error_codes <- c()
@@ -43,6 +45,42 @@ if (!is.null(model$specification$input_H1$Theta_B)) {
   }
 }
 
+  if (is.null(model$target.parameters)) {error_codes <- c(error_codes, 14)}
+  
+  # check whether variances are non-zero
+  if (any(diag(model$specification$input_H1$Omega$values) == 0)){
+    error_codes <- c(error_codes, 15)
+  }
+  
+  if (any(diag(model$specification$input_H1$Psi$values) == 0)){
+    error_codes <- c(error_codes, 16)
+  }
+  
+  if (any(diag(model$specification$input_H1$Theta_I$values) == 0)){
+    error_codes <- c(error_codes, 17)
+  }
+  
+  if (any(diag(model$specification$input_H1$Theta_S$values) == 0)){
+    error_codes <- c(error_codes, 18)
+  }
+  
+  if (any(diag(model$specification$input_H1$Theta_A$values) == 0)){
+    error_codes <- c(error_codes, 19)
+  }
+  
+  if (any(diag(model$specification$input_H1$Theta_B$values) == 0)){
+    error_codes <- c(error_codes, 20)
+  }
+  
+  # bei symmetrical matrix: nrow * (nrow+1) / 2 mögliche params (sind in error codes 14-20 zu sehen)
+  # bei asymmetrical matrix: nrow*nrow mögliche params
+  # kann man sicher noch vereinfachen weil viele matrizen gleiche dimensionen haben
+  # alles aufaddieren
+  # all.params <- nrow(model$specification$input_H1$Theta_B$values) * (nrow(model$specification$input_H1$Theta_B$values) + 1) / 2
+  # if (all.params == model$target.parameters)){
+  #   error_codes <- c(error_codes, 21)
+  # }
+  
 # return
 error_codes
 
