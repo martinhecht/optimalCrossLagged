@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.35 2022-10-05: new package required: here
 # MH 0.0.34 2022-09-15: new argument: timeout.log.data
 #						changed default of log.data from FALSE to TRUE
 #                       new results list entries: log.data.status (character) ..."ok", "error" or "error or timed out"
@@ -77,7 +78,8 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 				 require( rgenoud ); # genoud()
 				 require( Rcpp );
 				 require( RcppArmadillo );
-				 require( RMariaDB ) # MH 0.0.32 2022-09-11
+				 require( RMariaDB ); # MH 0.0.32 2022-09-11
+				 require( here ) # MH 0.0.35 2022-10-05
 				"   
 		
 		# suppress package loading outputs or not
@@ -128,7 +130,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 		
 		# MH 0.0.32 2022-09-11, log data
 		if( log.data ){
-				
+			
 				# MH 0.0.34 2022-09-15
 				# with timeout (or not)
 				wt2 <- !is.na( timeout.log.data ) && !is.null( timeout.log.data ) && is.numeric( timeout.log.data ) && timeout.log.data > 0 
@@ -141,7 +143,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 														 ifelse(wt2,',
 														 timeout = timeout.log.data,
 														 onTimeout = "error" )', "" ) ) ) )
-														 
+										 
 				# log.data.status
 				if( !inherits( logret, "try-error" ) ){
 					log.data.status <- "ok"
@@ -158,7 +160,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 		} else {
 				
 		}
-		
+
 		# return
 		return( results )
 }

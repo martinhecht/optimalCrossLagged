@@ -1,3 +1,4 @@
+# MH 0.0.35 2022-10-05: moved log.data out of genoud list
 # JW: 0.0.31 2022-10-05: dbLog added, if clause around optmze() removed for error catching within
 # JW: 0.0.30 2022-10-04: coherent labeling in off-diags of labelsM in symmetrical matrices 
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices, and RES, corrected (i.e., labelsL and labelsM); for testing, target.params and their values also in output 
@@ -540,10 +541,10 @@ compute_results <- function(budget,
         "max.generations" = 100,
         "wait.generations" = 1,
         "boundary.enforcement" = 2,
-        "solution.tolerance" = 0.001,
-        log.data=dbLog
+        "solution.tolerance" = 0.001
       ),
-      verbose = FALSE
+      log.data=dbLog, # MH 0.0.35 2022-10-05, moved log.data out of genoud list
+	  verbose = FALSE
     )
   
   testing <- list(specs=specs,

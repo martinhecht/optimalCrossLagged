@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.35 2022-10-05: read of description files wrapped in try, new package required: here
 # MH 0.0.34 2022-09-15: further variables added
 # MH 0.0.33 2022-09-12: further variables added
 # MH 0.0.32 2022-09-11: initial programming
@@ -13,7 +14,7 @@
 
 ## Function definition
 log.data <- function( input, results, verbose=TRUE ){
-	
+# browser()	
 	# start time 
 	start.time.log.data <- Sys.time()	
 	
@@ -27,24 +28,46 @@ log.data <- function( input, results, verbose=TRUE ){
 						username = dw$uid,
 						password = dw$pwd,
 						dbname = dw$database )
-	
-	## clpm version and date
-	# read lines from description file
-	lns <- readLines( "../DESCRIPTION" )
-	# which line has version
-	wV <- which( sapply( lns, function(ln) grepl( "Version:", ln, fixed=TRUE ) ) )
-	# which line has date
-	wD <- which( sapply( lns, function(ln) grepl( "Date:", ln, fixed=TRUE ) ) )
-	# get version
-	optimalclpm.version.str <- sub( "^.*\\s(\\d+\\.\\d+\\.\\d+).*$", "\\1", lns[wV] )
-	version <-       as.integer( sub( "^(\\d+)\\.\\d+\\.\\d+$", "\\1", optimalclpm.version.str ) )
-	subversion <-    as.integer( sub( "^\\d+\\.(\\d+)\\.\\d+$", "\\1", optimalclpm.version.str ) )
-	subsubversion <- as.integer( sub( "^\\d+\\.\\d+\\.(\\d+)$", "\\1", optimalclpm.version.str ) )
-	# get date
-	optimalclpm.version.date.str <- sub( "^.*\\s(\\d+\\-\\d+\\-\\d+).*$", "\\1", lns[wD] )
-	optimalclpm.version.year  <- as.integer( sub( "^(\\d+)\\-\\d+\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
-	optimalclpm.version.month <- as.integer( sub( "^\\d+\\-(\\d+)\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
-	optimalclpm.version.day   <- as.integer( sub( "^\\d+\\-\\d+\\-(\\d+)$", "\\1", optimalclpm.version.date.str ) )
+
+	# MH 0.0.35 2022-10-05: read of description files wrapped in try
+	get.clpm.info <- function(){ 
+		## clpm version and date
+		# read lines from description file
+		lns <- readLines( here( "DESCRIPTION" ) )
+		# which line has version
+		wV <- which( sapply( lns, function(ln) grepl( "Version:", ln, fixed=TRUE ) ) )
+		# which line has date
+		wD <- which( sapply( lns, function(ln) grepl( "Date:", ln, fixed=TRUE ) ) )
+		# get version
+		optimalclpm.version.str <- sub( "^.*\\s(\\d+\\.\\d+\\.\\d+).*$", "\\1", lns[wV] )
+		version <-       as.integer( sub( "^(\\d+)\\.\\d+\\.\\d+$", "\\1", optimalclpm.version.str ) )
+		subversion <-    as.integer( sub( "^\\d+\\.(\\d+)\\.\\d+$", "\\1", optimalclpm.version.str ) )
+		subsubversion <- as.integer( sub( "^\\d+\\.\\d+\\.(\\d+)$", "\\1", optimalclpm.version.str ) )
+		# get date
+		optimalclpm.version.date.str <- sub( "^.*\\s(\\d+\\-\\d+\\-\\d+).*$", "\\1", lns[wD] )
+		optimalclpm.version.year  <- as.integer( sub( "^(\\d+)\\-\\d+\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
+		optimalclpm.version.month <- as.integer( sub( "^\\d+\\-(\\d+)\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
+		optimalclpm.version.day   <- as.integer( sub( "^\\d+\\-\\d+\\-(\\d+)$", "\\1", optimalclpm.version.date.str ) )
+		return( list(  "optimalclpm.version.str"=optimalclpm.version.str,
+					   "version"=version,
+					   "subversion"=subversion,
+					   "subsubversion"=subsubversion,
+					   "optimalclpm.version.date.str"=optimalclpm.version.date.str,
+					   "optimalclpm.version.year"=optimalclpm.version.year,
+					   "optimalclpm.version.month"=optimalclpm.version.month,
+					   "optimalclpm.version.day"=optimalclpm.version.day ) )
+	}
+	clpm.info.list <- try( get.clpm.info() )
+	if( inherits( clpm.info.list, "try-error" ) ){
+		clpm.info.list <- list( "optimalclpm.version.str"=NULL,
+								"version"=NULL,
+								"subversion"=NULL,
+								"subsubversion"=NULL,								
+								"optimalclpm.version.date.str"=NULL,
+								"optimalclpm.version.year"=NULL,
+								"optimalclpm.version.month"=NULL,
+								"optimalclpm.version.day"=NULL )
+	}
 	
 	# get date time
 	posix <- Sys.time()
@@ -75,15 +98,15 @@ log.data <- function( input, results, verbose=TRUE ){
 						   "hour,",
 						   "min,",
 						   "sec,",
-						   "optimalclpm_version_str,",
-						   "version,",
-						   "subversion,",
-						   "subsubversion,",
-						   "optimalclpm_version_date_str,",
-						   "optimalclpm_version_date,",
-						   "optimalclpm_version_year,",
-						   "optimalclpm_version_month,",
-						   "optimalclpm_version_day,",
+						   ifelse( !is.null( clpm.info.list$optimalclpm.version.str      ), "optimalclpm_version_str,", ""),
+						   ifelse( !is.null( clpm.info.list$version                      ), "version,", ""),
+						   ifelse( !is.null( clpm.info.list$subversion                   ), "subversion,", ""),
+						   ifelse( !is.null( clpm.info.list$subsubversion                ), "subsubversion,", ""),
+						   ifelse( !is.null( clpm.info.list$optimalclpm_version_date_str ), "optimalclpm_version_date_str,", ""),
+						   ifelse( !is.null( clpm.info.list$optimalclpm_version_date     ), "optimalclpm_version_date,", ""),
+						   ifelse( !is.null( clpm.info.list$optimalclpm_version_year     ), "optimalclpm_version_year,", ""),
+						   ifelse( !is.null( clpm.info.list$optimalclpm_version_month    ), "optimalclpm_version_month,", ""),
+						   ifelse( !is.null( clpm.info.list$optimalclpm_version_day      ), "optimalclpm_version_day,", ""),
 						   "what,",
 						   "direction,",
 						   "via,",
@@ -138,15 +161,15 @@ log.data <- function( input, results, verbose=TRUE ){
 				   ,hour,","
 				   ,min,","
 				   ,sec,","
-				   ,'"',optimalclpm.version.str,'"',","
-				   ,version,","
-				   ,subversion,","
-				   ,subsubversion,","
-				   ,'"',optimalclpm.version.date.str,'"',","
-				   ,'"',optimalclpm.version.date.str,'"',","
-				   ,optimalclpm.version.year,","
-				   ,optimalclpm.version.month,","
-				   ,optimalclpm.version.day,","
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm.version.str      ),  paste0('"',clpm.info.list$optimalclpm.version.str,'"',","), "" )
+				   ,ifelse( !is.null( clpm.info.list$version                      ),  paste0(clpm.info.list$version,","), "" )
+				   ,ifelse( !is.null( clpm.info.list$subversion                   ),  paste0(clpm.info.list$subversion,","), "" )
+				   ,ifelse( !is.null( clpm.info.list$subsubversion                ),  paste0(clpm.info.list$subsubversion,","), "" )
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm_version_date_str ),  paste0('"',clpm.info.list$optimalclpm.version.date.str,'"',","), "" )
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm_version_date     ),  paste0('"',clpm.info.list$optimalclpm.version.date.str,'"',","), "" )
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm_version_year     ),  paste0(clpm.info.list$optimalclpm.version.year,","), "" )
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm_version_month    ),  paste0(clpm.info.list$optimalclpm.version.month,","), "" )
+				   ,ifelse( !is.null( clpm.info.list$optimalclpm_version_day      ),  paste0(clpm.info.list$optimalclpm.version.day,","), "" )
 				   ,'"',input$optimize$what,'"',","
 				   ,'"',input$optimize$direction,'"',","
 				   ,'"',input$optimize$via,'"',","
@@ -194,7 +217,7 @@ log.data <- function( input, results, verbose=TRUE ){
 				   ,results$stable.solution,
 		 ");"
 	)
-	
+
 	# execute
 	dbExecute(con, insert)
 	# check
@@ -264,7 +287,8 @@ log.data <- function( input, results, verbose=TRUE ){
 
 	# create insert command
 	do.insert5 <- function( matr, input ){
-		insert5 <- paste0(
+
+	  	insert5 <- paste0(
 			"INSERT INTO model_matrices (logid,",
 							   "matrix,",
 							   "value,",
@@ -284,9 +308,12 @@ log.data <- function( input, results, verbose=TRUE ){
 	# matrices
 	matrices <- names(input$model$specification$input_H1)
 	# delete not matrices names
-	matrices <- matrices[!matrices %in% c("model","n_ov")]
+	matrices <- matrices[!matrices %in% c("model","alpha","n_ov")]
 	# delete all NULL matrices
 	matrices <- matrices[!sapply( matrices, function( matr ) is.null( input$model$specification$input_H1[[matr]] ) )]
+  # values must exist
+	tr.bool <- sapply( matrices, function(matr,input) inherits( try(input$model$specification$input_H1[[matr]]$labels), "try-error"), input )
+	matrices <- matrices[!tr.bool]
 
 	# do insert
 	if( length( matrices ) > 0 ) sapply( matrices, do.insert5, input )
