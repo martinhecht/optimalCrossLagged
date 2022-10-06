@@ -141,11 +141,11 @@
         width: 11vw;
         }
         
-        /* remove arrows for numericInput, see: https://stackoverflow.com/questions/70974838/removing-up-down-arrows-from-numericinput-r-shiny */
+        /* remove arrows for numericInput, see: https://stackoverflow.com/questions/70974838/removing-up-down-arrows-from-numericinput-r-shiny 
         #alpha::-webkit-outer-spin-button,
         #alpha::-webkit-inner-spin-button {
         -webkit-appearance: none;
-        }
+        }*/
         
         #alpha.control-label:hover{
           background-color: unset !important;
