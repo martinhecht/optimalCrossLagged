@@ -1,9 +1,10 @@
+# JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
 # JW: 0.0.30 2022-10-05: diverse things added and bugs fixed
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
+setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -16,7 +17,9 @@ packages <- c("shiny", # basic
               "rgenoud",
               "RcppArmadillo",
               "matrixcalc", # check_plausability()
+              "stringr",
               "RMariaDB", # for data log
+              "here",
               "config" # same
 )
 newPackages <-
@@ -84,19 +87,30 @@ ui <-
                          column(
                            width = 6,
                            div(class = "input-box",
+                               tags$span(
+                                 class = "hovertext",
+                                 'data-hover' = "In any monetary unit, e.g. € or $.",
+                                 icon("circle-question")
+                               )  %>% tagAppendAttributes(style = "left: 101%;"),
                                numericInput(
                                  inputId = "budget",
                                  label = "Budget",
                                  value = 10000,
-                                 min = 1,
+                                 min = 0,
                                  max = 10000000,
-                                 step = 5000
+                                 step = 2500 # wird verdoppelt in UI!?
                                )
                            )
                          ),
                          column(
                            width = 6,
                            div(class = "input-box",
+                               tags$span(
+                                 class = "hovertext",
+                                 'data-hover' = "Used for the Likelihood-Ratio-Tests in which the optimal N and T are calculated.",
+                                 icon("circle-question")
+                               )  %>% tagAppendAttributes(style = "left: 101%;"),
+                               ## with arrows
                                numericInput(
                                  inputId = "alpha",
                                  label =
@@ -106,6 +120,17 @@ ui <-
                                  max = 1,
                                  step = 0.05
                                )
+                               ## without arrows (but not able to give value to backend)
+                               # autonumericInput(
+                               #   inputId = "alpha",
+                               #   label =
+                               #     withMathJax(c("\\(\\alpha\\)-Level")),
+                               #   value = 0.05,
+                               #   minimumValue = 0,
+                               #   maximumValue = 1,
+                               #   ecimalCharacter = ".",
+                               #   align = "left"
+                               # )
                            )
                          )
                        ), ### fluidRow budget-alpha
@@ -125,9 +150,9 @@ ui <-
                                inputId = "costN",
                                label = HTML("Costs"),
                                value = 10,
-                               min = 1,
+                               min = 0,
                                max = 10000000,
-                               step = 20
+                               step = 5
                              ),
                              splitLayout(
                                #cellWidths = c("75%", "25%"),
@@ -175,9 +200,9 @@ ui <-
                                inputId = "costT",
                                label = HTML("Costs"),
                                value = 10,
-                               min = 1,
+                               min = 0,
                                max = 10000000,
-                               step = 1
+                               step = 5
                              ),
                              splitLayout(
                                uiOutput(outputId = "minTidentify_Output"),
@@ -235,7 +260,7 @@ ui <-
                        div(class = "input-box",
                            textAreaInput(
                              inputId = "procNames",
-                             label = HTML("Processes"),
+                             label = HTML("Process Names"),
                              placeholder = "proc1, proc2",
                              value = "proc1, proc2"
                            )
@@ -715,7 +740,6 @@ ui <-
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "IS_Output")),
                          tags$br(),
-                         tags$br(),
                          uiOutput(outputId = "targetIS_Output")
                        )
                      ),
@@ -777,7 +801,6 @@ ui <-
                          ),
                          div(class = "matrixWidget", uiOutput(outputId = "AB_Output")),
                          tags$br(),
-                         tags$br(),
                          uiOutput(outputId = "targetAB_Output")
                        )
                      )
@@ -803,30 +826,25 @@ ui <-
                        #   icon("circle-question")
                        # )  %>% tagAppendAttributes(style = "left: 40%;"),
                        
-                       conditionalPanel(
-                         condition = "output.errorCond == true",
-                         div(class = "warn-box", textOutput("error", inline=T))
-                       ),
-                       
-                       div(class = "output-box",
-                           tags$span(class = "hovertext",
-                             'data-hover' = "lorem ipsum 1",
+                       div(class = "output-box", style="border: 3px solid black;",
+                           tags$span(class = "hovertext", style="font-weight:normal;",
+                             'data-hover' = "Likelihood-Ratio Test of Single Target Parameters",
                              icon("circle-question")
-                             )  %>% tagAppendAttributes(style = "left: 40%;"),
-                       div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
+                             )  %>% tagAppendAttributes(style = "left: 10%;"),
+                       #div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
+                       #tags$br(),
+                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Persons <i>N</i>:")), textOutput("optN", inline=T), 
                        tags$br(),
-                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of <i>N</i>:")), textOutput("optN", inline=T), 
-                       tags$br(),
-                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of <i>T</i>:")), textOutput("optT", inline=T)
+                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Time Points <i>T</i>:")), textOutput("optT", inline=T)
                        ),
 
-                       div(class = "output-box",
+                       div(class = "output-box", 
                        tags$span(
-                         class = "hovertext",
+                         class = "hovertext", style="font-weight:normal;",
                          'data-hover' = "lorem ipsum 2",
                          icon("circle-question")
                        )  %>% tagAppendAttributes(style = "left: 40%;"),
-                       div(class = "heading", "Power Analysis for All Target Parameters"),
+                       div(class = "heading", "Maximum Power For all Target Parameters"),
                        span(style="font-weight:normal; font-variant:small-caps;",
                          HTML(
                            "Given the optimal number of <i>N</i> and <i>T</i>"
@@ -834,7 +852,14 @@ ui <-
                        tags$br(),
                        tags$br(),
                        DT::dataTableOutput("maxPowerTable")
-                     )),
+                     ),
+                     
+                     conditionalPanel(
+                       condition = "output.errorCond == true",
+                       div(class = "warn-box", htmlOutput("error", inline=T)
+                       )
+                     )
+                     ),
                      
                      div(class="main-box",
                          tags$p(class = "heading", "Technical Details"),
@@ -846,17 +871,17 @@ ui <-
                              div(class = "input-box", style="padding-bottom: 5px;",
                                  sliderInput(
                                    inputId = "popSize",
-                                   label = "Population Size for Optimizer",
+                                   label = "Precision of Optimizer",
                                    value = 16,
-                                   min = 1,
+                                   min = 16,
                                    max = 1000,
                                    ticks=FALSE
                                  )
                              ),
-                             div(class = "input-box", style="padding-bottom: 2px; padding-top: 2px; ",
+                             div(class = "input-box", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
                                  checkboxInput(
                                    inputId = "dbLog",
-                                   label = HTML("<b>Allow us saving your results?</b>"),
+                                   label = HTML("<b>Log results for scientific optimization of this app?</b>"),
                                    value=TRUE
                                  )
                              )
@@ -869,11 +894,11 @@ ui <-
                                  span(style="font-weight:normal; font-variant:small-caps;", "Run Time (in sec):"), textOutput("runTime", inline=T),
                                  br(), span(style="font-weight:normal; font-variant:small-caps;", "Number of Runs:"), textOutput("optRuns", inline=T),
                                  # necessary bc https://github.com/rstudio/shiny/issues/1318
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
+                                 #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
                                  br(), 
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Run Time Log (in sec):"), textOutput("runTimeDB", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "LogID:"), textOutput("logID", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log:"), textOutput("logDB", inline=T)
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log ID:"), textOutput("logID", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Status:"), textOutput("logDB", inline=T)
                              )
                            )
                            
@@ -889,6 +914,9 @@ ui <-
                        tags$summary(span("Dev Ouput")),
                        verbatimTextOutput("results")
                      ),
+                     
+                     span(style="color:white;", textOutput("errorCond", inline=T)), 
+                     
                    ) ### column three
                  ) ### fluidRow POWER
                ) ### fluidpage POWER
@@ -921,13 +949,13 @@ ui <-
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  output$value <- renderPrint({ error_messages_translation(res()$res$error_codes) })
+  #output$value <- renderPrint({ error_messages_translation(res()$res$error_codes) })
   # in kombi mit:
   # verbatimTextOutput("value")
   
   ### for study design tab:
   
-  output$minTidentify_Output <- renderUI({
+  minTidentify <- reactive({
     mc <- input$modelClass
     minTidf <- case_when(mc == "clpm" ~ 2,
                          mc == "fclpm" ~ 3,
@@ -937,29 +965,33 @@ server <- function(input, output, session) {
                          mc == "alt" ~ 4,
                          mc == "lcs" ~ 3
     )
+    
+  })
+  
+  output$minTidentify_Output <- renderUI({
     numericInput(
       inputId = "minT",
       label = HTML("Min"),
-      value = minTidf,
-      min = minTidf,
+      value = minTidentify(),
+      min = minTidentify(),
       max = 10000
     )
   })
   
   output$minT_Output <- renderText({
-    round(res()$res$constraints$T.min.bound, 0)
+    tryCatch(round(res()$res$constraints$T.min.bound, 0), error = function(e){""})
   })
   
   output$maxT_Output <- renderText({
-    round(res()$res$constraints$T.max.bound, 0)
+    tryCatch(round(res()$res$constraints$T.max.bound, 0), error = function(e){""})
   })
   
   output$minN_Output <- renderText({
-    round(res()$res$constraints$N.min.bound, 0)
+    tryCatch(round(res()$res$constraints$N.min.bound, 0), error = function(e){""})
   })
   
   output$maxN_Output <- renderText({
-    round(res()$res$constraints$N.max.bound, 0)
+    tryCatch(round(res()$res$constraints$N.max.bound, 0), error = function(e){""})
   })
   
   ### for model characteristics tab
@@ -1732,8 +1764,8 @@ server <- function(input, output, session) {
     INames <- c()
     SNames <- c()
     for (i in 1:procNb){
-      INames[i] <- paste("I_", procNames_List[i])
-      SNames[i] <- paste("S_", procNames_List[i])
+      INames[i] <- paste("I ", procNames_List[i])
+      SNames[i] <- paste("S ", procNames_List[i])
     }
     preCovmat <-
       matrix(
@@ -1865,8 +1897,8 @@ server <- function(input, output, session) {
     ANames <- c()
     BNames <- c()
     for (i in 1:procNb){
-      ANames[i] <- paste("A_", procNames_List[i])
-      BNames[i] <- paste("B_", procNames_List[i])
+      ANames[i] <- paste("A ", procNames_List[i])
+      BNames[i] <- paste("B ", procNames_List[i])
     }
     preCovmat <-
       matrix(
@@ -1897,117 +1929,123 @@ server <- function(input, output, session) {
   
   ### compute results
   
-  res <- reactive({compute_results(budget=input$budget,
-                                   alpha=input$alpha,
-                                   costN=input$costN,
-                                   minN=input$minN,
-                                   maxN=input$maxN,
-                                   costT=input$costT,
-                                   minT=input$minT,
-                                   maxT=input$maxT,
-                                   modelClass=input$modelClass,
-                                   procNames=input$procNames,
-                                   measModel=input$measModel,
-                                   ARCL=input$ARCL,
-                                   targetARCL=input$targetARCL,
-                                   RES=input$RES,
-                                   targetRES=input$targetRES,
-                                   UNIQ=input$UNIQ,
-                                   targetUNIQ=input$targetUNIQ,
-                                   I=input$I,
-                                   targetI=input$targetI,
-                                   S=input$S,
-                                   targetS=input$targetS,
-                                   IS=input$IS,
-                                   targetIS=input$targetIS,
-                                   A=input$A,
-                                   targetA=input$targetA,
-                                   B=input$B,
-                                   targetB=input$targetB,
-                                   AB=input$AB,
-                                   targetAB=input$targetAB,
-                                   popSize=input$popSize,
-                                   dbLog=input$dbLog
+  res <- reactive({
+    compute_results(
+      budget = input$budget,
+      alpha = input$alpha,
+      costN = input$costN,
+      minN = input$minN,
+      maxN = input$maxN,
+      costT = input$costT,
+      minT = input$minT,
+      maxT = input$maxT,
+      modelClass = input$modelClass,
+      procNames = input$procNames,
+      measModel = input$measModel,
+      ARCL = input$ARCL,
+      targetARCL = input$targetARCL,
+      RES = input$RES,
+      targetRES = input$targetRES,
+      UNIQ = input$UNIQ,
+      targetUNIQ = input$targetUNIQ,
+      I = input$I,
+      targetI = input$targetI,
+      S = input$S,
+      targetS = input$targetS,
+      IS = input$IS,
+      targetIS = input$targetIS,
+      A = input$A,
+      targetA = input$targetA,
+      B = input$B,
+      targetB = input$targetB,
+      AB = input$AB,
+      targetAB = input$targetAB,
+      popSize = input$popSize,
+      dbLog = input$dbLog
   )})
   
-  output$optN <- renderText({ if (!is.null(res()$res$N.opt)){res()$res$N.opt}
-    # hilft nicht, also existiert das schon aber wird noch kurz fehlermeldung hier angezeigt
-    # $ invalid operator for atomic vectors
+  output$optN <- renderText({ tryCatch(as.integer(res()$res$N.opt), error = function(e){""})
     }) 
   
-  output$optT <- renderText({ res()$res$T.opt })
+  output$optT <- renderText({ tryCatch(as.integer(res()$res$T.opt), error = function(e){""})
+    })
   
   maxPower <- reactive({ 
-    if (!is.null(res()$target.parameters)){ # otherwise internal error message given when no target params
-      par <- gsub("_", " ", res()$target.parameters)
-      pow <- unname(round(res()$res$power.max, 5))
-      data <- data.frame("Target Parameter" = par, "Maximum Power" = pow) # later whitespace turned to points
+    # besser wäre es names von power.max zu nehmen
+    target.param <- tryCatch(res()$target.parameters, error = function(e){target.param <- NULL})
+    power.max <- tryCatch(res()$res$power.max, error = function(e){power.max <- NULL})
+    
+    if (!is.null(target.param)){
+      par <- c()
+      vars <- c("CL", "IS", "AB") # -->
+      covs <- c("RES", "UNIQ", "I", "S", "A", "B") # <-->
+      for (i in 1:length(target.param)){
+        if (lengths(regmatches(target.param[i], gregexpr("_", target.param[i]))) == 1){ # vars (including AR)
+          par[i] <- gsub("_", " ", target.param[i])
+        } else {
+          tmp <- c()
+          firstO <- c()
+          firstN <- c()
+          if (any(str_detect(target.param[i], vars))){
+            id <- str_which(target.param[i], vars)
+            firstO <- paste0(vars[id], "_") # old
+            firstN <- paste0(vars[id], " ") # new
+            tmp <- gsub(firstO, firstN, target.param[i])
+            par[i] <- gsub("_", " → ", tmp)
+          } else if (any(str_detect(target.param[i], covs))){
+            id <- str_which(target.param[i], covs)
+            firstO <- paste0(covs[id], "_") # old
+            firstN <- paste0(covs[id], " ") # new
+            tmp <- gsub(firstO, firstN, target.param[i])
+            par[i] <- gsub("_", " ↔ ", tmp)
+        }
+        }
+      }
+      #par <- gsub("_", " ", target.param)
+      pow <- unname(round(power.max, 5))
+      data <- data.frame(par, pow) # later whitespace turned to points 
+      return(data)
     }
   })
   
   output$maxPowerTable <- DT::renderDataTable({ 
-    DT::datatable(maxPower(), options = list(pageLength=nrow(maxPower()), 
-                                             dom = 't'),
-                  class='cell-border',
-                  colnames = c('Target Parameter', 'Maximum Power')
-    )
+    tryCatch(DT::datatable(maxPower(), options = list(pageLength=nrow(maxPower()), 
+                                                      dom = 't'),
+                           class='cell-border',
+                           colnames = c('Target Parameter', 'Maximum Power')),
+             error = function(e){""})
   })
 
-  output$errorCond <- reactive({ length(res()$res$error_codes) > 0 })
-  
-  output$error <- reactive({ error_messages_translation(res()$res$error_codes) })
-  
-  output$runTime <- renderText({ res()$res$run.time.optimizer.secs
-    # if(!is.null(res()$res$run.time.optimizer.secs, 5)){
-    #   round(res()$res$run.time.optimizer.secs)
-    # } else {
-    #     ""
-    #   }
+  output$errorCond <- reactive({ 
+    tryCatch(length(res()$res$error_codes) > 0, error = function(e){""}) 
     })
   
-  output$optRuns <- renderText({ res()$res$optimizer.runs })
+  output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
+    tryCatch(HTML(paste0(error_messages_translation(res()$res$error_codes), collapse = "<br/>")), error = function(e){""}) 
+    })
   
-  output$runTimeDB <- renderText({ res()$res$run.time.log.data.secs })
+  output$runTime <- renderText({ 
+    tryCatch(round(res()$res$run.time.optimizer.secs, 3), error = function(e){""})
+    })
   
-  output$logID <- renderText({ res()$res$logid })
+  output$optRuns <- renderText({ 
+    tryCatch(res()$res$optimizer.runs, error = function(e){""}) 
+    })
   
-  output$logDB <- renderText({ res()$res$log.data.status })
+  output$runTimeDB <- renderText({ 
+    tryCatch(round(res()$res$run.time.log.data.secs, 3), error = function(e){""}) 
+    })
   
-  # only for testign phase:
+  output$logID <- renderText({ tryCatch(as.integer(res()$res$logid), error = function(e){""}) 
+    })
+  
+  output$logDB <- renderText({ 
+    tryCatch(res()$res$log.data.status, error = function(e){""}) 
+    })
+  
+  # only for testing phase:
 output$results <- renderPrint({ 
-  res()
-  # res <- compute_results(budget=input$budget,
-  #                        alpha=input$alpha,
-  #                        costN=input$costN,
-  #                        minN=input$minN,
-  #                        maxN=input$maxN,
-  #                        costT=input$costT,
-  #                        minT=input$minT,
-  #                        maxT=input$maxT,
-  #                        modelClass=input$modelClass,
-  #                        procNames=input$procNames,
-  #                        measModel=input$measModel,
-  #                        popSize=input$popSize,
-  #                        ARCL=input$ARCL,
-  #                        targetARCL=input$targetARCL,
-  #                        RES=input$RES,
-  #                        targetRES=input$targetRES,
-  #                        UNIQ=input$UNIQ,
-  #                        targetUNIQ=input$targetUNIQ,
-  #                        I=input$I,
-  #                        targetI=input$targetI,
-  #                        S=input$S,
-  #                        targetS=input$targetS,
-  #                        IS=input$IS,
-  #                        targetIS=input$targetIS,
-  #                        A=input$A,
-  #                        targetA=input$targetA,
-  #                        B=input$B,
-  #                        targetB=input$targetB,
-  #                        AB=input$AB,
-  #                        targetAB=input$targetAB
-  # )
-  # res
+  tryCatch(res(), error = function(e){""})
 })
 
 ### deprecated bzw muss geändert werden später
