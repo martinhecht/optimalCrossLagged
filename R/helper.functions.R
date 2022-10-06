@@ -1,4 +1,5 @@
-# MH 0.0.35 2022-10-05: moved log.data out of genoud list
+# JQ: 0.0.36 2022-10-06: corrected labelL for IS and AB and convention labels symmetrical matrices covs
+# MH: 0.0.35 2022-10-05: moved log.data out of genoud list
 # JW: 0.0.31 2022-10-05: dbLog added, if clause around optmze() removed for error catching within
 # JW: 0.0.30 2022-10-04: coherent labeling in off-diags of labelsM in symmetrical matrices 
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices, and RES, corrected (i.e., labelsL and labelsM); for testing, target.params and their values also in output 
@@ -25,7 +26,7 @@ labelsL <- function(procNames, paramClass, measMod){
                if (i == j){
                  count <- count + 1
                  labels[[count]] <- paste0("AR_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0("AR ", procNames[i])
                }
              }
            }
@@ -35,7 +36,7 @@ labelsL <- function(procNames, paramClass, measMod){
                if (i != j){
                  count <- count + 1
                  labels[[count]] <- paste0("CL_", procNames[i], "_", procNames[j]) 
-                 names(labels)[[count]] <- paste0(procNames[j], " → ", procNames[i]) # bc column -> row
+                 names(labels)[[count]] <- paste0("CL ", procNames[j], " → ", procNames[i]) # bc column -> row
                }
              }
            }
@@ -47,15 +48,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:procNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:procNb){
              for (j in i:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
-                 names(labels)[[count]] <- paste0(procNames[i], " ↔ ", procNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[j], " ↔ ", procNames[i])
                }
              }
            }
@@ -67,15 +68,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:procNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:procNb){
              for (j in i:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
-                 names(labels)[[count]] <- paste0(procNames[i], " ↔ ", procNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[j], " ↔ ", procNames[i])
                }
              }
            }
@@ -87,15 +88,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:procNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:procNb){
              for (j in i:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
-                 names(labels)[[count]] <- paste0(procNames[i], " ↔ ", procNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[j], " ↔ ", procNames[i])
                }
              }
            }
@@ -107,15 +108,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:procNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:procNb){
              for (j in i:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
-                 names(labels)[[count]] <- paste0(procNames[i], " ↔ ", procNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[j], " ↔ ", procNames[i])
                }
              }
            }
@@ -127,15 +128,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:procNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", procNames[i])
-                 names(labels)[[count]] <- unlist(procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:procNb){
              for (j in i:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, "_", procNames[i], "_", procNames[j])
-                 names(labels)[[count]] <- paste0(procNames[i], " ↔ ", procNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", procNames[j], "_", procNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", procNames[j], " ↔ ", procNames[i])
                }
              }
            }
@@ -161,15 +162,15 @@ labelsL <- function(procNames, paramClass, measMod){
            for (i in 1:indNb){
                  count <- count + 1
                  labels[[count]] <- paste0(paramClass, "_", indNames[i])
-                 names(labels)[[count]] <- unlist(indNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", indNames[i])
            }
            # off-diagonal (cov)
            for (i in 1:indNb){
              for (j in i:indNb){
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0(paramClass, indNames[i], " - ", indNames[j])
-                 names(labels)[[count]] <- paste0(indNames[i], " ↔ ", indNames[j])
+                 labels[[count]] <- paste0(paramClass, "_", indNames[j], "_", indNames[i])
+                 names(labels)[[count]] <- paste0(paramClass, " ", indNames[j], " ↔ ", indNames[i])
                }
              }
            }
@@ -177,34 +178,23 @@ labelsL <- function(procNames, paramClass, measMod){
          
          ## Theta_AB
          "AB" = {
-           ANames <- c()
-           BNames <- c()
-           for (i in 1:procNb){
-             ANames[i] <- paste0("A_", procNames[i])
-             BNames[i] <- paste0("B_", procNames[i])
-           }
            for (i in 1:procNb){
              for (j in 1:procNb){
                  count <- count + 1
-                 labels[[count]] <- paste0(ANames[i], "_", BNames[j])
-                 names(labels)[[count]] <- paste0(ANames[i], " ↔ ", BNames[j]) 
+                 labels[[count]] <- paste0("A_", procNames[i], "_", "B_", procNames[j])
+                 names(labels)[[count]] <- paste0("A ", procNames[i], " ↔ ", "B ", procNames[j])
              }
            }
          }, 
          
          ## Theta_IS
          "IS" = {
-           INames <- c()
-           SNames <- c()
-           for (i in 1:procNb){
-             INames[i] <- paste0("I_", procNames[i])
-             SNames[i] <- paste0("S_", procNames[i])
-           }
+
            for (i in 1:procNb){
              for (j in 1:procNb){
                count <- count + 1
-               labels[[count]] <- paste0(INames[i], "_", SNames[j])
-               names(labels)[[count]] <- paste0(INames[i], " ↔ ", SNames[j]) 
+               labels[[count]] <- paste0("I_", procNames[i], "_", "S_", procNames[j])
+               names(labels)[[count]] <- paste0("A ", procNames[i], " ↔ ", "B ", procNames[j])
              }
            }
          })
