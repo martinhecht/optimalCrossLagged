@@ -29,7 +29,7 @@ if (length(newPackages))
 packages <- packages[-length(packages)] # prevent config from loading; otherwise base::get() masked
 lapply(packages, require, character.only = TRUE)
 if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
-install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
+  install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
 }
 require(shinyMatrix)
 if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
@@ -139,92 +139,92 @@ ui <-
                          column(
                            width = 6,
                            div(id="boxN",
-                             class = "input-box",
-                             tags$span(
-                               class = "hovertext",
-                               'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other.",
-                               icon("circle-question")
-                             )  %>% tagAppendAttributes(style = "left: 101%;"),
-                             p(HTML("<strong><i>Persons N</i></strong>")),
-                             numericInput(
-                               inputId = "costN",
-                               label = HTML("Costs"),
-                               value = 10,
-                               min = 0,
-                               max = 10000000,
-                               step = 5
-                             ),
-                             splitLayout(
-                               #cellWidths = c("75%", "25%"),
+                               class = "input-box",
+                               tags$span(
+                                 class = "hovertext",
+                                 'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other.",
+                                 icon("circle-question")
+                               )  %>% tagAppendAttributes(style = "left: 101%;"),
+                               p(HTML("<strong><i>Persons N</i></strong>")),
                                numericInput(
-                                 inputId = "minN",
-                                 label = HTML("Min"),
-                                 value = 3,
-                                 min = 2,
-                                 max = 10000,
-                                 step = 1
+                                 inputId = "costN",
+                                 label = HTML("Costs"),
+                                 value = 10,
+                                 min = 0,
+                                 max = 10000000,
+                                 step = 5
                                ),
-                               conditionalPanel(
-                               condition = "output.errorCond == false", 
-                               div(class = "unit", uiOutput(outputId = "minN_Output"))
-                             )
-                             ),
-                             splitLayout(
-                               numericInput(
-                                 inputId = "maxN",
-                                 label = HTML("Max"),
-                                 value = 300,
-                                 min = 2,
-                                 max = 10000,
-                                 step = 1
+                               splitLayout(
+                                 #cellWidths = c("75%", "25%"),
+                                 numericInput(
+                                   inputId = "minN",
+                                   label = HTML("Min"),
+                                   value = 3,
+                                   min = 2,
+                                   max = 10000,
+                                   step = 1
+                                 ),
+                                 conditionalPanel(
+                                   condition = "output.errorCond == false", 
+                                   div(class = "unit", uiOutput(outputId = "minN_Output"))
+                                 )
                                ),
-                               conditionalPanel(
-                               condition = "output.errorCond == false", 
-                               div(class = "unit", uiOutput(outputId = "maxN_Output"))
-                             )
-                             )
+                               splitLayout(
+                                 numericInput(
+                                   inputId = "maxN",
+                                   label = HTML("Max"),
+                                   value = 300,
+                                   min = 2,
+                                   max = 10000,
+                                   step = 1
+                                 ),
+                                 conditionalPanel(
+                                   condition = "output.errorCond == false", 
+                                   div(class = "unit", uiOutput(outputId = "maxN_Output"))
+                                 )
+                               )
                            ) ### div input-box N
                          ), ### column N
                          
                          column(
                            width = 6,
                            div(id="boxT",
-                             class = "input-box",
-                             tags$span(
-                               class = "hovertext",
-                               'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other. The default for the minimum number of units reflects the minimum number of units (given the number of parameters) that is required for model identification.",
-                               icon("circle-question")
-                             )  %>% tagAppendAttributes(style = "left: 101%;"),
-                             p(HTML("<strong><i>Time Points T</i></strong>")),
-                             numericInput(
-                               inputId = "costT",
-                               label = HTML("Costs"),
-                               value = 10,
-                               min = 0,
-                               max = 10000000,
-                               step = 5
-                             ),
-                             splitLayout(
-                               uiOutput(outputId = "minTidentify_Output"),
-                               conditionalPanel(
-                                 condition = "output.errorCond == false", 
-                               div(class = "unit", uiOutput(outputId = "minT_Output"))
-                               )
-                             ),
-                             splitLayout(
+                               class = "input-box",
+                               tags$span(
+                                 class = "hovertext",
+                                 'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other. The default for the minimum number of units reflects the minimum number of units (given the number of parameters) that is required for model identification.",
+                                 icon("circle-question")
+                               )  %>% tagAppendAttributes(style = "left: 101%;"),
+                               p(HTML("<strong><i>Time Points T</i></strong>")),
                                numericInput(
-                                 inputId = "maxT",
-                                 label = HTML("Max"),
+                                 inputId = "costT",
+                                 label = HTML("Costs"),
                                  value = 10,
-                                 min = 1,
-                                 max = 10000,
-                                 step = 1
+                                 min = 0,
+                                 max = 10000000,
+                                 step = 5
                                ),
-                               conditionalPanel(
-                               condition = "output.errorCond == false", 
-                               div(class = "unit", uiOutput(outputId = "maxT_Output"))
-                             )
-                             )
+                               splitLayout(
+                                 uiOutput(outputId = "minTidentify_Output"),
+                                 conditionalPanel(
+                                   condition = "output.errorCond == false", 
+                                   div(class = "unit", uiOutput(outputId = "minT_Output"))
+                                 )
+                               ),
+                               splitLayout(
+                                 numericInput(
+                                   inputId = "maxT",
+                                   label = HTML("Max"),
+                                   value = 10,
+                                   min = 1,
+                                   max = 10000,
+                                   step = 1
+                                 ),
+                                 conditionalPanel(
+                                   condition = "output.errorCond == false", 
+                                   div(class = "unit", uiOutput(outputId = "maxT_Output"))
+                                 )
+                               )
                            ) ### div input-box T
                          ) #### column T
                        ) ### fluidRow (N & T)
@@ -816,7 +816,7 @@ ui <-
                      # div(style = "min-height: 20px; padding: 19px; margin-bottom: 20px; background-color: #f5f5f5; border: 1px solid #e3e3e3; border-radius: 4px; box-shadow: inset 0 1px 1px rgba(0,0,0,.05);",
                      #     plotOutput("platzhalter")),
                      
-              
+                     
                      div(
                        class = "main-box",
                        tags$p(class = "heading", "Results"),
@@ -828,37 +828,37 @@ ui <-
                        
                        div(class = "output-box", style="border: 3px solid black;",
                            tags$span(class = "hovertext", style="font-weight:normal;",
-                             'data-hover' = "Likelihood-Ratio Test of Single Target Parameters",
-                             icon("circle-question")
-                             )  %>% tagAppendAttributes(style = "left: 10%;"),
-                       #div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
-                       #tags$br(),
-                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Persons <i>N</i>:")), textOutput("optN", inline=T), 
-                       tags$br(),
-                       span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Time Points <i>T</i>:")), textOutput("optT", inline=T)
+                                     'data-hover' = "Likelihood-Ratio Test of Single Target Parameters",
+                                     icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 10%;"),
+                           #div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
+                           #tags$br(),
+                           span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Persons <i>N</i>:")), textOutput("optN", inline=T), 
+                           tags$br(),
+                           span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Time Points <i>T</i>:")), textOutput("optT", inline=T)
                        ),
-
+                       
                        div(class = "output-box", 
-                       tags$span(
-                         class = "hovertext", style="font-weight:normal;",
-                         'data-hover' = "lorem ipsum 2",
-                         icon("circle-question")
-                       )  %>% tagAppendAttributes(style = "left: 40%;"),
-                       div(class = "heading", "Maximum Power For all Target Parameters"),
-                       span(style="font-weight:normal; font-variant:small-caps;",
-                         HTML(
-                           "Given the optimal number of <i>N</i> and <i>T</i>"
-                         )), 
-                       tags$br(),
-                       tags$br(),
-                       DT::dataTableOutput("maxPowerTable")
-                     ),
-                     
-                     conditionalPanel(
-                       condition = "output.errorCond == true",
-                       div(class = "warn-box", htmlOutput("error", inline=T)
+                           tags$span(
+                             class = "hovertext", style="font-weight:normal;",
+                             'data-hover' = "lorem ipsum 2",
+                             icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 40%;"),
+                           div(class = "heading", "Maximum Power For all Target Parameters"),
+                           span(style="font-weight:normal; font-variant:small-caps;",
+                                HTML(
+                                  "Given the optimal number of <i>N</i> and <i>T</i>"
+                                )), 
+                           tags$br(),
+                           tags$br(),
+                           DT::dataTableOutput("maxPowerTable")
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "output.errorCond == true",
+                         div(class = "warn-box", htmlOutput("error", inline=T)
+                         )
                        )
-                     )
                      ),
                      
                      div(class="main-box",
@@ -942,7 +942,7 @@ ui <-
              #   )
              # )
              # )
-)
+  )
 
 #################################################################################################
 #################################################################################################
@@ -1962,13 +1962,13 @@ server <- function(input, output, session) {
       targetAB = input$targetAB,
       popSize = input$popSize,
       dbLog = input$dbLog
-  )})
+    )})
   
   output$optN <- renderText({ tryCatch(as.integer(res()$res$N.opt), error = function(e){""})
-    }) 
+  }) 
   
   output$optT <- renderText({ tryCatch(as.integer(res()$res$T.opt), error = function(e){""})
-    })
+  })
   
   maxPower <- reactive({ 
     # besser wäre es names von power.max zu nehmen
@@ -1998,7 +1998,7 @@ server <- function(input, output, session) {
             firstN <- paste0(covs[id], " ") # new
             tmp <- gsub(firstO, firstN, target.param[i])
             par[i] <- gsub("_", " ↔ ", tmp)
-        }
+          }
         }
       }
       #par <- gsub("_", " ", target.param)
@@ -2015,67 +2015,67 @@ server <- function(input, output, session) {
                            colnames = c('Target Parameter', 'Maximum Power')),
              error = function(e){""})
   })
-
+  
   output$errorCond <- reactive({ 
     tryCatch(length(res()$res$error_codes) > 0, error = function(e){""}) 
-    })
+  })
   
   output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
     tryCatch(HTML(paste0(error_messages_translation(res()$res$error_codes), collapse = "<br/>")), error = function(e){""}) 
-    })
+  })
   
   output$runTime <- renderText({ 
     tryCatch(round(res()$res$run.time.optimizer.secs, 3), error = function(e){""})
-    })
+  })
   
   output$optRuns <- renderText({ 
     tryCatch(res()$res$optimizer.runs, error = function(e){""}) 
-    })
+  })
   
   output$runTimeDB <- renderText({ 
     tryCatch(round(res()$res$run.time.log.data.secs, 3), error = function(e){""}) 
-    })
+  })
   
   output$logID <- renderText({ tryCatch(as.integer(res()$res$logid), error = function(e){""}) 
-    })
+  })
   
   output$logDB <- renderText({ 
     tryCatch(res()$res$log.data.status, error = function(e){""}) 
-    })
+  })
   
   # only for testing phase:
-output$results <- renderPrint({ 
-  tryCatch(res(), error = function(e){""})
-})
-
-### deprecated bzw muss geändert werden später
-# Platzhalter für SEM Plot
-# output$platzhalter <- renderImage({
-#   outfile <- tempfile(fileext = '.png')
-#   # größe nicht verstellbar:
-#   png(outfile,
-#       width = 200,
-#       height = 200,
-#       units = "px")
-#   list(src = "img/platzhalter.png")
-# }, deleteFile = F) # constant img
-#dev.off()
-
-### deprecated: selfmade ICONS
-# output$cite <- renderImage({
-#   outfile <- tempfile(fileext='.png')
-#   # größe nicht verstellbar:
-#   png(outfile, width=20, height=2000, units="px", res=120)
-#   list(src="img/cite.png")
-# }, deleteFile=F) # constant img
-# dev.off()
-# output$logo <- renderImage({
-#   l <- tempfile(fileext='.png')
-#   # größe nicht verstellbar:
-#   png(l, width=20, height=20, units="px", res=120)
-#   list(src="img/Logo.png")
-# }, deleteFile=F) # constant img
-#dev.off()
+  output$results <- renderPrint({ 
+    tryCatch(res(), error = function(e){""})
+  })
+  
+  ### deprecated bzw muss geändert werden später
+  # Platzhalter für SEM Plot
+  # output$platzhalter <- renderImage({
+  #   outfile <- tempfile(fileext = '.png')
+  #   # größe nicht verstellbar:
+  #   png(outfile,
+  #       width = 200,
+  #       height = 200,
+  #       units = "px")
+  #   list(src = "img/platzhalter.png")
+  # }, deleteFile = F) # constant img
+  #dev.off()
+  
+  ### deprecated: selfmade ICONS
+  # output$cite <- renderImage({
+  #   outfile <- tempfile(fileext='.png')
+  #   # größe nicht verstellbar:
+  #   png(outfile, width=20, height=2000, units="px", res=120)
+  #   list(src="img/cite.png")
+  # }, deleteFile=F) # constant img
+  # dev.off()
+  # output$logo <- renderImage({
+  #   l <- tempfile(fileext='.png')
+  #   # größe nicht verstellbar:
+  #   png(l, width=20, height=20, units="px", res=120)
+  #   list(src="img/Logo.png")
+  # }, deleteFile=F) # constant img
+  #dev.off()
 }
 
 shinyApp(ui = ui, server = server)

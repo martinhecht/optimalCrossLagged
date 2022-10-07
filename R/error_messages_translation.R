@@ -1,4 +1,7 @@
 ## Changelog:
+# MA 0.0.36 2022-10-07:
+#     -- added error code 22
+#     -- , updated error_type for the errors 14 to 22
 # JW: 0.0.32 2022-10-05: added error codes 14-21
 # MH 0.0.31 2022-09-05: added error code 13 (type: warning)
 # MH 0.0.30 2022-09-02:
@@ -29,7 +32,8 @@ error_messages_translation <- function (error_code) {
 	"Variances cannot be set to 0. Please change the Random Slope Variance(s).", # 18
 	"Variances cannot be set to 0. Please change the Constant Accumulating Factor Variance(s).", # 19
 	"Variances cannot be set to 0. Please change the Changing Accumulating Factor Variance(s).", # 20
-	"Please don't select all parameters as target parameters." # 21
+	"Please don't select all parameters as target parameters.", # 21
+	"Testing of a variance parameters also includes the test of all related covariance parameters." # 22
   )
   
   error_messages[error_code]
@@ -50,8 +54,17 @@ error_type <- function (error_code) {
     "error",   # 9
     "error",   # 10
     "error",   # 11
-	"warning", # 12
-	"warning"  # 13
+    "warning", # 12
+    "warning", # 13
+    "error",   # 14
+    "error",   # 15
+    "error",   # 16
+    "error",   # 17
+    "error",   # 18
+    "error",   # 19
+    "error",   # 20
+    "error",   # 21
+    "warning"    # 22
   )
   
   error_type[error_code]
