@@ -69,7 +69,8 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
   error_codes <- check_plausability(constraints = constraints, model = model)
   
   # if errors are detected: return output with error codes
-  if (length(error_codes) > 0) {
+  if(length(  error_codes[  error_type(error_codes) %in%  "error" ] ) > 0) {
+  # if (length(error_codes) > 0) {
     return(make_output(error_codes = error_codes))
   }
 
