@@ -1,9 +1,11 @@
+# MA: 0.0.36 2022-10-07: sourced make_output.R and error_messages_translation.R
 # JW: 0.0.30 2022-10-05: diverse things added and bugs fixed
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
 setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
+
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -56,6 +58,8 @@ source("R/optmze.R")
 source("R/prepare.input.R")
 source("R/prepare.results.R")
 source("R/RcppExports.R")
+source("R/make_output.R")
+source("R/error_messages_translation.R")
 
 ui <-
   # include file-based css in shiny: https://shiny.rstudio.com/articles/css.html

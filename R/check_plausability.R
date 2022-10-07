@@ -1,3 +1,4 @@
+# MA 0.0.36 2022-10-07: added error code 22
 # JW: 0.0.32 2022-10-05: added error codes 14-21
 
 check_plausability <- function (constraints = constraints, model = model) {
@@ -81,6 +82,22 @@ if (!is.null(model$specification$input_H1$Theta_B)) {
   #   error_codes <- c(error_codes, 21)
   # }
   
+
+  # Check if by testing a variance parameter, covariance parameters are tested.
+  ## Check is unnecessary for univariate models
+  if (nrow(model$specification$input_H1$Gamma$values) > 1) {
+
+    if (any(model$target.parameters %in%
+            c(diag(model$specification$input_H1$Omega$labels),
+              diag(model$specification$input_H1$Psi$labels),
+              diag(model$specification$input_H1$Theta_I$labels),
+              diag(model$specification$input_H1$Theta_S$labels),
+              diag(model$specification$input_H1$Theta_A$labels),
+              diag(model$specification$input_H1$Theta$labels)))) {
+      error_codes <- c(error_codes, 22)
+    }
+  }
+    
 # return
 error_codes
 

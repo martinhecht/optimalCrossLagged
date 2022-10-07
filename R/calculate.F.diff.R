@@ -16,7 +16,7 @@
 
 calculate.F.diff <- function(timepoints, input_H1, target.parameters = NULL,
                              target.parameters.values.H0 = NULL,
-							 return.Sigma=FALSE) {
+                             return.Sigma = FALSE) {
   
   # Dimensions and indices for RAM matrices ----
   n_ov <- input_H1$n_ov
