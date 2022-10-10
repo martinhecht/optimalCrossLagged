@@ -127,12 +127,22 @@
         box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
         }
         
-        .warn-box {
+        .error-box {
         min-height: 20px;
         padding: 19px;
         margin-bottom: 20px;
         background-color: #fdb5c7;
         border: 1px solid #fdb5c7;
+        border-radius: 20px;
+        box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
+        }
+        
+        .warn-box {
+        min-height: 20px;
+        padding: 19px;
+        margin-bottom: 20px;
+        background-color: #ffdab3;
+        border: 1px solid #ffdab3;
         border-radius: 20px;
         box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
         }
