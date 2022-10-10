@@ -1,3 +1,4 @@
+# JW: 0.0.37 2022-20-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
 # JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
 # JW: 0.0.30 2022-10-05: diverse things added and bugs fixed
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
@@ -47,11 +48,7 @@ source("R/calculate.power.LRT.R")
 source("R/calculate.power.R")
 source("R/check_plausability.R")
 source("R/compute.se.oertzen.R")
-# source("R/compute_chisq.R")
-# source("R/compute_power.R")
 source("R/fn.R")
-# source("generate.model.example.2.R") # example
-# source("generate.model.example.3.R") # example
 source("R/get_all_labels.R")
 source("R/helper.functions.R")
 source("R/kickstart.optimizer.R")
@@ -66,7 +63,7 @@ ui <-
              title = "OptDynMo: Optimal Design for Dynamic Longitudinal Models",
              
              tabPanel(
-               title = HTML("Calculate <b>Power</b>"),
+               title = "Calculate Power",
                icon = icon("magnifying-glass-chart"),
                fluidPage(
                  fluidRow(
@@ -856,7 +853,13 @@ ui <-
                        
                        conditionalPanel(
                          condition = "output.errorCond == true",
-                         div(class = "warn-box", htmlOutput("error", inline=T)
+                         div(class = "error-box", htmlOutput("error", inline=T)
+                         )
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "output.warningCond == true",
+                         div(class = "warn-box", htmlOutput("warn", inline=T)
                          )
                        )
                      ),
@@ -915,7 +918,9 @@ ui <-
                        verbatimTextOutput("results")
                      ),
                      
+                     # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
                      span(style="color:white;", textOutput("errorCond", inline=T)), 
+                     span(style="color:white;", textOutput("warningCond", inline=T)) 
                      
                    ) ### column three
                  ) ### fluidRow POWER
@@ -979,11 +984,11 @@ server <- function(input, output, session) {
   })
   
   output$minT_Output <- renderText({
-    tryCatch(round(res()$res$constraints$T.min.bound, 0), error = function(e){""})
+    tryCatch(round(res()$res$constraints$T.min.set, 0), error = function(e){""})
   })
   
   output$maxT_Output <- renderText({
-    tryCatch(round(res()$res$constraints$T.max.bound, 0), error = function(e){""})
+    tryCatch(round(res()$res$constraints$T.max.set, 0), error = function(e){""})
   })
   
   output$minN_Output <- renderText({
@@ -1977,26 +1982,22 @@ server <- function(input, output, session) {
     
     if (!is.null(target.param)){
       par <- c()
-      vars <- c("CL", "IS", "AB") # -->
-      covs <- c("RES", "UNIQ", "I", "S", "A", "B") # <-->
-      for (i in 1:length(target.param)){
-        if (lengths(regmatches(target.param[i], gregexpr("_", target.param[i]))) == 1){ # vars (including AR)
+      vars_O <- c("CL_", "IS_", "AB_") # -->
+      vars_N <- c("CL ", "IS ", "AB ")
+      covs_0 <- c("RES_", "UNIQ_", "I_", "S_", "A_", "B_") # <-->
+      covs_N <- c("RES ", "UNIQ ", "I ", "S ", "A ", "B ")
+      for (i in 1:length(target.param)){ # if only one _ then variance (including AR)
+        if (lengths(regmatches(target.param[i], gregexpr("_", target.param[i]))) == 1){ 
           par[i] <- gsub("_", " ", target.param[i])
         } else {
           tmp <- c()
-          firstO <- c()
-          firstN <- c()
-          if (any(str_detect(target.param[i], vars))){
-            id <- str_which(target.param[i], vars)
-            firstO <- paste0(vars[id], "_") # old
-            firstN <- paste0(vars[id], " ") # new
-            tmp <- gsub(firstO, firstN, target.param[i])
+          if (any(str_detect(target.param[i], vars_O))){
+            id <- str_which(target.param[i], vars_O)
+            tmp <- gsub(vars_O[id], vars_N[id], target.param[i])
             par[i] <- gsub("_", " → ", tmp)
-          } else if (any(str_detect(target.param[i], covs))){
-            id <- str_which(target.param[i], covs)
-            firstO <- paste0(covs[id], "_") # old
-            firstN <- paste0(covs[id], " ") # new
-            tmp <- gsub(firstO, firstN, target.param[i])
+          } else if (any(str_detect(target.param[i], covs_O))){
+            id <- str_which(target.param[i], covs_O)
+            tmp <- gsub(covs_O[id], covs_N[id], target.param[i])
             par[i] <- gsub("_", " ↔ ", tmp)
           }
         }
@@ -2016,12 +2017,22 @@ server <- function(input, output, session) {
              error = function(e){""})
   })
   
-  output$errorCond <- reactive({ 
-    tryCatch(length(res()$res$error_codes) > 0, error = function(e){""}) 
+  output$errorCond <- reactive({
+    tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""}) 
   })
   
   output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(HTML(paste0(error_messages_translation(res()$res$error_codes), collapse = "<br/>")), error = function(e){""}) 
+    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ), 
+                         collapse = "<br/>"))), error = function(e){""}) 
+  })
+  
+  output$warningCond <- reactive({ 
+    tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ] ) > 0, error = function(e){""}) 
+  })
+  
+  output$warn <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
+    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Warning!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ] ), 
+                         collapse = "<br/>"))), error = function(e){""}) 
   })
   
   output$runTime <- renderText({ 
