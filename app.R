@@ -1,11 +1,12 @@
-# JW: 0.0.37 2022-20-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
+# JW: 0.0.38 2022-10-14: removed guthib packages (icons at all, shinyMatrix now from CRAN)
+# JW: 0.0.37 2022-10-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
 # JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
 # JW: 0.0.30 2022-10-05: diverse things added and bugs fixed
 # JW: 0.0.29 2022-09-02: error in IS and AB matrices corrected; problem with html and internet browser tab fixed in css; new script sourced
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
+#setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -13,6 +14,7 @@ packages <- c("shiny", # basic
               "magrittr", # pipe operator
               "devtools", # for shinyMatrix on github
               "shinyWidgets", # for pickerInput widget
+              "shinyMatrix",
               "dplyr", # for case_when
               "R.utils",
               "rgenoud",
@@ -29,15 +31,15 @@ if (length(newPackages))
   install.packages(newPackages)
 packages <- packages[-length(packages)] # prevent config from loading; otherwise base::get() masked
 lapply(packages, require, character.only = TRUE)
-if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
-  install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
-}
-require(shinyMatrix)
-if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
-  install_github("mitchelloharawild/icons") # does not appear in "Packages"
-  download_fontawesome()
-}
-require(icons)
+# if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
+#   install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
+# }
+# require(shinyMatrix)
+# if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
+#   install_github("mitchelloharawild/icons") # does not appear in "Packages"
+#   download_fontawesome()
+# }
+# require(icons)
 
 
 
