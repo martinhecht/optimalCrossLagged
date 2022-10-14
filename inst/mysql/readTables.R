@@ -5,7 +5,8 @@
 library("RMariaDB")
 
 # get config file
-dw <- config::get("datawarehouse")
+dw <- config::get("datawarehouse",file = Sys.getenv("R_CONFIG_FILE", "config.pikepi12.yml"))
+# dw <- config::get("datawarehouse")
 
 # connect to data base
 con <- dbConnect( 	eval(parse(text=dw$driver)),
