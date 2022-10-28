@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.42 2022-10-28: changed type of 22 to "note"
 # MA 0.0.36 2022-10-07:
 #     -- added error code 22
 #     -- , updated error_type for the errors 14 to 22
@@ -64,7 +65,7 @@ error_type <- function (error_code) {
     "error",   # 19
     "error",   # 20
     "error",   # 21
-    "warning"    # 22
+    "note"     # 22
   )
   
   error_type[error_code]

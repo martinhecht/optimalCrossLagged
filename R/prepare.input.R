@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.42 2022-10-28: added handling of T.min.set>T.max.set (to solve test case "budget35000")
 # MH 0.0.34 2022-09-15: timeout.log.data
 # MH 0.0.30 2022-09-02: modification for stability checks
 # MH 0.0.1 2022-01-20: copied chunks from optmze
@@ -135,6 +136,13 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 			
 			# if integer is required, make integer
 			eval( parse( text=paste0( 'if( constraints$',par,'.integer ) ',par,'.min.set <- as.integer( ceiling( ',par,'.min.set ) )' ) ) )
+			
+			# MH 0.0.42 2022-10-28:
+			# in some cases (e.g. test case "budget35000") T.min.set>T.max.set (for whatever reason, maybe rounding?)
+			# in test case "budget35000":  round(T.max.bound=1165.667)=1165;  T.max.set=10 (weil T.max=10)
+			#                              round(T.min.bound=10.6667)=11=T.min.set (T.min=2)
+			# in this case mean of .min.set and max.set for both
+			eval( parse( text=paste0( 'if(',par,'.min.set > ',par,'.max.set){ ',par,'.min.set <- ',par,'.max.set <- mean(',par,'.min.set,',par,'.max.set); if( constraints$',par,'.integer ) ',par,'.min.set <- ',par,'.max.set <- as.integer( round( ',par,'.min.set ) ) }') ) )
 			
 			## for checking
 			# maximal T possible by budget and N.min.set
