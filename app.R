@@ -1,3 +1,4 @@
+# JW: 0.0.41 2022 ----- implemented change suggestion from meeting on 22-10-28
 # JW: 0.0.38 2022-10-14: removed guthib packages (icons at all, shinyMatrix now from CRAN)
 # JW: 0.0.37 2022-10-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
 # JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
@@ -6,7 +7,7 @@
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-#setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
+setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -65,7 +66,7 @@ ui <-
              title = "OptDynMo: Optimal Design for Dynamic Longitudinal Models",
              
              tabPanel(
-               title = "Calculate Power",
+               title = "Maximize Power",
                icon = icon("magnifying-glass-chart"),
                fluidPage(
                  fluidRow(
@@ -117,7 +118,7 @@ ui <-
                                  value = 0.05,
                                  min = 0,
                                  max = 1,
-                                 step = 0.05
+                                 step = 0.005
                                )
                                ## without arrows (but not able to give value to backend)
                                # autonumericInput(
@@ -204,7 +205,7 @@ ui <-
                                  step = 5
                                ),
                                splitLayout(
-                                 uiOutput(outputId = "minTidentify_Output"),
+                                 uiOutput(outputId = ""),
                                  conditionalPanel(
                                    condition = "output.errorCond == false", 
                                    div(class = "unit", uiOutput(outputId = "minT_Output"))
@@ -262,8 +263,12 @@ ui <-
                              label = HTML("Process Names"),
                              placeholder = "proc1, proc2",
                              value = "proc1, proc2"
+                           ),
+                           tags$span(style = "font-weight:normal; font-size:small;",
+                                     "Please indicate at least one process name. Seperate multiple names with comma."
                            )
                        ),
+                       
                        
                        # only single-indicator for now
                        conditionalPanel(
@@ -860,9 +865,25 @@ ui <-
                        ),
                        
                        conditionalPanel(
-                         condition = "output.warningCond == true",
-                         div(class = "warn-box", htmlOutput("warn", inline=T)
+                         condition = "output.fatalErrorCond == true",
+                         div(class = "error-box", htmlOutput("fatalError", inline=T)
                          )
+                       ),
+                       
+                       ### TEST TEST - funzt auch nicht (background: isnull evals also to true)
+                       # conditionalPanel(
+                       #   condition = "output.errorCond_inverted == false",
+                       #   div(class = "error-box", htmlOutput("error", inline=T)
+                       #   )
+                       # ),
+                       
+                       # TEST TEST - funzt nicht
+                        # div(class = "error-box", htmlOutput("error", inline=T)), 
+                       
+                       conditionalPanel(
+                         condition = "output.warningCond == true",
+                         div(class = "warn-box", style = "display: none;", htmlOutput("warn", inline=T)
+                         ) # display: none so that won't be rendered unless true (otherwise flashing at start app)
                        )
                      ),
                      
@@ -922,7 +943,8 @@ ui <-
                      
                      # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
                      span(style="color:white;", textOutput("errorCond", inline=T)), 
-                     span(style="color:white;", textOutput("warningCond", inline=T)) 
+                     span(style="color:white;", textOutput("fatalErrorCond", inline=T)), 
+                     span(style="color:white;", textOutput("warningCond", inline=T)),
                      
                    ) ### column three
                  ) ### fluidRow POWER
@@ -956,7 +978,7 @@ ui <-
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  #output$value <- renderPrint({ error_messages_translation(res()$res$error_codes) })
+  #output$value <- renderPrint({ input$procNames == "" })
   # in kombi mit:
   # verbatimTextOutput("value")
   
@@ -1981,12 +2003,12 @@ server <- function(input, output, session) {
     # besser wäre es names von power.max zu nehmen
     target.param <- tryCatch(res()$target.parameters, error = function(e){target.param <- NULL})
     power.max <- tryCatch(res()$res$power.max, error = function(e){power.max <- NULL})
-    
+
     if (!is.null(target.param)){
       par <- c()
       vars_O <- c("CL_", "IS_", "AB_") # -->
       vars_N <- c("CL ", "IS ", "AB ")
-      covs_0 <- c("RES_", "UNIQ_", "I_", "S_", "A_", "B_") # <-->
+      covs_O <- c("RES_", "UNIQ_", "I_", "S_", "A_", "B_") # <-->
       covs_N <- c("RES ", "UNIQ ", "I ", "S ", "A ", "B ")
       for (i in 1:length(target.param)){ # if only one _ then variance (including AR)
         if (lengths(regmatches(target.param[i], gregexpr("_", target.param[i]))) == 1){ 
@@ -2020,13 +2042,39 @@ server <- function(input, output, session) {
   })
   
   output$errorCond <- reactive({
-    tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""}) 
+    # TRUE if errors
+    tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""})
   })
   
-  output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ), 
-                         collapse = "<br/>"))), error = function(e){""}) 
+  output$fatalErrorCond <- reactive({
+    # TRUE if errors
+    tryCatch(input$procNames == "", error = function(e){""})
   })
+  
+  output$fatalError <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
+    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/> Please indicate at least one process name.")), error = function(e){""})
+  })
+  
+  # output$errorCond_inverted <- reactive({
+  #   # TRUE if no errors
+  #   tryCatch( length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) == 0, error = function(e){""})
+  # })
+  
+  output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
+    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ),
+                                                                                                collapse = "<br/>"))), error = function(e){""})
+  })
+  
+  #  TEST TEST TEST
+  # errorCondTEST <- reactive({
+  #   tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""})
+  # })
+  # 
+  # output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
+  #   if (errorCondTEST()){
+  #     tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ),                                                                                           collapse = "<br/>"))), error = function(e){""})
+  #   } 
+  # })
   
   output$warningCond <- reactive({ 
     tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ] ) > 0, error = function(e){""}) 
