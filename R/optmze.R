@@ -1,4 +1,6 @@
 ## Changelog:
+# MH 0.0.42 2022-10-28: added test case "instable results"
+#                       added test case "budget35000"
 # MH 0.0.35 2022-10-05: new package required: here
 # MH 0.0.34 2022-09-15: new argument: timeout.log.data
 #						changed default of log.data from FALSE to TRUE
@@ -218,6 +220,69 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 # }
 
 
+### MH 0.0.42 2022-10-28 test case "instable results"
+# specs <- generate.model.example.3()
+# specs$input_H1$Gamma$values <- matrix( c(0.9,0.1,0.5,0.3), 2, 2 )
+# specs$input_H1$Omega$values <- matrix( c(1,0,0,1), 2, 2 )
+# specs$input_H1$Psi <- NULL
+# specs$input_H1$model <- "CLPM"
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=10000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=9, "T.max"=36, "N.min"=3, "N.max"=300,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
+
+
+### MH 0.0.42 2022-10-28 test case "budget35000"
+# specs <- generate.model.example.3()
+# specs$input_H1$Gamma$values <- matrix( c(0.5,0.1,0.1,0.5), 2, 2 )
+# specs$input_H1$Omega$values <- matrix( c(1,0,0,1), 2, 2 )
+# specs$input_H1$Psi <- NULL
+# specs$input_H1$model <- "CLPM"
+
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=35000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=2, "T.max"=10, "N.min"=3, "N.max"=300,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
 
 
 ### test
