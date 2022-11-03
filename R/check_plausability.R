@@ -1,16 +1,16 @@
-# MA 0.0.36 2022-10-07: added error code 22
+# JW: 0.0.43 2022-11-02: changed/deleted error 1-4, added error 23-29
+# MA: 0.0.36 2022-10-07: added error code 22
 # JW: 0.0.32 2022-10-05: added error codes 14-21
 
-check_plausability <- function (constraints = constraints, model = model) {
+check_plausability <- function (constraints = constraints, model = model, study = study) {
   
   error_codes <- c()
   
   # check N and T inputs
-  if (constraints$T.min < 2) {error_codes <- c(error_codes, 1)}
-  if (constraints$T.min >= constraints$T.max) {error_codes <- c(error_codes, 2)}
+  if (constraints$T.min < constraints$T.min.identify) {error_codes <- c(error_codes, 1)}
+  #if (constraints$T.min > constraints$T.max) {error_codes <- c(error_codes, 2)} # deprecated (should not occur)
   if (constraints$N.min < 1) {error_codes <- c(error_codes, 3)}
-  if (constraints$N.max <= constraints$N.min) {error_codes <- c(error_codes, 4)}
-  # hier kommen chekcs
+  #if (constraints$N.max < constraints$N.min) {error_codes <- c(error_codes, 4)} # deprecated (should not occur)
   
   # check building blocks
   identity_matrix <- diag(1, nrow = nrow(model$specification$input_H1$Gamma$values))
@@ -25,27 +25,27 @@ check_plausability <- function (constraints = constraints, model = model) {
       error_codes <- c(error_codes, 7)
     }
   }
-if (!is.null(model$specification$input_H1$Theta_I)) {
-  if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_I$values)) {
-    error_codes <- c(error_codes, 8)
+  if (!is.null(model$specification$input_H1$Theta_I)) {
+    if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_I$values)) {
+      error_codes <- c(error_codes, 8)
+    }
   }
-}
-if (!is.null(model$specification$input_H1$Theta_S)) {
-  if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_S$values)) {
-    error_codes <- c(error_codes, 9)
+  if (!is.null(model$specification$input_H1$Theta_S)) {
+    if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_S$values)) {
+      error_codes <- c(error_codes, 9)
+    }
   }
-}
-if (!is.null(model$specification$input_H1$Theta_A)) {
-  if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_A$values)) {
-    error_codes <- c(error_codes, 10)
+  if (!is.null(model$specification$input_H1$Theta_A)) {
+    if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_A$values)) {
+      error_codes <- c(error_codes, 10)
+    }
   }
-}
-if (!is.null(model$specification$input_H1$Theta_B)) {
-  if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_B$values)) {
-    error_codes <- c(error_codes, 11)
+  if (!is.null(model$specification$input_H1$Theta_B)) {
+    if (!matrixcalc::is.positive.semi.definite(model$specification$input_H1$Theta_B$values)) {
+      error_codes <- c(error_codes, 11)
+    }
   }
-}
-
+  
   if (is.null(model$target.parameters)) {error_codes <- c(error_codes, 14)}
   
   # check whether variances are non-zero
@@ -82,11 +82,11 @@ if (!is.null(model$specification$input_H1$Theta_B)) {
   #   error_codes <- c(error_codes, 21)
   # }
   
-
+  
   # Check if by testing a variance parameter, covariance parameters are tested.
   ## Check is unnecessary for univariate models
   if (nrow(model$specification$input_H1$Gamma$values) > 1) {
-
+    
     if (any(model$target.parameters %in%
             c(diag(model$specification$input_H1$Omega$labels),
               diag(model$specification$input_H1$Psi$labels),
@@ -97,8 +97,36 @@ if (!is.null(model$specification$input_H1$Theta_B)) {
       error_codes <- c(error_codes, 22)
     }
   }
-    
-# return
-error_codes
+  
+  if (study$budget == 0){
+    error_codes <- c(error_codes, 23)
+  }
+  
+  if (study$l2.cost == 0){
+    error_codes <- c(error_codes, 24)
+  }
+  
+  if (study$l1.cost == 0){
+    error_codes <- c(error_codes, 25)
+  }
+  
+  if (study$budget < (constraints$T.min * study$l1.cost) + (constraints$N.min * study$l2.cost) ){
+    error_codes <- c(error_codes, 26)
+  }
+  
+  if (study$alpha == 0 | study$alpha > 1){
+    error_codes <- c(error_codes, 27)
+  }
+  
+  if (any(diag(model$specification$input_H1$Gamma$values) >= 1)  | any(diag(model$specification$input_H1$Gamma$values) <= -1) ){
+    error_codes <- c(error_codes, 28)
+  }
+  
+  if (study$budget > 1000000){
+    error_codes <- c(error_codes, 29)
+  }
 
+  # return
+  error_codes
+  
 }

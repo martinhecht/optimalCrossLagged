@@ -1,4 +1,5 @@
 ## Changelog:
+# JW 0.0.43 2022-11-02: check_plausability() got new parameter study, optmze() got new list element T.min.identify for error checking
 # MH 0.0.42 2022-10-28: added test case "instable results"
 #                       added test case "budget35000"
 # MH 0.0.35 2022-10-05: new package required: here
@@ -49,7 +50,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 									"set.seed.value"="random"				   # max nchar: 10
 									),
 					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=NULL),
-					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300,
+					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300, "T.min.identify"=NULL,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
 					model=list("specification"=NULL, "target.parameters"=NULL, # max nchar: 50
@@ -68,7 +69,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
   
   # MA 0.0.25 2022-07-28: added plausability checks of inputs
   # plausability checks
-  error_codes <- check_plausability(constraints = constraints, model = model)
+  error_codes <- check_plausability(constraints = constraints, model = model, study = study)
   
   # if errors are detected: return output with error codes
   if(length(  error_codes[  error_type(error_codes) %in%  "error" ] ) > 0) {

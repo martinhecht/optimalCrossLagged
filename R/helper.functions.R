@@ -1,4 +1,7 @@
-# JQ: 0.0.36 2022-10-06: corrected labelL for IS and AB and convention labels symmetrical matrices covs
+# JW: 0.0.43 2022-11-02: fixed compute_results() error when no measModel
+#                        pop.size.max added in compute_results()
+#                        compute_results() got new param minTidentify for error checking in backend
+# JW: 0.0.36 2022-10-06: corrected labelL for IS and AB and convention labels symmetrical matrices covs
 # MH: 0.0.35 2022-10-05: moved log.data out of genoud list
 # JW: 0.0.31 2022-10-05: dbLog added, if clause around optmze() removed for error catching within
 # JW: 0.0.30 2022-10-04: coherent labeling in off-diags of labelsM in symmetrical matrices 
@@ -368,6 +371,7 @@ compute_results <- function(budget,
                             costT,
                             minT,
                             maxT,
+                            minTidentify,
                             modelClass,
                             procNames,
                             measModel,
@@ -395,12 +399,14 @@ compute_results <- function(budget,
   procNames_List <-
     as.list(unlist(strsplit(procNames, split = "\\, |\\,| ")))
   nP <- length(procNames_List)
-  nM <- length(measModel)
+  if (!is.null(measModel)){ # if meas model specified
+    nM <- length(measModel)
+    UNIQ <- matrix(as.numeric(UNIQ), ncol=nM)
+    UNIQ[upper.tri(UNIQ)] <- t(UNIQ)[upper.tri(UNIQ)]
+    }
   ARCL <- matrix(as.numeric(ARCL), ncol=nP)
   RES <- matrix(as.numeric(RES), ncol=nP)
   RES[upper.tri(RES)] <- t(RES)[upper.tri(RES)]
-  UNIQ <- matrix(as.numeric(UNIQ), ncol=nM)
-  UNIQ[upper.tri(UNIQ)] <- t(UNIQ)[upper.tri(UNIQ)]
   I <- matrix(as.numeric(I), ncol=nP)
   I[upper.tri(I)] <- t(I)[upper.tri(I)]
   S <- matrix(as.numeric(S), ncol=nP)
@@ -438,11 +444,13 @@ compute_results <- function(budget,
   
   # how to use switch with code blocks: https://stackoverflow.com/questions/7825501/switch-statement-usage
   switch(modelClass,
-         "fclpm" = {
-           input_H1$Psi <- list(values = UNIQ,
-                               labels = labelsM(NULL, "UNIQ", measModel))
-           target.parameters <- c(target.parameters, targetUNIQ)
-           target.parameters.values.h0 <- rep(0, length(target.parameters))
+         "fclpm" = { ########### erstmal nur hier testen ob problem mit UNIQ
+           if (!is.null(measModel)){
+             input_H1$Psi <- list(values = UNIQ,
+                                  labels = labelsM(NULL, "UNIQ", measModel))
+             target.parameters <- c(target.parameters, targetUNIQ)
+             target.parameters.values.h0 <- rep(0, length(target.parameters))
+           }
          },
          "ri-clpm" = {
            input_H1$Theta_I <- list(values = I,
@@ -451,12 +459,19 @@ compute_results <- function(budget,
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "starts" = {
-           input_H1$Psi <- list(values = UNIQ,
-                               labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_I <- list(values = I,
-                                   labels = labelsM(procNames_List, "I"))
-           target.parameters <- c(target.parameters, targetUNIQ, targetI)
-           target.parameters.values.h0 <- rep(0, length(target.parameters))
+           if (!is.null(measModel)){
+             input_H1$Psi <- list(values = UNIQ,
+                                  labels = labelsM(NULL, "UNIQ", measModel))
+             input_H1$Theta_I <- list(values = I,
+                                      labels = labelsM(procNames_List, "I"))
+             target.parameters <- c(target.parameters, targetUNIQ, targetI)
+             target.parameters.values.h0 <- rep(0, length(target.parameters))
+           } else {
+             input_H1$Theta_I <- list(values = I,
+                                      labels = labelsM(procNames_List, "I"))
+             target.parameters <- c(target.parameters, targetI)
+             target.parameters.values.h0 <- rep(0, length(target.parameters))
+           }
          },
          "lcm-sr" = {
            input_H1$Theta_I <- list(values = I,
@@ -479,12 +494,19 @@ compute_results <- function(budget,
            target.parameters.values.h0 <- rep(0, length(target.parameters))
          },
          "lcs" = {
-           input_H1$Psi <- list(values = UNIQ,
-                               labels = labelsM(NULL, "UNIQ", measModel))
-           input_H1$Theta_A <- list(values = A,
-                                   labels = labelsM(procNames_List, "A"))
-           target.parameters <- c(target.parameters, targetUNIQ, targetA)
-           target.parameters.values.h0 <- rep(0, length(target.parameters))
+           if (!is.null(measModel)){
+             input_H1$Psi <- list(values = UNIQ,
+                                  labels = labelsM(NULL, "UNIQ", measModel))
+             input_H1$Theta_A <- list(values = A,
+                                      labels = labelsM(procNames_List, "A"))
+             target.parameters <- c(target.parameters, targetUNIQ, targetA)
+             target.parameters.values.h0 <- rep(0, length(target.parameters))
+           } else {
+             input_H1$Theta_A <- list(values = A,
+                                      labels = labelsM(procNames_List, "A"))
+             target.parameters <- c(target.parameters, targetA)
+             target.parameters.values.h0 <- rep(0, length(target.parameters))
+           }
          }
   )
 
@@ -523,11 +545,13 @@ compute_results <- function(budget,
         "T.max" = maxT,
         "N.min" = minN,
         "N.max" = maxN,
+        "T.min.identify"=minTidentify,
         "T.integer" = TRUE,
         "N.integer" = FALSE
       ),
       genoud = list(
         "pop.size" = popSize,
+        "pop.size.max"=1000, # max from sliderInput(inputId = "popSize")
         "max.generations" = 100,
         "wait.generations" = 1,
         "boundary.enforcement" = 2,
@@ -536,7 +560,8 @@ compute_results <- function(budget,
       log.data=dbLog, # MH 0.0.35 2022-10-05, moved log.data out of genoud list
 	  verbose = FALSE
     )
-  
+    
+  # for dev output in testing phase:
   testing <- list(specs=specs,
                   target.parameters=target.parameters,
                   target.parameters.values.h0=target.parameters.values.h0,
