@@ -7,7 +7,7 @@
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
+#setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
