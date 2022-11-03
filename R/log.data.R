@@ -1,4 +1,6 @@
 ## Changelog:
+# MH 0.0.44 2022-11-04: moved get.clpm.info() to separate file
+#                       
 # MH 0.0.35 2022-10-05: read of description files wrapped in try, new package required: here
 # MH 0.0.34 2022-09-15: further variables added
 # MH 0.0.33 2022-09-12: further variables added
@@ -13,7 +15,7 @@
 #' @return
 
 ## Function definition
-log.data <- function( input, results, verbose=TRUE ){
+log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
 # browser()	
 	# start time 
 	start.time.log.data <- Sys.time()	
@@ -28,46 +30,6 @@ log.data <- function( input, results, verbose=TRUE ){
 						username = dw$uid,
 						password = dw$pwd,
 						dbname = dw$database )
-
-	# MH 0.0.35 2022-10-05: read of description files wrapped in try
-	get.clpm.info <- function(){ 
-		## clpm version and date
-		# read lines from description file
-		lns <- readLines( here( "DESCRIPTION" ) )
-		# which line has version
-		wV <- which( sapply( lns, function(ln) grepl( "Version:", ln, fixed=TRUE ) ) )
-		# which line has date
-		wD <- which( sapply( lns, function(ln) grepl( "Date:", ln, fixed=TRUE ) ) )
-		# get version
-		optimalclpm.version.str <- sub( "^.*\\s(\\d+\\.\\d+\\.\\d+).*$", "\\1", lns[wV] )
-		version <-       as.integer( sub( "^(\\d+)\\.\\d+\\.\\d+$", "\\1", optimalclpm.version.str ) )
-		subversion <-    as.integer( sub( "^\\d+\\.(\\d+)\\.\\d+$", "\\1", optimalclpm.version.str ) )
-		subsubversion <- as.integer( sub( "^\\d+\\.\\d+\\.(\\d+)$", "\\1", optimalclpm.version.str ) )
-		# get date
-		optimalclpm.version.date.str <- sub( "^.*\\s(\\d+\\-\\d+\\-\\d+).*$", "\\1", lns[wD] )
-		optimalclpm.version.year  <- as.integer( sub( "^(\\d+)\\-\\d+\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
-		optimalclpm.version.month <- as.integer( sub( "^\\d+\\-(\\d+)\\-\\d+$", "\\1", optimalclpm.version.date.str ) )
-		optimalclpm.version.day   <- as.integer( sub( "^\\d+\\-\\d+\\-(\\d+)$", "\\1", optimalclpm.version.date.str ) )
-		return( list(  "optimalclpm.version.str"=optimalclpm.version.str,
-					   "version"=version,
-					   "subversion"=subversion,
-					   "subsubversion"=subsubversion,
-					   "optimalclpm.version.date.str"=optimalclpm.version.date.str,
-					   "optimalclpm.version.year"=optimalclpm.version.year,
-					   "optimalclpm.version.month"=optimalclpm.version.month,
-					   "optimalclpm.version.day"=optimalclpm.version.day ) )
-	}
-	clpm.info.list <- try( get.clpm.info() )
-	if( inherits( clpm.info.list, "try-error" ) ){
-		clpm.info.list <- list( "optimalclpm.version.str"=NULL,
-								"version"=NULL,
-								"subversion"=NULL,
-								"subsubversion"=NULL,								
-								"optimalclpm.version.date.str"=NULL,
-								"optimalclpm.version.year"=NULL,
-								"optimalclpm.version.month"=NULL,
-								"optimalclpm.version.day"=NULL )
-	}
 	
 	# get date time
 	posix <- Sys.time()

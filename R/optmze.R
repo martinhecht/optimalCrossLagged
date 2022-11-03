@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.44 2022-11-04: changed default of T.min.identify from NULL to 0
 # JW 0.0.43 2022-11-02: check_plausability() got new parameter study, optmze() got new list element T.min.identify for error checking
 # MH 0.0.42 2022-10-28: added test case "instable results"
 #                       added test case "budget35000"
@@ -50,7 +51,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 									"set.seed.value"="random"				   # max nchar: 10
 									),
 					study=list("budget"=20000, "target.power"=0.80, "l2.cost"=10, "l1.cost"=10, alpha=0.05, T=NULL),
-					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300, "T.min.identify"=NULL,
+					constraints=list("T.min"=3, "T.max"=10, "N.min"=3, "N.max"=300, "T.min.identify"=0,
 									 "T.integer"=TRUE,
 									 "N.integer"=FALSE ),
 					model=list("specification"=NULL, "target.parameters"=NULL, # max nchar: 50
@@ -125,10 +126,14 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 		run.time.optimizer.difftime <- Sys.time() - start.time.optimizer
 		run.time.optimizer.secs <- as.double( run.time.optimizer.difftime, units="secs" )
 		
+		# MH 0.0.44 2022-11-04: get package version
+		clpm.info.list <- get.clpm.info()
+		
 		# prepare results
 		results <- prepare.results( res=res,
 									run.time.optimizer.secs=run.time.optimizer.secs,
 									input=input,
+									clpm.info.list=clpm.info.list,
 									verbose=verbose,
 									error_codes = error_codes)
 		
@@ -143,6 +148,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 													'try(log.data(
 														 input=input,
 														 results=results,
+														 clpm.info.list=clpm.info.list,
 														 verbose=verbose ) )',
 														 ifelse(wt2,',
 														 timeout = timeout.log.data,
@@ -212,7 +218,7 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 									# ),
 							# constraints=list("T.min"=3, "T.max"=40, "N.min"=3, "N.max"=1000,
 											# "T.integer"=TRUE,
-											# "N.integer"=FALSE ),									
+											# "N.integer"=FALSE, "T.min.identify"=0 ),
 						  # genoud=list("pop.size"=16,"max.generations"=100,"wait.generations"=1,
 						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
 						  # verbose=TRUE )

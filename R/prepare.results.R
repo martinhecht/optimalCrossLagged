@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.44 2022-11-04: added get.clpm.info
 # MH 0.0.31 2022-09-05: error code 13 implementation
 # MH 0.0.30 2022-09-02: modification for stability checks
 # MH 0.0.23 2022-07-27: bugfix, model$target.parameters
@@ -14,8 +15,8 @@
 #' @return
 
 ## Function definition
-prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
-                             error_codes){
+prepare.results <- function( res, run.time.optimizer.secs, input, clpm.info.list,
+							 verbose=TRUE, error_codes ){
 
 		# put elements from input list on this environment
 		do <- paste0( names( input ), " <- input$", names( input ) )
@@ -263,6 +264,9 @@ prepare.results <- function( res, run.time.optimizer.secs, input, verbose=TRUE,
 		
 		# add error_codes to results list
 		res2 <- c( res2, list( "error_codes"=error_codes ) )
+		
+		# MH 0.0.44 2022-11-04: added get.clpm.info
+		res2 <- c( res2, list( "optimalclpm.version.str"=clpm.info.list$optimalclpm.version.str ) )
 		
 		# return
 		return( res2 )
