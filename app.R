@@ -1,4 +1,4 @@
-# JW: 0.0.41 2022 ----- implemented change suggestion from meeting on 22-10-28
+# JW: 0.0.43 2022 ----- implemented change suggestion from meeting on 22-10-28, see google docs
 # JW: 0.0.38 2022-10-14: removed guthib packages (icons at all, shinyMatrix now from CRAN)
 # JW: 0.0.37 2022-10-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
 # JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
@@ -97,7 +97,7 @@ ui <-
                                  label = "Budget",
                                  value = 10000,
                                  min = 0,
-                                 max = 10000000,
+                                 max = 1000000, # otherwise no solution
                                  step = 2500 # wird verdoppelt in UI!?
                                )
                            )
@@ -116,7 +116,7 @@ ui <-
                                  label =
                                    withMathJax(c("\\(\\alpha\\)-Level")),
                                  value = 0.05,
-                                 min = 0,
+                                 min = 0.01,
                                  max = 1,
                                  step = 0.005
                                )
@@ -162,11 +162,11 @@ ui <-
                                    value = 3,
                                    min = 2,
                                    max = 10000,
-                                   step = 1
+                                   step = 0.5
                                  ),
                                  conditionalPanel(
                                    condition = "output.errorCond == false", 
-                                   div(class = "unit", uiOutput(outputId = "minN_Output"))
+                                   uiOutput(outputId = "minN_Output_Backend")
                                  )
                                ),
                                splitLayout(
@@ -176,11 +176,11 @@ ui <-
                                    value = 300,
                                    min = 2,
                                    max = 10000,
-                                   step = 1
+                                   step = 0.5
                                  ),
                                  conditionalPanel(
                                    condition = "output.errorCond == false", 
-                                   div(class = "unit", uiOutput(outputId = "maxN_Output"))
+                                   uiOutput(outputId = "maxN_Output_Backend")
                                  )
                                )
                            ) ### div input-box N
@@ -205,10 +205,10 @@ ui <-
                                  step = 5
                                ),
                                splitLayout(
-                                 uiOutput(outputId = ""),
+                                 uiOutput(outputId = "minTidentify_Output"),
                                  conditionalPanel(
                                    condition = "output.errorCond == false", 
-                                   div(class = "unit", uiOutput(outputId = "minT_Output"))
+                                   uiOutput(outputId = "minT_Output_Backend")
                                  )
                                ),
                                splitLayout(
@@ -218,11 +218,11 @@ ui <-
                                    value = 10,
                                    min = 1,
                                    max = 10000,
-                                   step = 1
+                                   step = 0.5
                                  ),
                                  conditionalPanel(
                                    condition = "output.errorCond == false", 
-                                   div(class = "unit", uiOutput(outputId = "maxT_Output"))
+                                   uiOutput(outputId = "maxT_Output_Backend")
                                  )
                                )
                            ) ### div input-box T
@@ -265,7 +265,7 @@ ui <-
                              value = "proc1, proc2"
                            ),
                            tags$span(style = "font-weight:normal; font-size:small;",
-                                     "Please indicate at least one process name. Seperate multiple names with comma."
+                                     "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names."
                            )
                        ),
                        
@@ -860,31 +860,24 @@ ui <-
                        
                        conditionalPanel(
                          condition = "output.errorCond == true",
-                         div(class = "error-box", htmlOutput("error", inline=T)
-                         )
+                         htmlOutput("error", inline=T)
                        ),
                        
                        conditionalPanel(
-                         condition = "output.fatalErrorCond == true",
-                         div(class = "error-box", htmlOutput("fatalError", inline=T)
-                         )
+                         condition = "output.errorCondFrontend == true",
+                         htmlOutput("errorFrontend", inline=T)
                        ),
-                       
-                       ### TEST TEST - funzt auch nicht (background: isnull evals also to true)
-                       # conditionalPanel(
-                       #   condition = "output.errorCond_inverted == false",
-                       #   div(class = "error-box", htmlOutput("error", inline=T)
-                       #   )
-                       # ),
-                       
-                       # TEST TEST - funzt nicht
-                        # div(class = "error-box", htmlOutput("error", inline=T)), 
                        
                        conditionalPanel(
                          condition = "output.warningCond == true",
-                         div(class = "warn-box", style = "display: none;", htmlOutput("warn", inline=T)
-                         ) # display: none so that won't be rendered unless true (otherwise flashing at start app)
+                         htmlOutput("warn", inline=T)
+                       ),
+                       
+                       conditionalPanel(
+                         condition = "output.noteCond == true",
+                         htmlOutput("note", inline=T)
                        )
+                       
                      ),
                      
                      div(class="main-box",
@@ -900,7 +893,7 @@ ui <-
                                    label = "Precision of Optimizer",
                                    value = 16,
                                    min = 16,
-                                   max = 1000,
+                                   max = 1000, # used in backend optmze() "pop.size.max"
                                    ticks=FALSE
                                  )
                              ),
@@ -943,8 +936,9 @@ ui <-
                      
                      # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
                      span(style="color:white;", textOutput("errorCond", inline=T)), 
-                     span(style="color:white;", textOutput("fatalErrorCond", inline=T)), 
+                     span(style="color:white;", textOutput("errorCondFrontend", inline=T)),  
                      span(style="color:white;", textOutput("warningCond", inline=T)),
+                     span(style="color:white;", textOutput("noteCond", inline=T))
                      
                    ) ### column three
                  ) ### fluidRow POWER
@@ -978,7 +972,7 @@ ui <-
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  #output$value <- renderPrint({ input$procNames == "" })
+  output$value <- renderPrint({ error_messages_translation( 27, minTidentify() ) })
   # in kombi mit:
   # verbatimTextOutput("value")
   
@@ -994,7 +988,6 @@ server <- function(input, output, session) {
                          mc == "alt" ~ 4,
                          mc == "lcs" ~ 3
     )
-    
   })
   
   output$minTidentify_Output <- renderUI({
@@ -1003,24 +996,81 @@ server <- function(input, output, session) {
       label = HTML("Min"),
       value = minTidentify(),
       min = minTidentify(),
-      max = 10000
+      max = 10000,
+      step = 0.5
     )
   })
   
-  output$minT_Output <- renderText({
-    tryCatch(round(res()$res$constraints$T.min.set, 0), error = function(e){""})
+  observeEvent(input$minT, { # without !is.na() app crashes when value deleted
+    if (!is.na(input$minT) && input$minT > input$maxT){
+      updateNumericInput(session, "maxT",
+                         value = input$minT)
+    }
   })
   
-  output$maxT_Output <- renderText({
-    tryCatch(round(res()$res$constraints$T.max.set, 0), error = function(e){""})
+  observeEvent(input$maxT, {
+    # req() ensures that values are available ("truthy") before proceeding with a calculation or action
+    if (!is.na(input$maxT) && input$maxT < req(input$minT)){ 
+      if (input$maxT > minTidentify()){
+        updateNumericInput(session, "minT",
+                           value = input$maxT) 
+      } else {
+        updateNumericInput(session, "minT",
+                           value = minTidentify())
+        updateNumericInput(session, "maxT",
+                           value = minTidentify())
+      }
+
+    }
   })
   
-  output$minN_Output <- renderText({
-    tryCatch(round(res()$res$constraints$N.min.bound, 0), error = function(e){""})
+  
+  observeEvent(input$minN, {
+    if (!is.na(input$minN) && input$minN > input$maxN){
+      updateNumericInput(session, "maxN",
+                         value = input$minN)
+    }
   })
   
-  output$maxN_Output <- renderText({
-    tryCatch(round(res()$res$constraints$N.max.bound, 0), error = function(e){""})
+  observeEvent(input$maxN, {
+    if (!is.na(input$maxN) && input$maxN < input$minN){
+      updateNumericInput(session, "minN",
+                         value = input$maxN)
+    }
+  })
+  
+  # maxT <- reactive({
+  #   init <- 10
+  #   if (input$minT > input$maxT){
+  #     init <- input$minT
+  #   }
+  # })
+  # 
+  # output$maxT_Output <- renderUI({
+  #   numericInput(
+  #     inputId = "maxT",
+  #     label = HTML("Max"),
+  #     value = maxT(),
+  #     min = 1,
+  #     max = 10000,
+  #     step = 1
+  #   )
+  # })
+  
+  output$minT_Output_Backend <- renderUI({ 
+    tryCatch(div(class="unit", round(res()$res$constraints$T.min.set, 1)), error = function(e){""})
+  })
+  
+  output$maxT_Output_Backend <- renderUI({
+    tryCatch(div(class="unit", round(res()$res$constraints$T.max.set, 1)), error = function(e){""})
+  })
+  
+  output$minN_Output_Backend <- renderUI({
+    tryCatch(div(class="unit", round(res()$res$constraints$N.min.bound, 1)), error = function(e){""})
+  })
+  
+  output$maxN_Output_Backend <- renderUI({
+    tryCatch(div(class="unit", round(res()$res$constraints$N.max.bound, 1)), error = function(e){""})
   })
   
   ### for model characteristics tab
@@ -1968,6 +2018,7 @@ server <- function(input, output, session) {
       costT = input$costT,
       minT = input$minT,
       maxT = input$maxT,
+      minTidentify = minTidentify(),
       modelClass = input$modelClass,
       procNames = input$procNames,
       measModel = input$measModel,
@@ -2001,10 +2052,14 @@ server <- function(input, output, session) {
   
   maxPower <- reactive({ 
     # besser wäre es names von power.max zu nehmen
-    target.param <- tryCatch(res()$target.parameters, error = function(e){target.param <- NULL})
-    power.max <- tryCatch(res()$res$power.max, error = function(e){power.max <- NULL})
-
-    if (!is.null(target.param)){
+    target.param <- tryCatch(req(res()$target.parameters), error = function(e){target.param <- NULL})
+    power.max <- tryCatch(req(res()$res$power.max), error = function(e){power.max <- NULL})
+    if (length(power.max) == 1){ # if problem with backend then NA returned for power.max
+      if (is.na(power.max)){
+        power.max <- NULL
+      }
+    }
+    if (!is.null(target.param) & !is.null(power.max)){ 
       par <- c()
       vars_O <- c("CL_", "IS_", "AB_") # -->
       vars_N <- c("CL ", "IS ", "AB ")
@@ -2023,13 +2078,15 @@ server <- function(input, output, session) {
             id <- str_which(target.param[i], covs_O)
             tmp <- gsub(covs_O[id], covs_N[id], target.param[i])
             par[i] <- gsub("_", " ↔ ", tmp)
-          }
+          } # error wenn alle als target.params aber funzt trotzdem (ie alle angezeigt): Warning in gsub(covs_O[id], covs_N[id], target.param[i]) : argument 'pattern' has length > 1 and only the first element will be used
         }
       }
       #par <- gsub("_", " ", target.param)
       pow <- unname(round(power.max, 5))
       data <- data.frame(par, pow) # later whitespace turned to points 
       return(data)
+    } else {
+      return(data=NULL)
     }
   })
   
@@ -2041,48 +2098,48 @@ server <- function(input, output, session) {
              error = function(e){""})
   })
   
+  output$errorCondFrontend <- reactive({
+    # TRUE if errors
+    #tryCatch(length( error_function_fe(procNames=input$procNames, budget=input$budget, costT=input$costT, costN=input$costN, minN=input$minN, minT=input$minT, minTidentify=minTidentify()) ) > 0, error = function(e){""})
+    tryCatch(input$procNames == "", error = function(e){""})
+  })
+  
+  output$errorFrontend <- renderUI({ 
+    #tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", error_function_fe(procNames=input$procNames, budget=input$budget, costT=input$costT, costN=input$costN, minN=input$minN, minT=input$minT, minTidentify=minTidentify()) ) ), error = function(e){""})
+    tryCatch(div(class = "error-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/> Please indicate at least one process name."))), error = function(e){""})
+  })
+  
+  # output$errorFrontend <- renderUI({ 
+  #   #tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", error_function_fe(procNames=input$procNames, budget=input$budget, costT=input$costT, costN=input$costN, minN=input$minN, minT=input$minT, minTidentify=minTidentify()) ) ), error = function(e){""})
+  #   tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/> Please indicate at least one process name.")), error = function(e){""})
+  # })
+  
   output$errorCond <- reactive({
     # TRUE if errors
     tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""})
   })
   
-  output$fatalErrorCond <- reactive({
-    # TRUE if errors
-    tryCatch(input$procNames == "", error = function(e){""})
-  })
-  
-  output$fatalError <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/> Please indicate at least one process name.")), error = function(e){""})
-  })
-  
-  # output$errorCond_inverted <- reactive({
-  #   # TRUE if no errors
-  #   tryCatch( length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) == 0, error = function(e){""})
-  # })
-  
   output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ),
-                                                                                                collapse = "<br/>"))), error = function(e){""})
+    tryCatch(div(class = "error-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Error(s)!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ], minTidentify=minTidentify() ),
+                                                                                                collapse = "<br/>")))), error = function(e){""})
   })
-  
-  #  TEST TEST TEST
-  # errorCondTEST <- reactive({
-  #   tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ) > 0, error = function(e){""})
-  # })
-  # 
-  # output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-  #   if (errorCondTEST()){
-  #     tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Error!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ] ),                                                                                           collapse = "<br/>"))), error = function(e){""})
-  #   } 
-  # })
   
   output$warningCond <- reactive({ 
     tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ] ) > 0, error = function(e){""}) 
   })
   
   output$warn <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(HTML(paste0("<span style=\"font-variant: small-caps;\">Warning!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ] ), 
-                         collapse = "<br/>"))), error = function(e){""}) 
+    tryCatch(div(class = "warn-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Warning!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ], minTidentify=minTidentify() ), 
+                         collapse = "<br/>")))), error = function(e){""}) 
+  })
+  
+  output$noteCond <- reactive({ 
+    tryCatch(length( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "note" ] ) > 0, error = function(e){""}) 
+  })
+  
+  output$note <- renderUI({ 
+    tryCatch(div(class = "note-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Note!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "note" ], minTidentify=minTidentify() ), 
+                                                                                                                       collapse = "<br/>")))), error = function(e){""}) 
   })
   
   output$runTime <- renderText({ 
