@@ -1,6 +1,6 @@
 @import url(https://use.fontawesome.com/releases/v6.1.1/css/all.css);
         
-        .container-fluid {
+        .navbar-static-top {
           padding-top: 20px;
         }
         
@@ -113,8 +113,8 @@
 
         .input-box {
         min-height: 20px;
-        padding: 19px ;
-        margin-bottom: 20px;
+        padding: 15px 15px 5px 15px;
+        margin-bottom: 10px;
         background-color: #f7e6ff;/*#e3e3e3;*/
         border: 1px solid #f7e6ff;/*#e3e3e3;*/
         border-radius: 20px;
@@ -124,7 +124,7 @@
         .output-box {
         min-height: 20px;
         padding: 19px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         background-color: #fef9e6;
         border: 1px solid #fef9e6;
         border-radius: 20px;
