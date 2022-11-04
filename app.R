@@ -1,4 +1,5 @@
-# JW: 0.0.43 2022 ----- implemented change suggestion from meeting on 22-10-28, see google docs
+# JW: 0.0.45 2022-11-04: minimal changes suggested by Martins Mail 22-11-03
+# JW: 0.0.43 2022-11-02: implemented change suggestion from meeting on 22-10-28, see google docs
 # JW: 0.0.38 2022-10-14: removed guthib packages (icons at all, shinyMatrix now from CRAN)
 # JW: 0.0.37 2022-10-10: new function for erro-warn differentiation; error output$maxPower fixed; T.<x>.set instead of T.<x>.bound
 # JW: 0.0.36 2022-10-06: tryCatch for results to suppress printing of internal errors
@@ -149,7 +150,7 @@ ui <-
                                numericInput(
                                  inputId = "costN",
                                  label = HTML("Costs"),
-                                 value = 10,
+                                 value = 100,
                                  min = 0,
                                  max = 10000000,
                                  step = 5
@@ -159,7 +160,7 @@ ui <-
                                  numericInput(
                                    inputId = "minN",
                                    label = HTML("Min"),
-                                   value = 3,
+                                   value = 10,
                                    min = 2,
                                    max = 10000,
                                    step = 0.5
@@ -173,7 +174,7 @@ ui <-
                                  numericInput(
                                    inputId = "maxN",
                                    label = HTML("Max"),
-                                   value = 300,
+                                   value = 50,
                                    min = 2,
                                    max = 10000,
                                    step = 0.5
@@ -199,7 +200,7 @@ ui <-
                                numericInput(
                                  inputId = "costT",
                                  label = HTML("Costs"),
-                                 value = 10,
+                                 value = 50,
                                  min = 0,
                                  max = 10000000,
                                  step = 5
@@ -215,7 +216,7 @@ ui <-
                                  numericInput(
                                    inputId = "maxT",
                                    label = HTML("Max"),
-                                   value = 10,
+                                   value = 18,
                                    min = 1,
                                    max = 10000,
                                    step = 0.5
@@ -239,6 +240,9 @@ ui <-
                        #),
                        tags$br(),
                        tags$br(),
+                       fluidRow(
+                         column(
+                           width = 6,
                        div(class = "input-box",
                            selectInput(
                              inputId = "modelClass",
@@ -254,7 +258,8 @@ ui <-
                              ),
                              selected = "clpm"
                            )
-                       ),
+                       )
+                       )),
                        # p(HTML("<small>For guidance concerning model selection see Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. Psychological Methods, 24(5), 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>.</small>")),
                        # tags$br(),
                        div(class = "input-box",
@@ -266,7 +271,9 @@ ui <-
                            ),
                            tags$span(style = "font-weight:normal; font-size:small;",
                                      "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names."
-                           )
+                           ),
+                           tags$br(),
+                           tags$br()
                        ),
                        
                        
@@ -917,7 +924,8 @@ ui <-
                                  br(), 
                                  br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
                                  br(), span(style="font-weight:normal; font-variant:small-caps;", "Log ID:"), textOutput("logID", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Status:"), textOutput("logDB", inline=T)
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Status:"), textOutput("logDB", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "App Version:"), textOutput("appVersion", inline=T)
                              )
                            )
                            
@@ -2159,6 +2167,10 @@ server <- function(input, output, session) {
   
   output$logDB <- renderText({ 
     tryCatch(res()$res$log.data.status, error = function(e){""}) 
+  })
+  
+  output$appVersion <- renderText({ 
+    tryCatch(res()$res$optimalclpm.version.str, error = function(e){""}) 
   })
   
   # only for testing phase:
