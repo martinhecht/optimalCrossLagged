@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.0.47 2022-11-14: changed message 13
 # JW: 0.0.43 2022-11-02: changed/deleted error 1-4, added error 23-29
 # MH 0.0.42 2022-10-28: changed type of 22 to "note"
 # MA 0.0.36 2022-10-07:
@@ -26,7 +27,7 @@ error_messages_translation <- function (error_code, minTidentify) {
     "Changing Accumulating Factor (B) covariance matrix is not positive semi-definite", # 11
     "Optimizer results might be of low accuracy. Try to increase the precision of the optimizer (see “Technical details” section) until this message vanishes.", # 12
     # MH 0.0.31 2022-09-05: pop.size.max
-    "Optimizer results might be of low accuracy. Please be cautious!",  # 13
+    "Optimizer results might be of low accuracy. Use results with caution!",  # 13
     "Please select at least one target parameter.", # 14
     "Variances cannot be set to 0. Please change the Dynamic Residual Variance(s).", # 15
     "Variances cannot be set to 0. Please change the Unique Residual Variance(s).", # 16
