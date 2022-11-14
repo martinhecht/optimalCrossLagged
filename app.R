@@ -1,3 +1,4 @@
+# JW: 0.0.46 2022-11-14: added default target params in univariate changed to AR (before: none)
 # JW: 0.0.45 2022-11-04: minimal changes suggested by Martins Mail 22-11-03
 # JW: 0.0.43 2022-11-02: implemented change suggestion from meeting on 22-10-28, see google docs
 # JW: 0.0.38 2022-10-14: removed guthib packages (icons at all, shinyMatrix now from CRAN)
@@ -980,7 +981,9 @@ ui <-
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  output$value <- renderPrint({ error_messages_translation( 27, minTidentify() ) })
+  output$value <- renderPrint({ procNames_List <-
+    as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| "))) # 2, 3, 4
+  length(procNames_List) })
   # in kombi mit:
   # verbatimTextOutput("value")
   
@@ -1635,7 +1638,11 @@ server <- function(input, output, session) {
     procNames_List <-
       as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| "))) # 2, 3, 4
     ARCLnames <- labelsL(procNames_List, "ARCL") # 2, 6, 12
-    ARCLsel <- ARCLnames[-c(1:length(procNames_List))]
+    if (length(procNames_List) > 1){
+      ARCLsel <- ARCLnames[-c(1:length(procNames_List))]
+    } else {
+      ARCLsel <- ARCLnames
+    }
     pickerInput(
       inputId = "targetARCL", 
       choices = ARCLnames, 
