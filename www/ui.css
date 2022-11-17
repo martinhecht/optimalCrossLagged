@@ -1,5 +1,5 @@
 @import url(https://use.fontawesome.com/releases/v6.1.1/css/all.css);
-        
+      
         .navbar-static-top {
           padding-top: 20px;
         }
@@ -159,10 +159,6 @@
         border: 1px solid #b3ffb3;
         border-radius: 20px;
         box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
-        }
-
-        .selectize-input {
-        width: 11vw;
         }
         
         /* remove arrows for numericInput, see: https://stackoverflow.com/questions/70974838/removing-up-down-arrows-from-numericinput-r-shiny 
