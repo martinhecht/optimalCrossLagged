@@ -1,3 +1,4 @@
+# JW: 0.0.48 2022-11-17: new infos in hover boxes
 # JW: 0.0.46 2022-11-14: added default target params in univariate changed to AR (before: none)
 # JW: 0.0.45 2022-11-04: minimal changes suggested by Martins Mail 22-11-03
 # JW: 0.0.43 2022-11-02: implemented change suggestion from meeting on 22-10-28, see google docs
@@ -144,7 +145,7 @@ ui <-
                                class = "input-box",
                                tags$span(
                                  class = "hovertext",
-                                 'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other.",
+                                 'data-hover' = "Indicate the cost to include one person in the study and the desired minimum and maximum number of persons in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes.",
                                  icon("circle-question")
                                )  %>% tagAppendAttributes(style = "left: 101%;"),
                                p(HTML("<strong><i>Persons N</i></strong>")),
@@ -194,7 +195,7 @@ ui <-
                                class = "input-box",
                                tags$span(
                                  class = "hovertext",
-                                 'data-hover' = "Indicate the costs per unit. Indicate minimum and maximum number of units in the white boxes; the gray boxes indicate the adapted number of minimum or maximum number of units for the optimizer, respectively. The adapted numbers differ from your input because the parameters depend on each other. The default for the minimum number of units reflects the minimum number of units (given the number of parameters) that is required for model identification.",
+                                 'data-hover' = "Indicate the cost for measuring one person at one time point and the desired minimum and maximum number of time points in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes. The default for the minimum number of time points reflects the minimum number of time points that are required for model identification (see Usami et al., 2019).",
                                  icon("circle-question")
                                )  %>% tagAppendAttributes(style = "left: 101%;"),
                                p(HTML("<strong><i>Time Points T</i></strong>")),
@@ -264,14 +265,18 @@ ui <-
                        # p(HTML("<small>For guidance concerning model selection see Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. Psychological Methods, 24(5), 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>.</small>")),
                        # tags$br(),
                        div(class = "input-box",
+                           splitLayout(
+                             cellWidths = c("80%", "20%"),
                            textAreaInput(
                              inputId = "procNames",
                              label = HTML("Process Names"),
                              placeholder = "proc1, proc2",
                              value = "proc1, proc2"
                            ),
+                           uiOutput(outputId = "nbProc")
+                           ),
                            tags$span(style = "font-weight:normal; font-size:small;",
-                                     "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names."
+                                     "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names. It is displayed right to the input field."
                            ),
                            tags$br(),
                            tags$br()
@@ -305,12 +310,12 @@ ui <-
                      tags$br(),
                      p(
                        HTML(
-                         "First, <strong>set the model parameters in the matrices</strong>. Set them to 0 to exclude them from the model. Note that variances cannot be set to 0 for a power analysis."
+                         "First, <strong>set the model parameters</strong> in the <strong>matrices</strong>. Note that variance parameters must be larger than zero."
                        )
                      ),
                      p(
                        HTML(
-                         "Second, <strong>choose all target parameters in the drop-down menu</strong> that you want to include in the single likelihood ratio test and the joint power analysis. Note that it is not possible to specify every parameter as target parameter."
+                         "Second, <strong>choose your target parameters</strong> for which you want to maximize the joint power from the respective <strong>drop-down menu</strong>."
                        )
                      ),
                      tags$br(),
@@ -617,11 +622,22 @@ ui <-
                      ### set parameters (T>2)
                      div(
                        class = "input-box",
+                       conditionalPanel(
+                         condition = "input.modelClass == 'clpm' | input.modelClass == 'fclpm'",
                        tags$span(
                          class = "hovertext",
-                         'data-hover' = "The AR effect is a partial regression coefficient from a variable at t-1 to the variable at t, after controlling for the CL effect of other variables on this variable at t-1. The CL effect is a partial regression coefficient from the predictor at t-1 to the outcome variable at t, after controlling for the AR effect of the outcome variable at t-1.",
+                         'data-hover' = "The AR parameters indicate the stability of the processes. Hamaker et al. (2015) give the following interpretation: “The closer these autoregressive parameters are to one, the more stable the rank order of individuals is from one occasion to the next”. (p. 104). The CL parameters indicate the extent to which change in one process can be predicted from the individual’s prior deviation from the group mean of another process (Hamaker et al., 2015, p. 104).",
                          icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
-                       ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
+                       ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;")
+                       ),
+                       conditionalPanel(
+                         condition = "input.modelClass == 'ri-clpm' | input.modelClass == 'starts'| input.modelClass == 'lcm-sr'| input.modelClass == 'lcs'| input.modelClass == 'alt'",
+                         tags$span(
+                           class = "hovertext",
+                           'data-hover' = "The AR parameters represent the amount of within-person carry-over effect. If it is positive, it implies that measurement occasions on which a person scored above his or her expected score are likely to be followed by occasions on which he or she still scores above the expected score again, and vice versa. (Hamaker et al., 2015, p. 104-105). The CL parameters indicate the extent to which variables influence each other. Specifically, a CL parameter indicates the degree by which deviations from an individual’s expected score on one variable can be predicted from preceding deviations from one’s expected score on another variable (Hamaker et al., 2015, p. 104-105).",
+                           icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
+                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;")
+                       ),
                        p(
                          HTML("<strong>Autoregressive and Cross-Lagged Effects (AR & CL)</strong>")
                        ),
@@ -639,7 +655,7 @@ ui <-
                        class = "input-box",
                        tags$span(
                          class = "hovertext",
-                         'data-hover' = "The dynamic residuals ... . They affect future scores through the lagged regression effects (i.e., AR and CL effects).",
+                         'data-hover' = "The dynamic residuals represent the parts of the processes that cannot be explained by the lagged relations (i.e., AR and CL effects) and other common factors. The influence of the dynamic residuals feeood forward through the lagged relations and affects subsequent measurement occasions . They are also referred to as innovations or dynamic errors (Usami et al., 2019, p. 7).",
                          icon("circle-question")
                        ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                        p(HTML("<strong>Dynamic Residuals (RES)</strong>")),
@@ -673,7 +689,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "The unique residuals are the measurement errors which are unique for each time point. In contrast to dynamic residuals, they do not have a temporal effect.",
+                           'data-hover' = "Unique residuals, also referred to as measurement errors, do not affect future measurements and are only associated with a single measurement occasion (Usami et al., 2019, p. 3).",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML("<strong>Unique Residuals (UNIQ)<strong>")),
@@ -696,7 +712,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "The random intercepts are the individual’s trait-like deviations from the group means (Hamaker et al., 2015, p. 104).",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML("<strong>Random Intercepts (I)</strong>")),
@@ -719,7 +735,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "Random slopes represent the linear slopes of the individual developmental trajectories. (Usami et al., 2019, p. 3).",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML("<strong>Random Slopes (S)</strong>")),
@@ -742,7 +758,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "The covariance of the random intercepts and slopes.",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
@@ -763,7 +779,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "The constant accumulating factors A have a constant effect on the processes that accumulate over time through the lagged relations (Usami et al., 2019, p. 7).",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML(
@@ -782,7 +798,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "The changing factors B have a changing effect on the processes that accumulate over time through the lagged relations. The direct effect of the changing accumulating factors grows with each measurement occasion (Usami et al., 2019, p. 5).",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(HTML(
@@ -803,9 +819,10 @@ ui <-
                        condition = "input.modelClass == 'alt'",
                        div(
                          class = "input-box",
+                         
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "...",
+                           'data-hover' = "The covariance of the constant changing accumulating factors A and B.",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
@@ -832,15 +849,9 @@ ui <-
                      div(
                        class = "main-box",
                        tags$p(class = "heading", "Results"),
-                       # tags$span(
-                       #   class = "hovertext",
-                       #   'data-hover' = "lorem ipsum",
-                       #   icon("circle-question")
-                       # )  %>% tagAppendAttributes(style = "left: 40%;"),
-                       
                        div(class = "output-box", style="border: 3px solid black;",
                            tags$span(class = "hovertext", style="font-weight:normal;",
-                                     'data-hover' = "Likelihood-Ratio Test of Single Target Parameters",
+                                     'data-hover' = "Optimal number of persons N and optimal number of time points T for which the power of the Likelihood-Ratio-Tests of the target parameters is maximal.",
                                      icon("circle-question")
                            )  %>% tagAppendAttributes(style = "left: 10%;"),
                            #div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
@@ -853,7 +864,7 @@ ui <-
                        div(class = "output-box", 
                            tags$span(
                              class = "hovertext", style="font-weight:normal;",
-                             'data-hover' = "lorem ipsum 2",
+                             'data-hover' = "The power values for all target parameters based on the optimal N and T solution.",
                              icon("circle-question")
                            )  %>% tagAppendAttributes(style = "left: 40%;"),
                            div(class = "heading", "Maximum Power For all Target Parameters"),
@@ -895,7 +906,13 @@ ui <-
                            
                            column(
                              width = 6,
-                             div(class = "input-box", style="padding-bottom: 5px;",
+                             div(class = "input-box", 
+                                 tags$span(
+                               class = "hovertext",
+                               'data-hover' = "The term “precision” is used as an user-friendly transcription of what the argument pop.size of the genoud optimizer adjusts, see Mebane and Sekhon (2011).",
+                               icon("circle-question") 
+                             ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
+                             style="padding-bottom: 5px;",
                                  sliderInput(
                                    inputId = "popSize",
                                    label = "Precision of Optimizer",
@@ -908,7 +925,7 @@ ui <-
                              div(class = "input-box", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
                                  checkboxInput(
                                    inputId = "dbLog",
-                                   label = HTML("<b>Log results for scientific optimization of this app?</b>"),
+                                   label = HTML("<b>Log results for future optimization of this app?</b>"),
                                    value=TRUE
                                  )
                              )
@@ -919,7 +936,7 @@ ui <-
                              width = 6,
                              div(class = "output-box",
                                  span(style="font-weight:normal; font-variant:small-caps;", "Run Time (in sec):"), textOutput("runTime", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Number of Runs:"), textOutput("optRuns", inline=T),
+                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Number of Iterations:"), textOutput("optRuns", inline=T),
                                  # necessary bc https://github.com/rstudio/shiny/issues/1318
                                  #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
                                  br(), 
@@ -933,14 +950,25 @@ ui <-
                          )
                      ),
                      
-                     div(
-                       class = "main-box",
-                       p(class = "heading", "Citation"),
-                       p(style="font-weight:normal;", HTML("This shiny app is based on the following article: ..."))
-                     ),
-                     tags$details(#'open' = "FALSE",
-                       tags$summary(span("Dev Ouput")),
-                       verbatimTextOutput("results")
+                     # div(
+                     #   class = "main-box",
+                     #   p(class = "heading", "Citation"),
+                     #   p(style="font-weight:normal;", HTML("This shiny app is based on the following article: ..."))
+                     # ),
+                     # tags$details(#'open' = "FALSE",
+                     #  tags$summary(span("Dev Output")),
+                     #  verbatimTextOutput("results")
+                     # ),
+                     tags$details(style="font-weight: lighter; padding-left: 1.5vw;",
+                       tags$summary(span(class = "heading", "References")),
+                       br(), 
+                       HTML("Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique of the cross-lagged panel model. <i>Psychological Methods</i>, 20, 102–116. <a href=\"https://doi.org/10.1037/a0038889\" target=\"_blank\">https://doi.org/10.1037/a0038889</a>"),
+                       br(), 
+                       br(), 
+                       HTML("Mebane, W. R., & Sekhon, J. S. (2011). Genetic optimization using derivatives: The rgenoud package for R. <i>Journal of Statistical Software</i>, 42. <a href=\"https://doi.org/10.18637/jss.v042.i11\" target=\"_blank\">https://doi.org/10.18637/jss.v042.i11</a>"),
+                       br(), 
+                       br(), 
+                       HTML("Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. <i>Psychological Methods</i>, 24, 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>")
                      ),
                      
                      # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
@@ -1085,6 +1113,12 @@ server <- function(input, output, session) {
   })
   
   ### for model characteristics tab
+  
+  output$nbProc <- renderUI({ 
+    tryCatch(procNames_List <- as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| "))), error = function(e){""})
+    tryCatch(div(class="unit", length(procNames_List) ), error = function(e){""})
+    
+  })
   
   output$measModel_Output <- renderUI({
     procNames_List <-
