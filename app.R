@@ -1,3 +1,4 @@
+# JW: 0.1.00 2022-11-18: some hover texts changed, problem with error 1 when changing modelClass persists
 # JW: 0.0.48 2022-11-17: new infos in hover boxes
 # JW: 0.0.46 2022-11-14: added default target params in univariate changed to AR (before: none)
 # JW: 0.0.45 2022-11-04: minimal changes suggested by Martins Mail 22-11-03
@@ -758,7 +759,7 @@ ui <-
                          class = "input-box",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "The covariance of the random intercepts and slopes.",
+                           'data-hover' = "The covariances of the random intercepts and slopes. For example, a positive covariance between the random intercept of process x and the random slope of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
@@ -822,7 +823,7 @@ ui <-
                          
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "The covariance of the constant changing accumulating factors A and B.",
+                           'data-hover' = "The covariance of the constant changing accumulating factors A and B. For example, a positive covariance between the constant accumuliting factor of process x and the changing accumulating factor of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
                            icon("circle-question")
                          ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
                          p(
@@ -1009,16 +1010,16 @@ ui <-
 
 server <- function(input, output, session) {
   ### zum debuggen, um zu schauen welche werte input hat
-  output$value <- renderPrint({ procNames_List <-
-    as.list(unlist(strsplit(input$procNames, split = "\\, |\\,| "))) # 2, 3, 4
-  length(procNames_List) })
-  # in kombi mit:
+  # output$value <- renderPrint({ 
+  #   tryCatch(res()$res$error_codes, error = function(e){0L}) 
+  # })
+  # # in kombi mit:
   # verbatimTextOutput("value")
   
   ### for study design tab:
   
   minTidentify <- reactive({
-    mc <- input$modelClass
+    mc <- req(input$modelClass)
     minTidf <- case_when(mc == "clpm" ~ 2,
                          mc == "fclpm" ~ 3,
                          mc == "ri-clpm" ~ 3,
@@ -1033,15 +1034,15 @@ server <- function(input, output, session) {
     numericInput(
       inputId = "minT",
       label = HTML("Min"),
-      value = minTidentify(),
-      min = minTidentify(),
+      value = req(minTidentify()),
+      min = req(minTidentify()),
       max = 10000,
       step = 0.5
     )
   })
   
   observeEvent(input$minT, { # without !is.na() app crashes when value deleted
-    if (!is.na(input$minT) && input$minT > input$maxT){
+    if (!is.na(input$minT) && req(input$minT) > input$maxT){
       updateNumericInput(session, "maxT",
                          value = input$minT)
     }
@@ -2169,7 +2170,7 @@ server <- function(input, output, session) {
   })
   
   output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
-    tryCatch(div(class = "error-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Error(s)!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ], minTidentify=minTidentify() ),
+    tryCatch(div(class = "error-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Error(s)!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ], minTidentify=req(minTidentify()) ),
                                                                                                 collapse = "<br/>")))), error = function(e){""})
   })
   
