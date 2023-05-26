@@ -1,4 +1,7 @@
 ## Changelog:
+# MH 0.1.1 2023-05-26: T.min < minimal allowed T.min ("error_costs" scenario) fixed
+#                      error_codes added/returned
+#                      T.min is checked against minimal model-specific T.min
 # MH 0.0.42 2022-10-28: added handling of T.min.set>T.max.set (to solve test case "budget35000")
 # MH 0.0.34 2022-09-15: timeout.log.data
 # MH 0.0.30 2022-09-02: modification for stability checks
@@ -15,6 +18,9 @@
 ## Function definition
 # MH 0.0.30 2022-09-02 new argument stability.check
 prepare.input <- function( optimize, study,	constraints, model, genoud, timeout, timeout.log.data, stability.check=TRUE, runs, verbose=TRUE ){
+
+		# MH 0.1.1 2023-05-26:
+		error_codes <- integer(0)
 
 		# handle optimize$what $direction $via $par $via.function $optimizer
 		# i.e. if more than one value is given, take the first one
@@ -99,14 +105,34 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 			# warning and set N.min to N.max.bound
 			#                  or
 			#          [other way around]
+			# eval( parse( text=paste0( '
+			# if( ',par,'.min > ',par,'.max.bound ){
+				# msg <- paste0( "user-specified ',par,'.min (",',par,'.min,") is greater than maximal possible ',par,'.max.bound (",',par,'.max.bound,") determined by ',oth,'.min;\n ',par,'.min set equal to ',par,'.max.bound, this however will result in the optimized ',par,' = ',par,'.min;\n set ',par,'.min to lower value than ",',par,'.max.bound,"." )
+				# if( verbose ) cat( paste0( msg, "\n" ) ); flush.console()
+				# warning( msg )
+				# ',par,'.min <- ',par,'.max.bound
+			# }'
+			# ) ) )
+			# MH 0.1.1 2023-05-26: T.min > T.max.bound error ("error_costs") scenario fixed
+			# currently optimizer is only for T optimization, therefore hard-coded error 30 (warning) is now included in error_message_translation.R
+			# and make_output() is called a the end of this function
 			eval( parse( text=paste0( '
 			if( ',par,'.min > ',par,'.max.bound ){
 				msg <- paste0( "user-specified ',par,'.min (",',par,'.min,") is greater than maximal possible ',par,'.max.bound (",',par,'.max.bound,") determined by ',oth,'.min;\n ',par,'.min set equal to ',par,'.max.bound, this however will result in the optimized ',par,' = ',par,'.min;\n set ',par,'.min to lower value than ",',par,'.max.bound,"." )
 				if( verbose ) cat( paste0( msg, "\n" ) ); flush.console()
 				warning( msg )
+				error_codes <- c( error_codes, 30 ) 
 				',par,'.min <- ',par,'.max.bound
 			}'
 			) ) )
+			# MH 0.1.1 2023-05-26
+			# now check T.min whether it's below allowed threshold
+			# T.min.allowed
+			T.min.allowed          <- c(2     , 3            , 3        , 3       , 3       , 4    ,  3   ) 
+			names( T.min.allowed ) <- c("CLPM", "factor CLPM", "RI-CLPM", "STARTS", "LCM-SR", "ALT", "LCS")
+			T.min.allowed.val <- 1 # default
+			T.min.allowed.val <- T.min.allowed[model$specification$input_H1$model] # model-specific
+			if( T.min < T.min.allowed.val ) error_codes <- c( error_codes, 31 )
 			
 			# set maximal N based on user input and boundaries
 			#                  or
@@ -235,11 +261,12 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 
 		# return list
 		#                                                             MH 0.0.34 2022-09-15: timeout.log.data
-		list.elements <- c( "optimize", "study", "constraints", "model", "envs", "timeout", "timeout.log.data", "stability.check", "runs" )
+		#                                                             MH 0.1.1 2023-05-26: error_codes
+		list.elements <- c( "optimize", "study", "constraints", "model", "envs", "timeout", "timeout.log.data", "stability.check", "runs", "error_codes" )
 		if( optimize$optimizer %in% "genoud" ) list.elements <- c( list.elements, "genoud" )
 		ret <- eval( parse( text=paste0("list(",paste(list.elements,collapse=","),")" ) ) )
 		names( ret ) <- list.elements
-		
+
 		# return
 		return( ret )
 }

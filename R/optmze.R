@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.1.1 2023-05-26: prepare.input() now returns error_codes
 # MH 0.0.44 2022-11-04: changed default of T.min.identify from NULL to 0
 # JW 0.0.43 2022-11-02: check_plausability() got new parameter study, optmze() got new list element T.min.identify for error checking
 # MH 0.0.42 2022-10-28: added test case "instable results"
@@ -106,7 +107,13 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 								stability.check=stability.check,
 								runs=runs,
 								verbose=verbose )
-
+		# MH 0.1.1 2023-05-26: error_codes
+		# if errors are detected: return output with error codes
+		if(length(  input$error_codes[  error_type(input$error_codes) %in%  "error" ] ) > 0) {
+		# if (length(error_codes) > 0) {
+		  return(make_output(error_codes = input$error_codes))
+		}		
+		
 		# optimize with timeout (or not)
 		wt <- !is.na( timeout ) && !is.null( timeout ) && is.numeric( timeout ) && timeout > 0 
 
@@ -191,6 +198,69 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
 
+
+### MH 0.1.00/0.1.1 2023-05-26 test case "error_largeCL"
+# specs <- generate.model.example.3()
+# specs$input_H1$Gamma$values <- matrix( c(0.5,0.1,5,0.5), 2, 2 )
+# specs$input_H1$Psi <- NULL
+# specs$input_H1$model <- "CLPM"
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=10000, "target.power"=0.80, "l2.cost"=100, "l1.cost"=50, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=2, "T.max"=18, "N.min"=10, "N.max"=50, "T.min.identify"=0,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
+
+
+### MH 0.1.00/0.1.1 2023-05-26 test case "error_costs"
+# specs <- generate.model.example.3()
+# specs$input_H1$Psi <- NULL
+# specs$input_H1$model <- "CLPM"
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=200, "target.power"=0.80, "l2.cost"=0.1, "l1.cost"=50, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=2, "T.max"=18, "N.min"=10, "N.max"=50, "T.min.identify"=0,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
+
+
+# ===================================
 
 # specs <- generate.model.example.2()
 # specs$N <- NULL

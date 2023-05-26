@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.1.1 2023-05-26: added 30 (warning) and 31 (error)
 # MH 0.0.47 2022-11-14: changed message 13
 # JW: 0.0.43 2022-11-02: changed/deleted error 1-4, added error 23-29
 # MH 0.0.42 2022-10-28: changed type of 22 to "note"
@@ -43,7 +44,9 @@ error_messages_translation <- function (error_code, minTidentify) {
     "Budget must be greater than the minimum number of time points and persons multiplied with their respective costs. Please increase the budget, the minimum number of time points and/or persons, or decrease the cost per time point and/or person.", # 26
     "Alpha level must be greater than 0 and smaller than 1.", #27
     "AR effects must not be greater than or equal to 1 nor smaller than or equal to -1.", # 28
-    "The budget cannot be greater than 1.000.000 because of technical restrictions." # 29 (eg when 10.000.000: "Error : vector memory exhausted (limit reached?)")
+    "The budget cannot be greater than 1.000.000 because of technical restrictions.", # 29 (eg when 10.000.000: "Error : vector memory exhausted (limit reached?)")
+	"User-specified T.min is greater than maximal possible T.max.bound determined by N.min; T.min set equal to T.max.bound, this however will result in the optimized T = T.min; in case of problems, either lower T.min or increase N.min.", # 30
+    "T.min (possibly modified to accomodate N.min) is below model-specific lowest limit." # 31  
   )
   
   error_messages[error_code]
@@ -81,7 +84,9 @@ error_type <- function (error_code) {
     "error",   # 26
     "error",   # 27
     "error",   # 28
-    "error"    # 29
+    "error",   # 29
+    "warning", # 30
+    "error"    # 31
   )
   
   error_type[error_code]
