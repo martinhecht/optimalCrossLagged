@@ -11,6 +11,7 @@
 # MH 0.0.30 2022-09-02:
 #    -- added function error_type
 #    -- added code 12 (type: warning)
+# MA 0.0.31 2023-05-28: added error codes 32 and 33
 
 error_messages_translation <- function (error_code, minTidentify) {
   
@@ -46,7 +47,9 @@ error_messages_translation <- function (error_code, minTidentify) {
     "AR effects must not be greater than or equal to 1 nor smaller than or equal to -1.", # 28
     "The budget cannot be greater than 1.000.000 because of technical restrictions.", # 29 (eg when 10.000.000: "Error : vector memory exhausted (limit reached?)")
 	"User-specified T.min is greater than maximal possible T.max.bound determined by N.min; T.min set equal to T.max.bound, this however will result in the optimized T = T.min; in case of problems, either lower T.min or increase N.min.", # 30
-    "T.min (possibly modified to accomodate N.min) is below model-specific lowest limit." # 31  
+    "T.min (possibly modified to accomodate N.min) is below model-specific lowest limit.", # 31
+	"The absolute value of one of the autoregressive parameters is equal or larger than one, leading to an unstable model.", # 32
+	"One or multiple cross-lagged parameters are too large, leading to an unstable model." # 33
   )
   
   error_messages[error_code]
@@ -86,7 +89,9 @@ error_type <- function (error_code) {
     "error",   # 28
     "error",   # 29
     "warning", # 30
-    "error"    # 31
+    "error",   # 31
+    "error",   # 32
+    "error"    # 33
   )
   
   error_type[error_code]
