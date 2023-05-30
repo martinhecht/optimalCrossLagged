@@ -1,4 +1,4 @@
-# MA: 0.0.44 2023-05-28: added error codes 32 and 33
+# MA: 0.0.44 2023-05-28: added error codes 32
 # JW: 0.0.43 2022-11-02: changed/deleted error 1-4, added error 23-29
 # MA: 0.0.36 2022-10-07: added error code 22
 # JW: 0.0.32 2022-10-05: added error codes 14-21
@@ -125,37 +125,6 @@ check_plausability <- function (constraints = constraints, model = model, study 
   
   if (study$budget > 1000000){
     error_codes <- c(error_codes, 29)
-  }
-  
-  # Check if the ARCL parameters satisfy the stationarity conditions of the
-  # vector-autoregressive model
-  
-  n_processes <- length(model$specification$names_process)
-  ARCLP <- abs(model$specification$input_H1$Gamma$values)
-  stationary_violations <- matrix(FALSE, nrow = n_processes, ncol = n_processes)
-    
-  # check autoregressive parameters
-  diag(stationary_violations) <- diag(ARCLP) >= 1
-  
-  # check cross-lagged parameters
-  for (i in seq_len(n_processes)) {
-    for (j in seq_len(n_processes)) {
-      if (i == j) next
-      print(c(i,j))
-      stationary_violations[i, j] <- ARCLP[i, j] >= (
-        1 - ARCLP[i, i] * ARCLP[j, j]) / ARCLP[j, j]
-    }
-  }
-
-  # Autoregressive parameters violate stationary conditions  
-  if (any(diag(stationary_violations))) {
-    error_codes <- c(error_codes, 32)
-  }
-  
-  # Cross-lagged parameters violate stationary conditions  
-  if (any(stationary_violations[!row(stationary_violations) ==
-                                col(stationary_violations)])) {
-    error_codes <- c(error_codes, 33)
   }
 
   # return

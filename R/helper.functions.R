@@ -1,3 +1,4 @@
+# JW: 1.1.69: changed order of CL effect names (reviewer comment)
 # JW: 0.0.43 2022-11-02: fixed compute_results() error when no measModel
 #                        pop.size.max added in compute_results()
 #                        compute_results() got new param minTidentify for error checking in backend
@@ -38,7 +39,7 @@ labelsL <- function(procNames, paramClass, measMod){
              for (j in 1:procNb){ #!
                if (i != j){
                  count <- count + 1
-                 labels[[count]] <- paste0("CL_", procNames[i], "_", procNames[j]) 
+                 labels[[count]] <- paste0("CL_", procNames[j], "_", procNames[i]) 
                  names(labels)[[count]] <- paste0("CL ", procNames[j], " → ", procNames[i]) # bc column -> row
                }
              }
@@ -220,7 +221,7 @@ labelsM <- function(procNames, paramClass, measMod){
                if (i == j){ # diagonal
                  labels[i, j] <- paste0("AR_", procNames[i])
                } else { # off-diagonal
-                 labels[i, j] <- paste0("CL_", procNames[i], "_", procNames[j]) 
+                 labels[i, j] <- paste0("CL_", procNames[j], "_", procNames[i]) 
                }
              }
            }
