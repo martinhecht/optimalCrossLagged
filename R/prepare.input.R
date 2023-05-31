@@ -129,7 +129,7 @@ prepare.input <- function( optimize, study,	constraints, model, genoud, timeout,
 			# now check T.min whether it's below allowed threshold
 			# T.min.allowed
 			T.min.allowed          <- c(2     , 3            , 3        , 3       , 3       , 4    ,  3   ) 
-			names( T.min.allowed ) <- c("CLPM", "factor CLPM", "RI-CLPM", "STARTS", "LCM-SR", "ALT", "LCS")
+			names( T.min.allowed ) <- c("clpm", "fclpm", "ri-clpm", "starts", "lcm-sr", "alt", "lcs")
 			T.min.allowed.val <- 1 # default
 			T.min.allowed.val <- T.min.allowed[model$specification$input_H1$model] # model-specific
 			if( T.min < T.min.allowed.val ) error_codes <- c( error_codes, 31 )

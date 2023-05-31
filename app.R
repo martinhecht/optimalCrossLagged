@@ -1,3 +1,16 @@
+# JW: 0.1.69 2023-05-17: error that prevented tabpanels from appearing (a missing / in HTML()...) in row 699 fixed,
+#                        two new tabs added (use, cite),
+#                        all fluidTab() etc removed bc deprecated bc navbarpage(fluid=TRUE, ...),
+#                        included full names of model classes,
+#                        numbering of steps,
+#                        both types of results in one box, with progress bar (package shinycssloaders),
+#                        new column Example Model with static path diagrams for each model class
+#                        all main columns are equally wide now
+#                        included more information on usage of the app
+#                        changed display form of optimal numbers to table (like maxPower)
+#                        note: no solution for url in hovertext & force to print 3 digits in maxPowTable left aligns them..
+#                        hover text refering to Usami for model selection
+#                        amended hover text for budget, larger budgets
 # JW: 0.1.00 2022-11-18: some hover texts changed, problem with error 1 when changing modelClass persists
 # JW: 0.0.48 2022-11-17: new infos in hover boxes
 # JW: 0.0.46 2022-11-14: added default target params in univariate changed to AR (before: none)
@@ -11,7 +24,7 @@
 # JW: 0.0.26 2022-08-31: typo in compute_results() input corrected
 
 # only for local run
-#setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optDynMo_JK-main")
+#setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -28,13 +41,14 @@ packages <- c("shiny", # basic
               "stringr",
               "RMariaDB", # for data log
               "here",
-              "config" # same
+              "shinycssloaders",
+              "config" # same (has to be last!)
 )
 newPackages <-
   packages[!(packages %in% installed.packages()[, "Package"])]
 if (length(newPackages))
   install.packages(newPackages)
-packages <- packages[-length(packages)] # prevent config from loading; otherwise base::get() masked
+packages <- packages[!packages %in% "config"] # prevent config from loading; otherwise base::get() masked
 lapply(packages, require, character.only = TRUE)
 # if (!("shinyMatrix" %in% installed.packages()[, "Package"])){
 #   install_github("INWTlab/shiny-matrix") # version on github is more recent (i.e., editableCells parameter only here)
@@ -49,961 +63,1004 @@ lapply(packages, require, character.only = TRUE)
 
 
 # source all relevant functions
-source("R/calculate.F.diff.R")
-source("R/calculate.from.cost.function.R")
-source("R/calculate.power.LRT.R")
-source("R/calculate.power.R")
-source("R/check_plausability.R")
-source("R/compute.se.oertzen.R")
-source("R/fn.R")
-source("R/get_all_labels.R")
-source("R/helper.functions.R")
-source("R/kickstart.optimizer.R")
-source("R/optmze.R")
-source("R/prepare.input.R")
-source("R/prepare.results.R")
-source("R/RcppExports.R")
+source("R/calculate.F.diff.R", local = TRUE)
+source("R/calculate.from.cost.function.R", local = TRUE)
+source("R/calculate.power.LRT.R", local = TRUE)
+source("R/calculate.power.R", local = TRUE)
+source("R/check_plausability.R", local = TRUE)
+source("R/compute.se.oertzen.R", local = TRUE)
+source("R/error_messages_translation.R", local = TRUE)
+source("R/fn.R", local = TRUE)
+source("R/get_all_labels.R", local = TRUE)
+source("R/helper.functions.R", local = TRUE)
+source("R/kickstart.optimizer.R", local = TRUE)
+source("R/optmze.R", local = TRUE)
+source("R/prepare.input.R", local = TRUE)
+source("R/prepare.results.R", local = TRUE)
+source("R/RcppExports.R", local = TRUE)
 
-ui <-
+ui <- 
   # include file-based css in shiny: https://shiny.rstudio.com/articles/css.html
-  navbarPage(tags$link(rel = "stylesheet", type = "text/css", href = "ui.css"),
-             title = "OptDynMo: Optimal Design for Dynamic Longitudinal Models",
+  navbarPage(header = includeCSS('www/ui.css'),
+             #title = "OptDynMo: Finding the optimal number of persons (N) and time points (T) for maximal power in dynamic longitudinal models given a fixed budget",
+             title = HTML("<strong>OptDynMo</strong>: Optimal Design for Dynamic Longitudinal Models"),
              
              tabPanel(
                title = "Maximize Power",
                icon = icon("magnifying-glass-chart"),
-               fluidPage(
-                 fluidRow(
-                   column(
-                     id = "one",
-                     width = 4,
-                     #tags$details(
-                     #'open' = "TRUE",
-                     #tags$summary(
-                     div(
-                       class = "main-box",
-                       tags$span(class = "heading", "Study Design"),
-                       #),
-                       tags$br(),
-                       tags$br(),
-                       
-                       fluidRow(
-                         column(
-                           width = 6,
-                           div(class = "input-box",
-                               tags$span(
-                                 class = "hovertext",
-                                 'data-hover' = "In any monetary unit, e.g. € or $.",
-                                 icon("circle-question")
-                               )  %>% tagAppendAttributes(style = "left: 101%;"),
-                               numericInput(
-                                 inputId = "budget",
-                                 label = "Budget",
-                                 value = 10000,
-                                 min = 0,
-                                 max = 1000000, # otherwise no solution
-                                 step = 2500 # wird verdoppelt in UI!?
-                               )
-                           )
-                         ),
-                         column(
-                           width = 6,
-                           div(class = "input-box",
-                               tags$span(
-                                 class = "hovertext",
-                                 'data-hover' = "Used for the Likelihood-Ratio-Tests in which the optimal N and T are calculated.",
-                                 icon("circle-question")
-                               )  %>% tagAppendAttributes(style = "left: 101%;"),
-                               ## with arrows
-                               numericInput(
-                                 inputId = "alpha",
-                                 label =
-                                   withMathJax(c("\\(\\alpha\\)-Level")),
-                                 value = 0.05,
-                                 min = 0.01,
-                                 max = 1,
-                                 step = 0.005
-                               )
-                               ## without arrows (but not able to give value to backend)
-                               # autonumericInput(
-                               #   inputId = "alpha",
-                               #   label =
-                               #     withMathJax(c("\\(\\alpha\\)-Level")),
-                               #   value = 0.05,
-                               #   minimumValue = 0,
-                               #   maximumValue = 1,
-                               #   ecimalCharacter = ".",
-                               #   align = "left"
-                               # )
-                           )
-                         )
-                       ), ### fluidRow budget-alpha
-                       
-                       fluidRow(
-                         column(
-                           width = 6,
-                           div(id="boxN",
-                               class = "input-box",
-                               tags$span(
-                                 class = "hovertext",
-                                 'data-hover' = "Indicate the cost to include one person in the study and the desired minimum and maximum number of persons in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes.",
-                                 icon("circle-question")
-                               )  %>% tagAppendAttributes(style = "left: 101%;"),
-                               p(HTML("<strong><i>Persons N</i></strong>")),
-                               numericInput(
-                                 inputId = "costN",
-                                 label = HTML("Costs"),
-                                 value = 100,
-                                 min = 0,
-                                 max = 10000000,
-                                 step = 5
-                               ),
-                               splitLayout(
-                                 #cellWidths = c("75%", "25%"),
-                                 numericInput(
-                                   inputId = "minN",
-                                   label = HTML("Min"),
-                                   value = 10,
-                                   min = 2,
-                                   max = 10000,
-                                   step = 0.5
-                                 ),
-                                 conditionalPanel(
-                                   condition = "output.errorCond == false", 
-                                   uiOutput(outputId = "minN_Output_Backend")
-                                 )
-                               ),
-                               splitLayout(
-                                 numericInput(
-                                   inputId = "maxN",
-                                   label = HTML("Max"),
-                                   value = 50,
-                                   min = 2,
-                                   max = 10000,
-                                   step = 0.5
-                                 ),
-                                 conditionalPanel(
-                                   condition = "output.errorCond == false", 
-                                   uiOutput(outputId = "maxN_Output_Backend")
-                                 )
-                               )
-                           ) ### div input-box N
-                         ), ### column N
-                         
-                         column(
-                           width = 6,
-                           div(id="boxT",
-                               class = "input-box",
-                               tags$span(
-                                 class = "hovertext",
-                                 'data-hover' = "Indicate the cost for measuring one person at one time point and the desired minimum and maximum number of time points in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes. The default for the minimum number of time points reflects the minimum number of time points that are required for model identification (see Usami et al., 2019).",
-                                 icon("circle-question")
-                               )  %>% tagAppendAttributes(style = "left: 101%;"),
-                               p(HTML("<strong><i>Time Points T</i></strong>")),
-                               numericInput(
-                                 inputId = "costT",
-                                 label = HTML("Costs"),
-                                 value = 50,
-                                 min = 0,
-                                 max = 10000000,
-                                 step = 5
-                               ),
-                               splitLayout(
-                                 uiOutput(outputId = "minTidentify_Output"),
-                                 conditionalPanel(
-                                   condition = "output.errorCond == false", 
-                                   uiOutput(outputId = "minT_Output_Backend")
-                                 )
-                               ),
-                               splitLayout(
-                                 numericInput(
-                                   inputId = "maxT",
-                                   label = HTML("Max"),
-                                   value = 18,
-                                   min = 1,
-                                   max = 10000,
-                                   step = 0.5
-                                 ),
-                                 conditionalPanel(
-                                   condition = "output.errorCond == false", 
-                                   uiOutput(outputId = "maxT_Output_Backend")
-                                 )
-                               )
-                           ) ### div input-box T
-                         ) #### column T
-                       ) ### fluidRow (N & T)
-                     ),
-                     ### div study design
-                     
-                     #tags$details('open' = "TRUE",
-                     # tags$summary(
-                     div(
-                       class = "main-box",
-                       tags$span(class = "heading", "Model Characteristics"),
-                       #),
-                       tags$br(),
-                       tags$br(),
-                       fluidRow(
-                         column(
-                           width = 6,
-                       div(class = "input-box",
-                           selectInput(
-                             inputId = "modelClass",
-                             label = h5(strong("Model Class")),
-                             choices = list(
-                               "CLPM" = "clpm",
-                               "factor CLPM" = "fclpm",
-                               "RI-CPLM" = "ri-clpm",
-                               "STARTS" = "starts",
-                               "LCM-SR" = "lcm-sr",
-                               "ALT" = "alt",
-                               "LCS" = "lcs"
-                             ),
-                             selected = "clpm"
-                           )
-                       )
-                       )),
-                       # p(HTML("<small>For guidance concerning model selection see Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. Psychological Methods, 24(5), 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>.</small>")),
-                       # tags$br(),
-                       div(class = "input-box",
-                           splitLayout(
-                             cellWidths = c("80%", "20%"),
-                           textAreaInput(
-                             inputId = "procNames",
-                             label = HTML("Process Names"),
-                             placeholder = "proc1, proc2",
-                             value = "proc1, proc2"
-                           ),
-                           uiOutput(outputId = "nbProc")
-                           ),
-                           tags$span(style = "font-weight:normal; font-size:small;",
-                                     "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names. It is displayed right to the input field."
-                           ),
-                           tags$br(),
-                           tags$br()
-                       ),
-                       
-                       
-                       # only single-indicator for now
-                       conditionalPanel(
-                         condition = "input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs'",
-                         div(class = "input-box",
-                             uiOutput(outputId = "measModel_Output")
-                         )
-                       )
-                       # conditionalPanel(condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
-                       #                  tags$br(),
-                       #                  uiOutput(outputId = "indicat_Output"))
-                     ) ### div model characteristics
-                   ),
-                   ### column one
+               
+               div(class= "what", "This app helps you to plan a study with the optimal number of persons (n) and time Points (t) for maximal power given your budget", br(), span(style="font-size:18px", HTML("Simply follow Steps (<font color=#7000a8>1</font>), (<font color=#7000a8>2</font>) and (<font color=#7000a8>3</font>)"))),
+               br(), 
+               
+               column(
+                 id = "one",
+                 width = 4,
+                 div(
+                   class = "main-box",
+                   tags$span(class = "heading", HTML("(<font color=#7000a8>1</font>) Study Design")),
+                   tags$br(),
+                   tags$br(),
+                   p(HTML("First, indicate key features of your planned study.")),
+                   tags$br(),
                    
+                   fluidRow(
                    column(
-                     id = "two",
-                     class = "main-box",
-                     #style = "left: 8px;",
-                     width = 3,
-                     #tags$details('open' = "TRUE",
-                     #tags$summary(
-                     tags$span(class = "heading", "Model Parameters"),
-                     # ),
-                     tags$br(),
-                     tags$br(),
-                     p(
-                       HTML(
-                         "First, <strong>set the model parameters</strong> in the <strong>matrices</strong>. Note that variance parameters must be larger than zero."
-                       )
-                     ),
-                     p(
-                       HTML(
-                         "Second, <strong>choose your target parameters</strong> for which you want to maximize the joint power from the respective <strong>drop-down menu</strong>."
-                       )
-                     ),
-                     tags$br(),
-                     
-                     ### removed for now: first measurement occasion params
-                     # div(
-                     #   class = "input-box", style="background-color: #c1c1c1",
-                     #   span(
-                     #     tags$span(
-                     #       class = "hovertext",
-                     #       'data-hover' = "Per default, parameters for the first measurement occasion are computed from your parameter inputs for all subsequent measurement occasions. You can also chose to set them by yourself.",
-                     #       icon("circle-question")
-                     #     ) %>% tagAppendAttributes(style = "left: 30%;"),
-                     #     checkboxInput(
-                     #       inputId = "firstCheck",
-                     #       label = HTML("<strong>Fixed Parameters for <i>T = 1</i></strong>"),
-                     #       value = TRUE
-                     #     )
-                     #   ),
-                     #   tags$details(
-                     #     tags$summary(class = "firstMeas", span("See/set parameters")),
-                     #     tags$br(),
-                     #
-                     #     # fixed values
-                     #
-                     #     # standard
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1",
-                     #       div(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         HTML(
-                     #           "<strong>See</strong> the parameters for <i>T = 1</i>:"
-                     #         )
-                     #       ),
-                     #       tags$br(),
-                     #       p(HTML(
-                     #         "<strong>Autoregressive Effects</strong>"
-                     #       )),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ARfixT1_Output")
-                     #       ),
-                     #       p(HTML("<strong>Cross-Lagged Effects</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "CLfixT1_Output")
-                     #       ),
-                     #       p(
-                     #         HTML("<strong>Dynamic Residuals</strong>")
-                     #       ),
-                     #         p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "RESfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # Measurement Model
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & (input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
-                     #       p(HTML("<strong>Factor Loadings</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "LOADfixT1_Output")
-                     #       ),
-                     #       p(HTML("<strong>Unique Residuals</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "UNIQfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # Intercept
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & (input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-scr')",
-                     #       p(HTML("<strong>Random Intercepts</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "IfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # Slope
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & input.modelClass == 'lcm-sr'",
-                     #       p(HTML("<strong>Random Slopes</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "SfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # Cov Int - Slope
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & input.modelClass == 'lcm-sr'",
-                     #       p(HTML("<strong>Covariance Random Intercept and Random Slope</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ISfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # constant accumulating factor A
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & (input.modelClass == 'alt' | input.modelClass == 'lcs')",
-                     #       p(HTML("<strong>Constant Accumulating Factor A</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "AfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # changing accumulating factor B
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & input.modelClass == 'alt'",
-                     #       p(HTML("<strong>Changing Accumulating Factor B</strong>")),
-                     #       p(HTML("Means")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "BmeanfixT1_Output")
-                     #       ),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "BfixT1_Output")
-                     #       )
-                     #     ),
-                     #
-                     #     # coupling factor AB
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck==1 & input.modelClass == 'alt'",
-                     #       p(HTML("<strong>Covariances Accumulating Factors A and B</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ABfixT1_Output")
-                     #         )
-                     #       ),
-                     #
-                     #
-                     #     # set parameters (T=1)
-                     #
-                     #     # standard
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1",
-                     #       div(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         HTML(
-                     #           "<strong>Set</strong> the parameters for <i>T = 1</i>:´"
-                     #         )
-                     #       ),
-                     #       tags$br(),
-                     #       p(HTML(
-                     #         "<strong>Autoregressive Effects</strong>"
-                     #       )),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ART1_Output")
-                     #       ),
-                     #       p(HTML("<strong>Cross-Lagged Effects</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "CLT1_Output")
-                     #       ),
-                     #       p(
-                     #         HTML("<strong>Dynamic Residual</strong>")
-                     #       ),
-                     #         p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "REST1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # Measurement Model
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & (input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
-                     #       p(HTML("<strong>Factor Loadings</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "LOADT1_Output")
-                     #       ),
-                     #       p(HTML("<strong>Unique Residuals</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "UNIQT1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # Intercept
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & (input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-scr')",
-                     #       p(HTML("<strong>Random Intercepts</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "IT1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # Slope
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & input.modelClass == 'lcm-sr'",
-                     #       p(HTML("<strong>Random Slopes</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ST1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # Cov Int - Slope
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & input.modelClass == 'lcm-sr'",
-                     #       p(HTML("<strong>Covariances Random Intercepts and Random Slopes</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "IST1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # constant accumulating factor A
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & (input.modelClass == 'alt' | input.modelClass == 'lcs')",
-                     #       p(HTML("<strong>Constant Accumulating Factor A</strong>")),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "AT1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # changing accumulating factor B
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & input.modelClass == 'alt'",
-                     #       p(HTML("<strong>Changing Accumulating Factor B</strong>")),
-                     #       p(HTML("Means")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "BmeanT1_Output")
-                     #       ),
-                     #       p(HTML("Variances and Covariances")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "BT1_Output")
-                     #       ),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in covariances in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #     ),
-                     #
-                     #     # coupling AB
-                     #     conditionalPanel(
-                     #       condition = "input.firstCheck!=1 & input.modelClass == 'alt'",
-                     #       p(HTML("<strong>Covariances Accumulating Factors A and B</strong>")),
-                     #       div(
-                     #         class = "matrixWidget",
-                     #         uiOutput(outputId = "ABT1_Output")),
-                     #       tags$span(
-                     #         style = "font-weight:normal; font-size:small;",
-                     #         "Please only fill in the lower triangular matrix."
-                     #       ),
-                     #       tags$br()
-                     #       )
-                     #   )
-                     # ),
-                     
-                     ### set parameters (T>2)
-                     div(
-                       class = "input-box",
-                       conditionalPanel(
-                         condition = "input.modelClass == 'clpm' | input.modelClass == 'fclpm'",
-                       tags$span(
-                         class = "hovertext",
-                         'data-hover' = "The AR parameters indicate the stability of the processes. Hamaker et al. (2015) give the following interpretation: “The closer these autoregressive parameters are to one, the more stable the rank order of individuals is from one occasion to the next”. (p. 104). The CL parameters indicate the extent to which change in one process can be predicted from the individual’s prior deviation from the group mean of another process (Hamaker et al., 2015, p. 104).",
-                         icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
-                       ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;")
-                       ),
-                       conditionalPanel(
-                         condition = "input.modelClass == 'ri-clpm' | input.modelClass == 'starts'| input.modelClass == 'lcm-sr'| input.modelClass == 'lcs'| input.modelClass == 'alt'",
+                     width = 6,
+                     div(class = "input-box mini-left",
                          tags$span(
                            class = "hovertext",
-                           'data-hover' = "The AR parameters represent the amount of within-person carry-over effect. If it is positive, it implies that measurement occasions on which a person scored above his or her expected score are likely to be followed by occasions on which he or she still scores above the expected score again, and vice versa. (Hamaker et al., 2015, p. 104-105). The CL parameters indicate the extent to which variables influence each other. Specifically, a CL parameter indicates the degree by which deviations from an individual’s expected score on one variable can be predicted from preceding deviations from one’s expected score on another variable (Hamaker et al., 2015, p. 104-105).",
-                           icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;")
-                       ),
-                       p(
-                         HTML("<strong>Autoregressive and Cross-Lagged Effects (AR & CL)</strong>")
-                       ),
-                       div(class = "matrixWidget", uiOutput(outputId = "ARCL_Output")),
-                       tags$span(
-                         style = "font-weight:normal; font-size:small;",
-                         "Specfiy AR effects in the diagonal; CL effects in the off-diagonal. For the direction of CL effects: columns → rows"
-                       ),
-                       tags$br(),
-                       tags$br(),
-                       uiOutput(outputId = "targetARCL_Output")
-                     ),
-                     
-                     div(
-                       class = "input-box",
-                       tags$span(
-                         class = "hovertext",
-                         'data-hover' = "The dynamic residuals represent the parts of the processes that cannot be explained by the lagged relations (i.e., AR and CL effects) and other common factors. The influence of the dynamic residuals feeood forward through the lagged relations and affects subsequent measurement occasions . They are also referred to as innovations or dynamic errors (Usami et al., 2019, p. 7).",
-                         icon("circle-question")
-                       ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                       p(HTML("<strong>Dynamic Residuals (RES)</strong>")),
-                       p(style = "font-weight:normal;", "Variances and Covariances"),
-                       div(class = "matrixWidget", uiOutput(outputId = "RES_Output")),
-                       tags$span(
-                         style = "font-weight:normal; font-size:small;",
-                         "Please only fill in covariances in lower triangular matrix."
-                       ),
-                       tags$br(),
-                       tags$br(),
-                       uiOutput(outputId = "targetRES_Output")
-                     ),
-                     
-                     # Measurement Model
-                     conditionalPanel(
-                       condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
-                       ### removed for now: Factor Loadings
-                       # div(
-                       #   class = "input-box",
-                       #   tags$span(
-                       #     class = "hovertext",
-                       #     'data-hover' = "...",
-                       #     icon("circle-question")
-                       #   ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                       #   p(HTML("<strong>Factor Loadings</strong>")),
-                       #   uiOutput(outputId = "LOAD_Output"),
-                       #   uiOutput(outputId = "targetLOAD_Output")
-                       # ),
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "Unique residuals, also referred to as measurement errors, do not affect future measurements and are only associated with a single measurement occasion (Usami et al., 2019, p. 3).",
+                           'data-hover' = "Indicate the maximum budget that you have available for the study (in any monetary unit). Note that larger budgets lead to larger computation times (because the search space for the optimizer gets larger).",
                            icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Unique Residuals (UNIQ)<strong>")),
-                         p(style = "font-weight:normal;", "Variances and Covariances"),
-                         div(class = "matrixWidget", uiOutput(outputId = "UNIQ_Output")),
-                         tags$span(
-                           style = "font-weight:normal; font-size:small;",
-                           "Please only fill in covariances in lower triangular matrix."
-                         ),
-                         tags$br(),
-                         tags$br(),
-                         uiOutput(outputId = "targetUNIQ_Output")
-                       )
-                     ),
-                     
-                     # Intercept (Persons means for ri-clpm and starts, growth curve for lcm-sr)
-                     conditionalPanel(
-                       condition = "input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-sr'",
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "The random intercepts are the individual’s trait-like deviations from the group means (Hamaker et al., 2015, p. 104).",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Random Intercepts (I)</strong>")),
-                         p(style = "font-weight:normal;", "Variances and Covariances"),
-                         div(class = "matrixWidget", uiOutput(outputId = "I_Output")),
-                         tags$span(
-                           style = "font-weight:normal; font-size:small;",
-                           "Please only fill in covariances in lower triangular matrix."
-                         ),
-                         tags$br(),
-                         tags$br(),
-                         uiOutput(outputId = "targetI_Output")
-                       )
-                     ),
-                     
-                     ### Slope
-                     conditionalPanel(
-                       condition = "input.modelClass == 'lcm-sr'",
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "Random slopes represent the linear slopes of the individual developmental trajectories. (Usami et al., 2019, p. 3).",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML("<strong>Random Slopes (S)</strong>")),
-                         p(style = "font-weight:normal;", "Variances and Covariances"),
-                         div(class = "matrixWidget", uiOutput(outputId = "S_Output")),
-                         tags$span(
-                           style = "font-weight:normal; font-size:small;",
-                           "Please only fill in covariances in lower triangular matrix."
-                         ),
-                         tags$br(),
-                         tags$br(),
-                         uiOutput(outputId = "targetS_Output")
-                       )
-                     ),
-                     
-                     ### Cov Int - Slope
-                     conditionalPanel(
-                       condition = "input.modelClass == 'lcm-sr'",
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "The covariances of the random intercepts and slopes. For example, a positive covariance between the random intercept of process x and the random slope of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(
-                           HTML(
-                             "<strong>Covariances of Random Intercepts and Random Slopes (IS)</strong>"
-                           )
-                         ),
-                         div(class = "matrixWidget", uiOutput(outputId = "IS_Output")),
-                         tags$br(),
-                         uiOutput(outputId = "targetIS_Output")
-                       )
-                     ),
-                     
-                     ### constant Accumulating Factor A
-                     conditionalPanel(
-                       condition = "(input.modelClass == 'alt' | input.modelClass == 'lcs')",
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "The constant accumulating factors A have a constant effect on the processes that accumulate over time through the lagged relations (Usami et al., 2019, p. 7).",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML(
-                           "<strong>Constant Accumulating Factor (A)</strong>"
-                         )),
-                         p(style = "font-weight:normal;", "Variances and Covariances"),
-                         div(class = "matrixWidget", uiOutput(outputId = "A_Output")),
-                         uiOutput(outputId = "targetA_Output")
-                       )
-                     ),
-                     
-                     ### changing Accumulating Factor B
-                     conditionalPanel(
-                       condition = "input.modelClass == 'alt'",
-                       div(
-                         class = "input-box",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "The changing factors B have a changing effect on the processes that accumulate over time through the lagged relations. The direct effect of the changing accumulating factors grows with each measurement occasion (Usami et al., 2019, p. 5).",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(HTML(
-                           "<strong>Changing Accumulating Factor (B)</strong>"
-                         )),
-                         ### removed for now:
-                         # p(style = "font-weight:normal;", "Means"),
-                         # div(class="matrixWidget", uiOutput(outputId = "Bmean_Output")),
-                         # uiOutput(outputId = "targetBmean_Output"),
-                         p(style = "font-weight:normal;", "Variances and Covariances"),
-                         div(class = "matrixWidget", uiOutput(outputId = "B_Output")),
-                         uiOutput(outputId = "targetB_Output")
-                       )
-                     ),
-                     
-                     # Cov AB
-                     conditionalPanel(
-                       condition = "input.modelClass == 'alt'",
-                       div(
-                         class = "input-box",
-                         
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "The covariance of the constant changing accumulating factors A and B. For example, a positive covariance between the constant accumuliting factor of process x and the changing accumulating factor of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
-                           icon("circle-question")
-                         ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                         p(
-                           HTML("<strong>Covariance of Accumulating Factors (AB)</strong>")
-                         ),
-                         div(class = "matrixWidget", uiOutput(outputId = "AB_Output")),
-                         tags$br(),
-                         uiOutput(outputId = "targetAB_Output")
-                       )
+                         )  %>% tagAppendAttributes(style = "left: 4%;"),
+                           
+                         numericInput(
+                           inputId = "budget",
+                           label = "Budget",
+                           value = 10000,
+                           min = 0,
+                           max = 1000000, # otherwise no solution
+                           step = 2500 # wird verdoppelt in UI!?
+                         )
                      )
                    ),
-                   #### column two
+                   column(
+                     width = 6,
+                     div(class = "input-box mini-right",
+                         tags$span(
+                           class = "hovertext",
+                           'data-hover' = "This is used for the Likelihood-Ratio-Tests in which the optimal N and T are calculated.",
+                           icon("circle-question")
+                         )  %>% tagAppendAttributes(style = "left: 4%;"),
+                         ## with arrows
+                         numericInput(
+                           inputId = "alpha",
+                           label =
+                             withMathJax(c("\\(\\alpha\\)-Level")),
+                           value = 0.05,
+                           min = 0.01,
+                           max = 1,
+                           step = 0.005
+                         )
+                         ## without arrows (but not able to give value to backend)
+                         # autonumericInput(
+                         #   inputId = "alpha",
+                         #   label =
+                         #     withMathJax(c("\\(\\alpha\\)-Level")),
+                         #   value = 0.05,
+                         #   minimumValue = 0,
+                         #   maximumValue = 1,
+                         #   ecimalCharacter = ".",
+                         #   align = "left"
+                         # )
+                     ))
+                   ),
+                   fluidRow(
+                   column(
+                     width = 6,
+                     div(id="boxN",
+                         class = "input-box mini-left",
+                         tags$span(
+                           class = "hovertext",
+                           'data-hover' = "Indicate the cost to include one person in the study and the desired minimum and maximum number of persons in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes.",
+                           icon("circle-question")
+                         )  %>% tagAppendAttributes(style = "left: 4%;"),
+                         p(HTML("<strong><i>Persons N</i></strong>")),
+                         numericInput(
+                           inputId = "costN",
+                           label = HTML("Costs"),
+                           value = 100,
+                           min = 0,
+                           max = 10000000,
+                           step = 5
+                         ),
+                         splitLayout(
+                           #cellWidths = c("75%", "25%"),
+                           numericInput(
+                             inputId = "minN",
+                             label = HTML("Min"),
+                             value = 10,
+                             min = 2,
+                             max = 10000,
+                             step = 0.5
+                           ),
+                           conditionalPanel(
+                             condition = "output.errorCond == false", 
+                             uiOutput(outputId = "minN_Output_Backend")
+                           )
+                         ),
+                         splitLayout(
+                           numericInput(
+                             inputId = "maxN",
+                             label = HTML("Max"),
+                             value = 50,
+                             min = 2,
+                             max = 10000,
+                             step = 0.5
+                           ),
+                           conditionalPanel(
+                             condition = "output.errorCond == false", 
+                             uiOutput(outputId = "maxN_Output_Backend")
+                           )
+                         )
+                     ) ### div input-box N
+                   ), ### column N
                    
                    column(
-                     id = "three",
-                     width = 5,
-                     
-                     # main-box(
-                     ### removed for now (not working yet, too): SEM Plot
-                     # div(style = "min-height: 20px; padding: 19px; margin-bottom: 20px; background-color: #f5f5f5; border: 1px solid #e3e3e3; border-radius: 4px; box-shadow: inset 0 1px 1px rgba(0,0,0,.05);",
-                     #     plotOutput("platzhalter")),
-                     
-                     
-                     div(
-                       class = "main-box",
-                       tags$p(class = "heading", "Results"),
-                       div(class = "output-box", style="border: 3px solid black;",
-                           tags$span(class = "hovertext", style="font-weight:normal;",
-                                     'data-hover' = "Optimal number of persons N and optimal number of time points T for which the power of the Likelihood-Ratio-Tests of the target parameters is maximal.",
-                                     icon("circle-question")
-                           )  %>% tagAppendAttributes(style = "left: 10%;"),
-                           #div(class = "heading", "Likelihood-Ratio Test of Single Target Parameters"),
-                           #tags$br(),
-                           span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Persons <i>N</i>:")), textOutput("optN", inline=T), 
-                           tags$br(),
-                           span(style="font-weight:normal; font-variant:small-caps;", HTML("Optimal number of Time Points <i>T</i>:")), textOutput("optT", inline=T)
-                       ),
-                       
-                       div(class = "output-box", 
-                           tags$span(
-                             class = "hovertext", style="font-weight:normal;",
-                             'data-hover' = "The power values for all target parameters based on the optimal N and T solution.",
-                             icon("circle-question")
-                           )  %>% tagAppendAttributes(style = "left: 40%;"),
-                           div(class = "heading", "Maximum Power For all Target Parameters"),
-                           span(style="font-weight:normal; font-variant:small-caps;",
-                                HTML(
-                                  "Given the optimal number of <i>N</i> and <i>T</i>"
-                                )), 
-                           tags$br(),
-                           tags$br(),
-                           DT::dataTableOutput("maxPowerTable")
-                       ),
-                       
-                       conditionalPanel(
-                         condition = "output.errorCond == true",
-                         htmlOutput("error", inline=T)
-                       ),
-                       
-                       conditionalPanel(
-                         condition = "output.errorCondFrontend == true",
-                         htmlOutput("errorFrontend", inline=T)
-                       ),
-                       
-                       conditionalPanel(
-                         condition = "output.warningCond == true",
-                         htmlOutput("warn", inline=T)
-                       ),
-                       
-                       conditionalPanel(
-                         condition = "output.noteCond == true",
-                         htmlOutput("note", inline=T)
-                       )
-                       
-                     ),
-                     
-                     div(class="main-box",
-                         tags$p(class = "heading", "Technical Details"),
-                         
-                         fluidRow(
-                           
-                           column(
-                             width = 6,
-                             div(class = "input-box", 
-                                 tags$span(
-                               class = "hovertext",
-                               'data-hover' = "The term “precision” is used as an user-friendly transcription of what the argument pop.size of the genoud optimizer adjusts, see Mebane and Sekhon (2011).",
-                               icon("circle-question") 
-                             ) %>% tagAppendAttributes(style = "left: 30%; font-weight:normal;"),
-                             style="padding-bottom: 5px;",
-                                 sliderInput(
-                                   inputId = "popSize",
-                                   label = "Precision of Optimizer",
-                                   value = 16,
-                                   min = 16,
-                                   max = 1000, # used in backend optmze() "pop.size.max"
-                                   ticks=FALSE
-                                 )
-                             ),
-                             div(class = "input-box", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
-                                 checkboxInput(
-                                   inputId = "dbLog",
-                                   label = HTML("<b>Log results for future optimization of this app?</b>"),
-                                   value=TRUE
-                                 )
-                             )
-                           ),
-                           
-                           
-                           column(
-                             width = 6,
-                             div(class = "output-box",
-                                 span(style="font-weight:normal; font-variant:small-caps;", "Run Time (in sec):"), textOutput("runTime", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Number of Iterations:"), textOutput("optRuns", inline=T),
-                                 # necessary bc https://github.com/rstudio/shiny/issues/1318
-                                 #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
-                                 br(), 
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log ID:"), textOutput("logID", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "Log Status:"), textOutput("logDB", inline=T),
-                                 br(), span(style="font-weight:normal; font-variant:small-caps;", "App Version:"), textOutput("appVersion", inline=T)
-                             )
+                     width = 6,
+                     div(id="boxT",
+                         class = "input-box mini-right",
+                         tags$span(
+                           class = "hovertext",
+                           'data-hover' = "Indicate the cost for measuring one person at one time point and the desired minimum and maximum number of time points in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes. The default for the minimum number of time points reflects the minimum number of time points that are required for model identification (see Usami et al., 2019).",
+                           icon("circle-question")
+                         )  %>% tagAppendAttributes(style = "left: 4%;"),
+                         p(HTML("<strong><i>Time Points T</i></strong>")),
+                         numericInput(
+                           inputId = "costT",
+                           label = HTML("Costs"),
+                           value = 50,
+                           min = 0,
+                           max = 10000000,
+                           step = 5
+                         ),
+                         splitLayout(
+                           uiOutput(outputId = "minTidentify_Output"),
+                           conditionalPanel(
+                             condition = "output.errorCond == false", 
+                             uiOutput(outputId = "minT_Output_Backend")
                            )
-                           
+                         ),
+                         splitLayout(
+                           numericInput(
+                             inputId = "maxT",
+                             label = HTML("Max"),
+                             value = 18,
+                             min = 1,
+                             max = 10000,
+                             step = 0.5
+                           ),
+                           conditionalPanel(
+                             condition = "output.errorCond == false", 
+                             uiOutput(outputId = "maxT_Output_Backend")
+                           )
                          )
+                     ) ### div input-box T
+                   ) #### column T
+                   ),
+                   br(),
+                   column(width=6, "", style="margin-left:-0.5vw"),
+                   icon("arrow-down")
+                 ),
+                 ### div study design
+
+                 div(
+                   class = "main-box",
+                   tags$span(class = "heading", HTML("(<font color=#7000a8>2</font>) Model Characteristics")),
+                   tags$br(),
+                   tags$br(),
+                   p(HTML("Second, indicate the model class that you plan to analyse the data with and the names of the manifest processes that you plan to investigate.")),
+                   tags$br(),
+                   
+                   div(class = "input-box",
+                       tags$span(
+                         class = "hovertext",
+                         'data-hover' = "For guidance on model selection see Usami et al. (2019).",
+                         icon("circle-question")
+                       )  %>% tagAppendAttributes(style = "left: 1%;"),
+                       selectInput(
+                         inputId = "modelClass",
+                         label = h5(strong("Model Class")),
+                         choices = list(
+                           "Cross-Lagged Panel Model (CLPM)" = "clpm",
+                           "Factor Cross-Lagged Panel Model (factor CLPM)" = "fclpm",
+                           "Random Intercept Cross-Lagged Panel Model (RI-CPLM)" = "ri-clpm",
+                           "Stable Trait Autoregressive Trait and State Model (STARTS)" = "starts",
+                           "Latent Curve Model With Structured Residuals (LCM-SR)" = "lcm-sr",
+                           "Autoregressive Latent Trajectory Model (ALT)" = "alt",
+                           "Latent Change Score Model (LCS)" = "lcs"
+                         ),
+                         selected = "clpm"
+                       )
+                   ),
+                   
+                   fluidRow(column(width=10,
+                   div(class = "input-box", 
+                       splitLayout(
+                         cellWidths = c("80%", "20%"),
+                         textAreaInput(
+                           inputId = "procNames",
+                           label = HTML("Process Names"),
+                           placeholder = "y1, y2",
+                           value = "y1, y2"
+                         ),
+                         uiOutput(outputId = "nbProc")
+                       ),
+                       tags$span(style = "font-weight:normal; font-size:small;",
+                                 "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names. It is displayed right to the input field."
+                       ),
+                       tags$br(),
+                       tags$br()
+                   ),
+                   
+                   # only single-indicator for now
+                   conditionalPanel(
+                     condition = "input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs'",
+                     div(class = "input-box",
+                         uiOutput(outputId = "measModel_Output")
+                     )
+                   )), column(width=1, br(), br(), icon("arrow-turn-up")))
+                   #column(width=9, ""), icon("arrow-turn-up")
+                   # conditionalPanel(condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
+                   #                  tags$br(),
+                   #                  uiOutput(outputId = "indicat_Output"))
+                 ), ### div model characteristics
+                 div(
+                   class = "main-box",
+                   
+                   HTML("<p>The example path diagram below helps you select a model class and set model parameters. It shows your currently selected model class and the non-zero model parameters of the defaults of the app.</p>"),
+                   br(),
+                   span(style="text-align:center;",
+                   conditionalPanel(
+                     condition = "input.modelClass == 'clpm' ",
+                     imageOutput(outputId = "figCLPM")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'fclpm' ",
+                     imageOutput(outputId = "figfCLPM")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'ri-clpm' ",
+                     imageOutput(outputId = "figRICLPM")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'starts' ",
+                     imageOutput(outputId = "figSTARTS")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'lcm-sr' ",
+                     imageOutput(outputId = "figLCMSR")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'alt' ",
+                     imageOutput(outputId = "figALT")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'lcs' ",
+                     imageOutput(outputId = "figLCS")
+                   )))
+               ),
+               ### column one
+               
+               column(
+                 id = "two",
+                 class = "main-box",
+                 #style = "left: 8px;",
+                 width = 4,
+                 #tags$details('open' = "TRUE",
+                 #tags$summary(
+                 tags$span(class = "heading", HTML("(<font color=#7000a8>3</font>) Model Parameters")),
+                 # ),
+                 tags$br(),
+                 tags$br(),
+                 p(
+                   HTML(
+                     "Third, set model parameters and choose target parameters for which you want to maximize the joint power."
+                   )
+                 ),
+                 p(style="text-indent: -1.4em;",
+                   HTML(
+                     "<li>Set the model parameters in the matrices.<br/><small>(Note that variance parameters must be larger than zero)</small></li>"
+                   )
+                 ),
+                 p(
+                   HTML(
+                     "<li>Choose the target parameters from the drop-down menu.</li>"
+                   )
+                 ),
+                 tags$br(),
+                 
+                 ### removed for now: first measurement occasion params
+                 # div(
+                 #   class = "input-box", style="background-color: #c1c1c1",
+                 #   span(
+                 #     tags$span(
+                 #       class = "hovertext",
+                 #       'data-hover' = "Per default, parameters for the first measurement occasion are computed from your parameter inputs for all subsequent measurement occasions. You can also chose to set them by yourself.",
+                 #       icon("circle-question")
+                 #     ) %>% tagAppendAttributes(style = "left: 3%;"),
+                 #     checkboxInput(
+                 #       inputId = "firstCheck",
+                 #       label = HTML("<strong>Fixed Parameters for <i>T = 1</i></strong>"),
+                 #       value = TRUE
+                 #     )
+                 #   ),
+                 #   tags$details(
+                 #     tags$summary(class = "firstMeas", span("See/set parameters")),
+                 #     tags$br(),
+                 #
+                 #     # fixed values
+                 #
+                 #     # standard
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1",
+                 #       div(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         HTML(
+                 #           "<strong>See</strong> the parameters for <i>T = 1</i>:"
+                 #         )
+                 #       ),
+                 #       tags$br(),
+                 #       p(HTML(
+                 #         "<strong>Autoregressive Effects</strong>"
+                 #       )),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ARfixT1_Output")
+                 #       ),
+                 #       p(HTML("<strong>Cross-Lagged Effects</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "CLfixT1_Output")
+                 #       ),
+                 #       p(
+                 #         HTML("<strong>Dynamic Residuals</strong>")
+                 #       ),
+                 #         p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "RESfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # Measurement Model
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & (input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
+                 #       p(HTML("<strong>Factor Loadings</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "LOADfixT1_Output")
+                 #       ),
+                 #       p(HTML("<strong>Unique Residuals</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "UNIQfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # Intercept
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & (input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-scr')",
+                 #       p(HTML("<strong>Random Intercepts</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "IfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # Slope
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & input.modelClass == 'lcm-sr'",
+                 #       p(HTML("<strong>Random Slopes</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "SfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # Cov Int - Slope
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & input.modelClass == 'lcm-sr'",
+                 #       p(HTML("<strong>Covariance Random Intercept and Random Slope</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ISfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # constant accumulating factor A
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & (input.modelClass == 'alt' | input.modelClass == 'lcs')",
+                 #       p(HTML("<strong>Constant Accumulating Factor A</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "AfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # changing accumulating factor B
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & input.modelClass == 'alt'",
+                 #       p(HTML("<strong>Changing Accumulating Factor B</strong>")),
+                 #       p(HTML("Means")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "BmeanfixT1_Output")
+                 #       ),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "BfixT1_Output")
+                 #       )
+                 #     ),
+                 #
+                 #     # coupling factor AB
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck==1 & input.modelClass == 'alt'",
+                 #       p(HTML("<strong>Covariances Accumulating Factors A and B</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ABfixT1_Output")
+                 #         )
+                 #       ),
+                 #
+                 #
+                 #     # set parameters (T=1)
+                 #
+                 #     # standard
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1",
+                 #       div(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         HTML(
+                 #           "<strong>Set</strong> the parameters for <i>T = 1</i>:´"
+                 #         )
+                 #       ),
+                 #       tags$br(),
+                 #       p(HTML(
+                 #         "<strong>Autoregressive Effects</strong>"
+                 #       )),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ART1_Output")
+                 #       ),
+                 #       p(HTML("<strong>Cross-Lagged Effects</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "CLT1_Output")
+                 #       ),
+                 #       p(
+                 #         HTML("<strong>Dynamic Residual</strong>")
+                 #       ),
+                 #         p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "REST1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # Measurement Model
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & (input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
+                 #       p(HTML("<strong>Factor Loadings</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "LOADT1_Output")
+                 #       ),
+                 #       p(HTML("<strong>Unique Residuals</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "UNIQT1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # Intercept
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & (input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-scr')",
+                 #       p(HTML("<strong>Random Intercepts</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "IT1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # Slope
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & input.modelClass == 'lcm-sr'",
+                 #       p(HTML("<strong>Random Slopes</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ST1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # Cov Int - Slope
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & input.modelClass == 'lcm-sr'",
+                 #       p(HTML("<strong>Covariances Random Intercepts and Random Slopes</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "IST1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # constant accumulating factor A
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & (input.modelClass == 'alt' | input.modelClass == 'lcs')",
+                 #       p(HTML("<strong>Constant Accumulating Factor A</strong>")),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "AT1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # changing accumulating factor B
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & input.modelClass == 'alt'",
+                 #       p(HTML("<strong>Changing Accumulating Factor B</strong>")),
+                 #       p(HTML("Means")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "BmeanT1_Output")
+                 #       ),
+                 #       p(HTML("Variances and Covariances")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "BT1_Output")
+                 #       ),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in covariances in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #     ),
+                 #
+                 #     # coupling AB
+                 #     conditionalPanel(
+                 #       condition = "input.firstCheck!=1 & input.modelClass == 'alt'",
+                 #       p(HTML("<strong>Covariances Accumulating Factors A and B</strong>")),
+                 #       div(
+                 #         class = "matrixWidget",
+                 #         uiOutput(outputId = "ABT1_Output")),
+                 #       tags$span(
+                 #         style = "font-weight:normal; font-size:small;",
+                 #         "Please only fill in the lower triangular matrix."
+                 #       ),
+                 #       tags$br()
+                 #       )
+                 #   )
+                 # ),
+                 
+                 ### set parameters (T>2)
+                 div(
+                   class = "input-box",
+                   conditionalPanel(
+                     condition = "input.modelClass == 'clpm' | input.modelClass == 'fclpm'",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The AR parameters indicate the stability of the processes. Hamaker et al. (2015) give the following interpretation: “The closer these autoregressive parameters are to one, the more stable the rank order of individuals is from one occasion to the next”. (p. 104). The CL parameters indicate the extent to which change in one process can be predicted from the individual’s prior deviation from the group mean of another process (Hamaker et al., 2015, p. 104).",
+                       icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;")
+                   ),
+                   conditionalPanel(
+                     condition = "input.modelClass == 'ri-clpm' | input.modelClass == 'starts'| input.modelClass == 'lcm-sr'| input.modelClass == 'lcs'| input.modelClass == 'alt'",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The AR parameters represent the amount of within-person carry-over effect. If it is positive, it implies that measurement occasions on which a person scored above his or her expected score are likely to be followed by occasions on which he or she still scores above the expected score again, and vice versa. (Hamaker et al., 2015, p. 104-105). The CL parameters indicate the extent to which variables influence each other. Specifically, a CL parameter indicates the degree by which deviations from an individual’s expected score on one variable can be predicted from preceding deviations from one’s expected score on another variable (Hamaker et al., 2015, p. 104-105).",
+                       icon("circle-question") # CLPM: rank order stability (i.e., between level effect) - Hamaker: between and within conflated, vs RI-CLPM: within-person carry-over
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;")
+                   ),
+                   p(
+                     HTML("<strong>Autoregressive and Cross-Lagged Effects (AR & CL)</strong>")
+                   ),
+                   div(class = "matrixWidget", uiOutput(outputId = "ARCL_Output")),
+                   tags$span(
+                     style = "font-weight:normal; font-size:small;",
+                     "Specfiy AR effects in the diagonal; CL effects in the off-diagonal. For the direction of CL effects: columns → rows"
+                   ),
+                   tags$br(),
+                   tags$br(),
+                   uiOutput(outputId = "targetARCL_Output")
+                 ),
+                 
+                 div(
+                   class = "input-box",
+                   tags$span(
+                     class = "hovertext",
+                     'data-hover' = "The dynamic residuals represent the parts of the processes that cannot be explained by the lagged relations (i.e., AR and CL effects) and other common factors. The influence of the dynamic residuals feeood forward through the lagged relations and affects subsequent measurement occasions . They are also referred to as innovations or dynamic errors (Usami et al., 2019, p. 7).",
+                     icon("circle-question")
+                   ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                   p(HTML("<strong>Dynamic Residuals (RES)</strong>")),
+                   p(style = "font-weight:normal;", "Variances and Covariances"),
+                   div(class = "matrixWidget", uiOutput(outputId = "RES_Output")),
+                   tags$span(
+                     style = "font-weight:normal; font-size:small;",
+                     "Please only fill in covariances in lower triangular matrix."
+                   ),
+                   tags$br(),
+                   tags$br(),
+                   uiOutput(outputId = "targetRES_Output")
+                 ),
+                 
+                 # Measurement Model
+                 conditionalPanel(
+                   condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
+                   ### removed for now: Factor Loadings
+                   # div(
+                   #   class = "input-box",
+                   #   tags$span(
+                   #     class = "hovertext",
+                   #     'data-hover' = "...",
+                   #     icon("circle-question")
+                   #   ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                   #   p(HTML("<strong>Factor Loadings</strong>")),
+                   #   uiOutput(outputId = "LOAD_Output"),
+                   #   uiOutput(outputId = "targetLOAD_Output")
+                   # ),
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "Unique residuals, also referred to as measurement errors, do not affect future measurements and are only associated with a single measurement occasion (Usami et al., 2019, p. 3).",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(HTML("<strong>Unique Residuals (UNIQ)</strong>")),
+                     p(style = "font-weight:normal;", "Variances and Covariances"),
+                     div(class = "matrixWidget", uiOutput(outputId = "UNIQ_Output")),
+                     tags$span(
+                       style = "font-weight:normal; font-size:small;",
+                       "Please only fill in covariances in lower triangular matrix."
                      ),
-                     
-                     # div(
-                     #   class = "main-box",
-                     #   p(class = "heading", "Citation"),
-                     #   p(style="font-weight:normal;", HTML("This shiny app is based on the following article: ..."))
-                     # ),
-                     # tags$details(#'open' = "FALSE",
-                     #  tags$summary(span("Dev Output")),
-                     #  verbatimTextOutput("results")
-                     # ),
-                     tags$details(style="font-weight: lighter; padding-left: 1.5vw;",
-                       tags$summary(span(class = "heading", "References")),
-                       br(), 
-                       HTML("Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique of the cross-lagged panel model. <i>Psychological Methods</i>, 20, 102–116. <a href=\"https://doi.org/10.1037/a0038889\" target=\"_blank\">https://doi.org/10.1037/a0038889</a>"),
-                       br(), 
-                       br(), 
-                       HTML("Mebane, W. R., & Sekhon, J. S. (2011). Genetic optimization using derivatives: The rgenoud package for R. <i>Journal of Statistical Software</i>, 42. <a href=\"https://doi.org/10.18637/jss.v042.i11\" target=\"_blank\">https://doi.org/10.18637/jss.v042.i11</a>"),
-                       br(), 
-                       br(), 
-                       HTML("Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. <i>Psychological Methods</i>, 24, 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>")
+                     tags$br(),
+                     tags$br(),
+                     uiOutput(outputId = "targetUNIQ_Output")
+                   )
+                 ),
+                 
+                 # Intercept (Persons means for ri-clpm and starts, growth curve for lcm-sr)
+                 conditionalPanel(
+                   condition = "input.modelClass == 'ri-clpm' | input.modelClass == 'starts' | input.modelClass == 'lcm-sr'",
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The random intercepts are the individual’s trait-like deviations from the group means (Hamaker et al., 2015, p. 104).",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(HTML("<strong>Random Intercepts (I)</strong>")),
+                     p(style = "font-weight:normal;", "Variances and Covariances"),
+                     div(class = "matrixWidget", uiOutput(outputId = "I_Output")),
+                     tags$span(
+                       style = "font-weight:normal; font-size:small;",
+                       "Please only fill in covariances in lower triangular matrix."
                      ),
+                     tags$br(),
+                     tags$br(),
+                     uiOutput(outputId = "targetI_Output")
+                   )
+                 ),
+                 
+                 ### Slope
+                 conditionalPanel(
+                   condition = "input.modelClass == 'lcm-sr'",
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "Random slopes represent the linear slopes of the individual developmental trajectories. (Usami et al., 2019, p. 3).",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(HTML("<strong>Random Slopes (S)</strong>")),
+                     p(style = "font-weight:normal;", "Variances and Covariances"),
+                     div(class = "matrixWidget", uiOutput(outputId = "S_Output")),
+                     tags$span(
+                       style = "font-weight:normal; font-size:small;",
+                       "Please only fill in covariances in lower triangular matrix."
+                     ),
+                     tags$br(),
+                     tags$br(),
+                     uiOutput(outputId = "targetS_Output")
+                   )
+                 ),
+                 
+                 ### Cov Int - Slope
+                 conditionalPanel(
+                   condition = "input.modelClass == 'lcm-sr'",
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The covariances of the random intercepts and slopes. For example, a positive covariance between the random intercept of process x and the random slope of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(
+                       HTML(
+                         "<strong>Covariances of Random Intercepts and Random Slopes (IS)</strong>"
+                       )
+                     ),
+                     div(class = "matrixWidget", uiOutput(outputId = "IS_Output")),
+                     tags$br(),
+                     uiOutput(outputId = "targetIS_Output")
+                   )
+                 ),
+                 
+                 ### constant Accumulating Factor A
+                 conditionalPanel(
+                   condition = "(input.modelClass == 'alt' | input.modelClass == 'lcs')",
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The constant accumulating factors A have a constant effect on the processes that accumulate over time through the lagged relations (Usami et al., 2019, p. 7).",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(HTML(
+                       "<strong>Constant Accumulating Factor (A)</strong>"
+                     )),
+                     p(style = "font-weight:normal;", "Variances and Covariances"),
+                     div(class = "matrixWidget", uiOutput(outputId = "A_Output")),
+                     uiOutput(outputId = "targetA_Output")
+                   )
+                 ),
+                 
+                 ### changing Accumulating Factor B
+                 conditionalPanel(
+                   condition = "input.modelClass == 'alt'",
+                   div(
+                     class = "input-box",
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The changing factors B have a changing effect on the processes that accumulate over time through the lagged relations. The direct effect of the changing accumulating factors grows with each measurement occasion (Usami et al., 2019, p. 5).",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(HTML(
+                       "<strong>Changing Accumulating Factor (B)</strong>"
+                     )),
+                     ### removed for now:
+                     # p(style = "font-weight:normal;", "Means"),
+                     # div(class="matrixWidget", uiOutput(outputId = "Bmean_Output")),
+                     # uiOutput(outputId = "targetBmean_Output"),
+                     p(style = "font-weight:normal;", "Variances and Covariances"),
+                     div(class = "matrixWidget", uiOutput(outputId = "B_Output")),
+                     uiOutput(outputId = "targetB_Output")
+                   )
+                 ),
+                 
+                 # Cov AB
+                 conditionalPanel(
+                   condition = "input.modelClass == 'alt'",
+                   div(
+                     class = "input-box",
                      
-                     # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
-                     span(style="color:white;", textOutput("errorCond", inline=T)), 
-                     span(style="color:white;", textOutput("errorCondFrontend", inline=T)),  
-                     span(style="color:white;", textOutput("warningCond", inline=T)),
-                     span(style="color:white;", textOutput("noteCond", inline=T))
-                     
-                   ) ### column three
-                 ) ### fluidRow POWER
-               ) ### fluidpage POWER
-             )
-             ### tabpanel POWER
+                     tags$span(
+                       class = "hovertext",
+                       'data-hover' = "The covariance of the constant changing accumulating factors A and B. For example, a positive covariance between the constant accumuliting factor of process x and the changing accumulating factor of process y indicates that an individual who starts the study with a larger-than-average value of process x is likely to exhibit more growth in process y over time.",
+                       icon("circle-question")
+                     ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                     p(
+                       HTML("<strong>Covariance of Accumulating Factors (AB)</strong>")
+                     ),
+                     div(class = "matrixWidget", uiOutput(outputId = "AB_Output")),
+                     tags$br(),
+                     uiOutput(outputId = "targetAB_Output")
+                   )
+                 )
+               ),
+               #### column two
+               
+               column(
+                 id = "three",
+                 width = 4,
+                 
+                 div(
+                   class = "main-box",
+                   tags$span(class = "heading", "Results"),
+                   br(),
+                   br(),
+                   HTML("<p>Finally, have a look at the results. <br>Note that the results change immediately when you change any input.</p>"),
+                   br(),
+                   div(class = "output-box", style="border: 3px solid black;",
+                       # tags$span(class = "hovertext", style="font-weight:normal;",
+                       #           'data-hover' = "Optimal number of persons N and optimal number of time points T for which the power of the Likelihood-Ratio-Tests of the target parameters is maximal.",
+                       #           icon("circle-question")
+                       # )  %>% tagAppendAttributes(style = "left: 1%;"),
+                       span(style="font-weight:bold; font-variant:small-caps;", HTML("Optimal Number of Units for Maximal Power<br>")),
+                       span(style="font-weight:normal; font-size:12px; font-variant:small-caps;", "for which the power of the likelihood-ratio tests of the target parameters is maximal"),
+                       br(),
+                       br(),
+                       shinycssloaders::withSpinner(DT::dataTableOutput("optNumTable", width="auto"), type=7, color="#7000a8", hide.ui=FALSE),
+                       # span(style="font-weight:normal; font-variant:small-caps;", HTML("Persons <i>N</i>:")), textOutput("optN", inline=T),
+                       # tags$br(),
+                       # span(style="font-weight:normal; font-variant:small-caps;", HTML("Time Points <i>T</i>:")), textOutput("optT", inline=T),
+                       br(),
+                       br(),
+                       span(style="font-weight:bold; font-variant:small-caps;", HTML("Maximum Power for All Target Parameters<br>")),
+                       span(style="font-weight:normal; font-size:12px; font-variant:small-caps;", HTML("for all target parameters based on the optimal <i>n</i> and <i>t</i> solution")),
+                       tags$br(),
+                       tags$br(),
+                       shinycssloaders::withSpinner(DT::dataTableOutput("maxPowerTable", width="auto"), type=7, color="#7000a8", hide.ui=FALSE)
+                   ),
+                   
+                   
+                   conditionalPanel(
+                     condition = "output.errorCond == true",
+                     htmlOutput("error", inline=T)
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "output.errorCondFrontend == true",
+                     htmlOutput("errorFrontend", inline=T)
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "output.warningCond == true",
+                     htmlOutput("warn", inline=T)
+                   ),
+                   
+                   conditionalPanel(
+                     condition = "output.noteCond == true",
+                     htmlOutput("note", inline=T)
+                   )
+                 ),
+                 
+                 div(class="main-box",
+                     tags$span(class = "heading", "Technical Details"),
+                     br(),
+                     br(),
+                     p("Here you have some further options."),
+                     p(HTML("<li>Change precision of the optimizer.<br/><small>(“Precision” is a user-friendly term for what the argument pop.size of the genoud optimizer from the package <a href=\"https://cran.r-project.org/web/packages/rgenoud/rgenoud.pdf\" target=\"_blank\">rgenoud</a> adjusts, see Mebane and Sekhon, 2011.)</small></li>")),
+                     p(HTML("<li>Disallow logging of your results.<br/><small>(This helps us improving this app!)</small></li>")),
+                     p(HTML("<li>Get technical information on your last results.</li>")),
+                     br(),
+                       
+                       column(
+                         width = 5,
+                         div(class = "input-box mini-left mini-right",
+
+                             # tags$span(
+                             #   class = "hovertext",
+                             #   'data-hover' = "The term “precision” is used as an user-friendly transcription of what the argument pop.size of the genoud optimizer adjusts, see Mebane and Sekhon (2011).",
+                             #   icon("circle-question") 
+                             # ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                             style="padding-bottom: 5px;",
+                             sliderInput(
+                               inputId = "popSize",
+                               label = "Precision",
+                               value = 16,
+                               min = 16,
+                               max = 1000, # used in backend optmze() "pop.size.max"
+                               ticks=FALSE
+                             ),
+                             # span(style="font-size:small;", HTML("“Precision” is a user-friendly term for what the argument pop.size of the genoud optimizer from the package <a href=\"https://cran.r-project.org/web/packages/rgenoud/rgenoud.pdf\" target=\"_blank\">rgenoud</a> adjusts (see Mebane and Sekhon, 2011).</small>")),
+                         ),
+
+                         div(class = "input-box mini-left mini-right", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
+                             checkboxInput(
+                               inputId = "dbLog",
+                               label = HTML("<b>Log Results</b>"),
+                               value=TRUE
+                             )
+                         )
+                       ),
+                       
+                       
+                       column(
+                         width = 7,
+                         div(class = "output-box mini-left mini-right", 
+                             style="font-weight: small; font-variant:small-caps;",
+                             span("Run Time (in sec):"), textOutput("runTime", inline=T),
+                             br(), span("Number of Iterations:"), textOutput("optRuns", inline=T),
+                             # necessary bc https://github.com/rstudio/shiny/issues/1318
+                             #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
+                             br(), 
+                             br(), span("Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
+                             br(), span("Log ID:"), textOutput("logID", inline=T),
+                             br(), span("Log Status:"), textOutput("logDB", inline=T),
+                             br(), span("App Version:"), textOutput("appVersion", inline=T)
+                         )
+                       )
+                 ),
+                 
+                 div(class="main-box",
+                     br(),
+                     br(),
+                 
+                 tags$details(style="font-weight: lighter;",
+                              tags$summary(span(class = "heading", "References")),
+                              br(), 
+                              HTML("Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique of the cross-lagged panel model. <i>Psychological Methods</i>, 20, 102–116. <a href=\"https://doi.org/10.1037/a0038889\" target=\"_blank\">https://doi.org/10.1037/a0038889</a>"),
+                              br(), 
+                              br(), 
+                              HTML("Mebane, W. R., & Sekhon, J. S. (2011). Genetic optimization using derivatives: The rgenoud package for R. <i>Journal of Statistical Software</i>, 42. <a href=\"https://doi.org/10.18637/jss.v042.i11\" target=\"_blank\">https://doi.org/10.18637/jss.v042.i11</a>"),
+                              br(), 
+                              br(), 
+                              HTML("Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. <i>Psychological Methods</i>, 24, 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>")
+                 )),
+                 
+                 
+                 # tags$details(#'open' = "FALSE",
+                 #  tags$summary(span("Dev Output")),
+                 #  verbatimTextOutput("results")
+                 # ),
+                 
+                 # have to stay!!! otherwise JS using errorCond and warningCond won't evaluate
+                 span(style="color:white;", textOutput("errorCond", inline=T)), 
+                 span(style="color:white;", textOutput("errorCondFrontend", inline=T)),  
+                 span(style="color:white;", textOutput("warningCond", inline=T)),
+                 span(style="color:white;", textOutput("noteCond", inline=T))
+                 
+               ) ### column three
+               
+             ),
              
-             ### removed for now: other panels, "compute budget" and "how to cite" (not implemented yet and problems with tab panels)
+             
              # tabPanel(
-             #   title = "How To Cite",
-             #   icon = icon("pen-fancy"),
-             #   fluidPage(
-             #   fluidRow(
-             #     column(
-             #       class = "main-box",
-             #       width = 3,
-             #       p("Coming soon"),
-             #       HTML("lolo")
-             #     ),
-             #     column(class = "main-box", width = 3,
-             #            div(fluidRow(
-             #              p("muhu"), HTML("kl")
-             #            )))
-             #   )
-             # )
-             # )
+             #   title = "How To Use",
+             #   icon = icon("question"),
+             #   img(src='exCLPM.jpg', align = "middle", width="50%", height="50%")
+             #   # uiOutput(outputId = "tutorial")
+             # ),
+             
+             tabPanel(
+               title = "How To Cite",
+               icon = icon("pen-fancy"),
+               div(
+                 class = "main-box",
+                 p(style="font-weight:normal;", HTML("If you use the app for publications, please cite the corresponding article:")),
+                 br(), 
+                 p(style="font-weight: lighter;", HTML("Zitzmann, S., Wagner, W., Hecht, M., Helm, C., Fischer, C., Bardach, L., & Göllner, R. (2021). How many classes and students should ideally be sampled when assessing the role of classroom climate via student ratings on a limited budget? An optimal design perspective. <i>Educational Psychology Review</i>. <a href=\"https://doi.org/10.1007/s10648-021-09635-4\" target=\"_blank\">https://doi.org/10.1007/s10648-021-09635-4</a>"))
+               )
+             )
+             
   )
+
 
 #################################################################################################
 #################################################################################################
@@ -1060,7 +1117,7 @@ server <- function(input, output, session) {
         updateNumericInput(session, "maxT",
                            value = minTidentify())
       }
-
+      
     }
   })
   
@@ -2093,18 +2150,55 @@ server <- function(input, output, session) {
       popSize = input$popSize,
       dbLog = input$dbLog
     )})
+
   
-  output$optN <- renderText({ tryCatch(as.integer(res()$res$N.opt), error = function(e){""})
-  }) 
+  # output$optN <- renderText({ tryCatch(as.integer(res()$res$N.opt), error = function(e){""})
+  # })
+  # 
+  # output$optT <- renderText({ tryCatch(as.integer(res()$res$T.opt), error = function(e){""})
+  # })
   
-  output$optT <- renderText({ tryCatch(as.integer(res()$res$T.opt), error = function(e){""})
+  
+  optNum <- reactive({
+    optN <- tryCatch(as.integer(res()$res$N.opt), error = function(e){optN <- NULL})
+    optT <- tryCatch(as.integer(res()$res$T.opt), error = function(e){optT <- NULL})
+    if (length(optN) == 1){ # otherwise error data must be 2 dimensional
+      if (is.na(optN)){
+        optN <- NULL
+      }
+    }
+    if (length(optT) == 1){ # otherwise error data must be 2 dimensional
+      if (is.na(optT)){
+        optT <- NULL
+      }
+    }
+    if (!is.null(optN) & !is.null(optT)){
+      unitNam <- c("Persons <i>N</i>", "Time Points <i>T</i>")
+      unitVal <- c(optN, optT)
+      data <- data.frame(unitNam, unitVal)
+      return(data)
+    } else {
+      return(data=NULL)
+    }
   })
+
+  output$optNumTable <- DT::renderDataTable({
+    wtf <- optNum() # otherwise shortly appearing: error data must be 2 dimensional
+    tryCatch(DT::datatable(data=wtf, options = list(pageLength=2,
+                                                      dom = 't'),
+                           class='cell-border', escape=FALSE, 
+                           colnames = c('', 'Optimal Number')),
+               error = function(e){""})
+      
+  })
+
   
   maxPower <- reactive({ 
     # besser wäre es names von power.max zu nehmen
     target.param <- tryCatch(req(res()$target.parameters), error = function(e){target.param <- NULL})
     power.max <- tryCatch(req(res()$res$power.max), error = function(e){power.max <- NULL})
-    if (length(power.max) == 1){ # if problem with backend then NA returned for power.max
+    #ARCL <- tryCatch(req(res()$res$ARCL), error = function(e){ARCL <- NULL})
+    if (length(power.max) == 1){ # otherwise error data must be 2 dimensional
       if (is.na(power.max)){
         power.max <- NULL
       }
@@ -2132,7 +2226,7 @@ server <- function(input, output, session) {
         }
       }
       #par <- gsub("_", " ", target.param)
-      pow <- unname(round(power.max, 5))
+      pow <- unname(round(power.max, 3))
       data <- data.frame(par, pow) # later whitespace turned to points 
       return(data)
     } else {
@@ -2171,7 +2265,7 @@ server <- function(input, output, session) {
   
   output$error <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
     tryCatch(div(class = "error-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Error(s)!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "error" ], minTidentify=req(minTidentify()) ),
-                                                                                                collapse = "<br/>")))), error = function(e){""})
+                                                                                                                            collapse = "<br/>")))), error = function(e){""})
   })
   
   output$warningCond <- reactive({ 
@@ -2180,7 +2274,7 @@ server <- function(input, output, session) {
   
   output$warn <- renderUI({ # print linebreaks https://groups.google.com/g/shiny-discuss/c/8GmXV-UfTm4?pli=1
     tryCatch(div(class = "warn-box", HTML(paste0("<span style=\"font-variant: small-caps;\">Warning!</span><br/>", paste0(error_messages_translation( res()$res$error_codes[  error_type(res()$res$error_codes) %in%  "warning" ], minTidentify=minTidentify() ), 
-                         collapse = "<br/>")))), error = function(e){""}) 
+                                                                                                                          collapse = "<br/>")))), error = function(e){""}) 
   })
   
   output$noteCond <- reactive({ 
@@ -2220,34 +2314,55 @@ server <- function(input, output, session) {
     tryCatch(res(), error = function(e){""})
   })
   
-  ### deprecated bzw muss geändert werden später
-  # Platzhalter für SEM Plot
-  # output$platzhalter <- renderImage({
-  #   outfile <- tempfile(fileext = '.png')
-  #   # größe nicht verstellbar:
-  #   png(outfile,
-  #       width = 200,
-  #       height = 200,
-  #       units = "px")
-  #   list(src = "img/platzhalter.png")
-  # }, deleteFile = F) # constant img
-  #dev.off()
+  output$figCLPM <- renderImage({
+    list(src="./img/figCLPM-no.jpg",
+         contentType = "image/jpeg",
+         width="75%", height="100%"
+    )
+  }, deleteFile=FALSE) 
   
-  ### deprecated: selfmade ICONS
-  # output$cite <- renderImage({
-  #   outfile <- tempfile(fileext='.png')
-  #   # größe nicht verstellbar:
-  #   png(outfile, width=20, height=2000, units="px", res=120)
-  #   list(src="img/cite.png")
-  # }, deleteFile=F) # constant img
-  # dev.off()
-  # output$logo <- renderImage({
-  #   l <- tempfile(fileext='.png')
-  #   # größe nicht verstellbar:
-  #   png(l, width=20, height=20, units="px", res=120)
-  #   list(src="img/Logo.png")
-  # }, deleteFile=F) # constant img
-  #dev.off()
+  output$figfCLPM <- renderImage({
+    list(src="./img/figfCLPM-no.jpg",
+         contentType = "image/jpeg",
+         width="70%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
+  output$figRICLPM <- renderImage({
+    list(src="./img/figRI-CLPM-no.jpg",
+         contentType = "image/jpeg",
+         width="95%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
+  output$figSTARTS <- renderImage({
+    list(src="./img/figSTARTS-no.jpg",
+         contentType = "image/jpeg",
+         width="95%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
+  output$figLCMSR <- renderImage({
+    list(src="./img/figLCM-SR-no.jpg",
+         contentType = "image/jpeg",
+         width="100%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
+  output$figALT <- renderImage({
+    list(src="./img/figALT-no.jpg",
+         contentType = "image/jpeg",
+         width="100%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
+  output$figLCS <- renderImage({
+    list(src="./img/figLCS-no.jpg",
+         contentType = "image/jpeg",
+         width="95%", height="100%"
+    )
+  }, deleteFile=FALSE) 
+  
 }
 
 shinyApp(ui = ui, server = server)
