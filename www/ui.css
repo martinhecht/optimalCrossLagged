@@ -1,11 +1,5 @@
 @import url(https://use.fontawesome.com/releases/v6.1.1/css/all.css);
       
-      li {
-       list-style-position: outside;
-       text-indent: -1.4em;
-       /*padding-left:2em; doesnt work bc navbar li cant be changed*/
-      }
-      
       .navbar-nav>li>a {
        list-style-position: outside;
        text-indent: 0em;
