@@ -1,3 +1,4 @@
+# JW: 0.1.71 2023-06-08: package OpenMx included
 # JW: 0.1.70 2023-06-06: lorem ipsum citation
 # JW: 0.1.69 2023-05-17: error that prevented tabpanels from appearing (a missing / in HTML()...) in row 699 fixed,
 #                        two new tabs added (use, cite),
@@ -43,7 +44,8 @@ packages <- c("shiny", # basic
               "RMariaDB", # for data log
               "here",
               "shinycssloaders",
-              "config" # same (has to be last!)
+              "config",
+              "OpenMx"
 )
 newPackages <-
   packages[!(packages %in% installed.packages()[, "Package"])]
