@@ -1,3 +1,5 @@
+# JW: 0.1.71 2023-06-08: package OpenMx included
+# JW: 0.1.70 2023-06-06: lorem ipsum citation
 # JW: 0.1.69 2023-05-17: error that prevented tabpanels from appearing (a missing / in HTML()...) in row 699 fixed,
 #                        two new tabs added (use, cite),
 #                        all fluidTab() etc removed bc deprecated bc navbarpage(fluid=TRUE, ...),
@@ -42,7 +44,8 @@ packages <- c("shiny", # basic
               "RMariaDB", # for data log
               "here",
               "shinycssloaders",
-              "config" # same (has to be last!)
+              "config",
+              "OpenMx"
 )
 newPackages <-
   packages[!(packages %in% installed.packages()[, "Package"])]
@@ -1055,7 +1058,7 @@ ui <-
                  class = "main-box",
                  p(style="font-weight:normal;", HTML("If you use the app for publications, please cite the corresponding article:")),
                  br(), 
-                 p(style="font-weight: lighter;", HTML("Zitzmann, S., Wagner, W., Hecht, M., Helm, C., Fischer, C., Bardach, L., & Göllner, R. (2021). How many classes and students should ideally be sampled when assessing the role of classroom climate via student ratings on a limited budget? An optimal design perspective. <i>Educational Psychology Review</i>. <a href=\"https://doi.org/10.1007/s10648-021-09635-4\" target=\"_blank\">https://doi.org/10.1007/s10648-021-09635-4</a>"))
+                 p(style="font-weight: lighter;", HTML("Ipsum, L. (2023). Lorem Ipsum <i>Lorem Ipsum</i>. <a href=\"https://shiny.psychologie.hu-berlin.de/optdynmo/\" target=\"_blank\">https://shiny.psychologie.hu-berlin.de/optdynmo/</a>"))
                )
              )
              
