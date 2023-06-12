@@ -1,4 +1,5 @@
 ## Changelog:
+# MH/MA 0.1.74 2023-06-12: mods due to precise power calculation ("pprec")
 # MH 0.0.7 2022-01-20
 # MH 0.0.6 2022-01-20
 # MH 0.0.4 2022-01-15: renamed foptim to fn
@@ -81,7 +82,8 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 				}
 				
 				# via power
-				if( optimize$via %in% c("power") ) {
+				## MH/MA 0.1.74 2023-06-12: added pprec
+				if( optimize$via %in% c("pprec","power") ) {
 						
 						# compute power
 						if( optimize$via.function %in% "calculate.power.LRT" ){
@@ -100,7 +102,14 @@ fn <- function( pr, optimize, study, constraints, model, genoud, envs, timeout, 
 
 				## prepare return
 				# if power is optimized, then return power of target parameters
-				if( optimize$what %in% "power" ) value <- eval( parse( text=optimize$via ) )
+				## MH/MA 0.1.74 2023-06-12, adapted for pprec
+				if( optimize$what %in% "power" ){
+					if( optimize$via %in% "pprec" ){
+						value <- eval( parse( text="power" ) )
+					} else {
+						value <- eval( parse( text=optimize$via ) )
+					}
+				}
 				# if target.power should be achieved, then return is quadratic loss
 				if( optimize$what %in% "target.power" ) value <- ( power - study$target.power )^2
 		}

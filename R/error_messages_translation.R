@@ -1,4 +1,5 @@
 ## Changelog:
+# MH/MA 0.1.74 2023-06-12: added 34 (error): internal error when computing precise power
 # MH 0.1.1 2023-05-26: added 30 (warning) and 31 (error)
 # MH 0.0.47 2022-11-14: changed message 13
 # JW: 0.0.43 2022-11-02: changed/deleted error 1-4, added error 23-29
@@ -49,7 +50,8 @@ error_messages_translation <- function (error_code, minTidentify) {
 	"User-specified T.min is greater than maximal possible T.max.bound determined by N.min; T.min set equal to T.max.bound, this however will result in the optimized T = T.min; in case of problems, either lower T.min or increase N.min.", # 30
     "T.min (possibly modified to accomodate N.min) is below model-specific lowest limit.", # 31
 	"The absolute value of one of the autoregressive parameters is equal or larger than one, leading to an unstable model.", # 32
-	"One or multiple cross-lagged parameters are too large, leading to an unstable model." # 33
+	"One or multiple cross-lagged parameters are too large, leading to an unstable model.", # 33
+	"Internal error when computing precise power (\"pprec\"). Contact developer team." # 34
   )
   
   error_messages[error_code]
@@ -91,7 +93,8 @@ error_type <- function (error_code) {
     "warning", # 30
     "error",   # 31
     "error",   # 32
-    "error"    # 33
+    "error",   # 33
+    "error"    # 34
   )
   
   error_type[error_code]

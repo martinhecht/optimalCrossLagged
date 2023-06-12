@@ -1,4 +1,5 @@
 ## Changelog:
+# MH/MA 0.1.74 2023-06-12: added precise power calculation ("pprec")
 # MH 0.0.44 2022-11-04: added get.clpm.info
 # MH 0.0.31 2022-09-05: error code 13 implementation
 # MH 0.0.30 2022-09-02: modification for stability checks
@@ -81,6 +82,43 @@ prepare.results <- function( res, run.time.optimizer.secs, input, clpm.info.list
 		if( optimize$what %in% "power" && optimize$via %in% c("power") ) {
 			power.opt <- values.opt
 		}
+
+		## MH/MA 0.1.74 2023-06-12
+		# precise power calculation
+		# (only for T optimization)
+		# (N.opt needs to be integer)
+		if( optimize$via %in% c("pprec") ){
+
+			if( verbose ) { cat( paste0( "Calculating precise power" ) ); flush.console() }
+			
+			calc.pprec <- function( N.opt, T.opt, model, study ){
+					N.floor <- floor( N.opt )
+					F_diff_prec <- calculate.F.diff.precise (	timepoints = T.opt,
+																input_H1 = model$specification$input_H1,
+																target.parameters = model$target.parameters,
+																target.parameters.values.H0 = model$target.parameters.values.H0,
+																return.Sigma = FALSE,
+																N = N.floor )
+					c_alpha <- qchisq(	p = study$alpha, df = F_diff_prec$df, lower.tail = FALSE )
+					# more precise (but also still approximated) power
+					power.opt <- pchisq(	q = c_alpha, df = F_diff_prec$df,
+											ncp = F_diff_prec$values * N.floor, lower.tail = FALSE )													
+					names( power.opt ) <- model$target.parameters
+			
+					power.opt
+			}
+			power.opt <- try( calc.pprec( N.opt, T.opt, model, study ) )
+			
+			if( inherits( power.opt, "try-error" ) ) {
+				# power.opt <- rep( NA, length( model$target.parameters ) )
+				error_codes <- c( error_codes, 34 )
+			}
+			
+			# names( power.opt ) <- model$target.parameters
+			
+			if( verbose ) { cat( paste0( " ...done\n" ) ); flush.console() }
+		}
+		
 		# if power optimization was with se (or se^2), optimal power needs to be calculated
 		if( optimize$what %in% "power" && optimize$via %in% c("se^2","se") ) {
 			
@@ -241,7 +279,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, clpm.info.list
 		# add constraints
 		res2 <- c( res2, list( "constraints"=constraints ) )
 
-		## MH 0.0.21 2022-07-24: covariance matrice of optimized model
+		## MH 0.0.21 2022-07-24: covariance matrices of optimized model
 		F_diff <- calculate.F.diff.fast(
           timepoints = res2$T.opt,
           input_H1 = model$specification$input_H1,
@@ -267,7 +305,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, clpm.info.list
 		
 		# MH 0.0.44 2022-11-04: added get.clpm.info
 		res2 <- c( res2, list( "optimalclpm.version.str"=clpm.info.list$optimalclpm.version.str ) )
-		
+
 		# return
 		return( res2 )
 

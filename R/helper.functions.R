@@ -1,3 +1,4 @@
+# MH/MA 0.1.74 2023-06-12, changed "via" argument from "power" to "pprec" in optmze() call
 # MA 0.1.73 2023-06-12: added F_ML()
 # JW: 1.1.69: changed order of CL effect names (reviewer comment)
 # JW: 0.0.43 2022-11-02: fixed compute_results() error when no measModel
@@ -535,7 +536,8 @@ compute_results <- function(budget,
       optimize = list(
         "what" = c("power"),
         "direction" = c("max"),
-        "via" = c("power"),
+        ## MH/MA 0.1.74 2023-06-12, changed "power" to "pprec"
+		"via" = c("pprec"),
         "par" = c("T"),
         "via.function" = c("calculate.power.LRT"),
         "optimizer" = c("genoud"),

@@ -1,3 +1,4 @@
+# MH 0.1.74 2023-06-12: setwd commented out
 # JW: 0.1.71 2023-06-08: package OpenMx included
 # JW: 0.1.70 2023-06-06: lorem ipsum citation
 # JW: 0.1.69 2023-05-17: error that prevented tabpanels from appearing (a missing / in HTML()...) in row 699 fixed,
@@ -27,7 +28,8 @@
 
 # only for local run
 #setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
-setwd("C:/Users/manue/OneDrive/Forschung/Optimal Cross Lagged/optimalCrossLagged")
+# setwd("C:/Users/manue/OneDrive/Forschung/Optimal Cross Lagged/optimalCrossLagged")
+# setwd("c:/Users/martin/Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged")
 
 
 # (install and) load packages

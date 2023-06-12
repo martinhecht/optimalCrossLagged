@@ -1,4 +1,5 @@
 ## Changelog:
+# MH/MA 0.1.74 2023-06-12: added precise power calculation ("pprec")
 # MH 0.1.1 2023-05-26: prepare.input() now returns error_codes
 # MH 0.0.44 2022-11-04: changed default of T.min.identify from NULL to 0
 # JW 0.0.43 2022-11-02: check_plausability() got new parameter study, optmze() got new list element T.min.identify for error checking
@@ -44,7 +45,13 @@
 ## Function definition
 optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # max nchar: 12
 									"direction"=c("max","min"),                # max nchar: 3
-									"via"=c("power","se","se^2"),			   # max nchar: 5
+									# MH/MA 0.1.74 2023-06-12 option pprec (more precise (but also still approximated) power) added
+									#              was necessary, because in Revision 1, we realized
+									#              that the implemented power calculation (on which the optimization runs)
+									#              was just a fast approximation
+									#              Note: the power optimization runs not on the precise power (but still on the fast
+									#                    power, therefore, it ist not really "via" but after the optimization
+									"via"=c("pprec","power","se","se^2"),      # max nchar: 5
 									"par"=c("T","N"),						   # nchar: 1
 									"via.function"=c("calculate.power.LRT","compute.se.oertzen"), # max nchar: 19
 									"optimizer"=c("genoud"),				   # max nchar: 6
@@ -135,14 +142,22 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 		
 		# MH 0.0.44 2022-11-04: get package version
 		clpm.info.list <- get.clpm.info()
-		
+
 		# prepare results
 		results <- prepare.results( res=res,
 									run.time.optimizer.secs=run.time.optimizer.secs,
 									input=input,
 									clpm.info.list=clpm.info.list,
 									verbose=verbose,
-									error_codes = error_codes)
+									error_codes = error_codes )
+
+		## MH/MA 0.1.74 2023-06-12: error_codes
+		# if errors are detected: return output with error codes
+		if(length(  results$error_codes[  error_type(results$error_codes) %in%  "error" ] ) > 0) {
+		# if (length(error_codes) > 0) {
+		  return(make_output(error_codes = results$error_codes))
+		}
+		
 		
 		# MH 0.0.32 2022-09-11, log data
 		if( log.data ){
@@ -197,6 +212,34 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 # for( Rfile in Rfiles ){
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
+
+### MH 0.1.74 2023-06-12
+# specs <- generate.model.example.3()
+# specs$input_H1$model <- "fclpm"
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=10000, "target.power"=0.80, "l2.cost"=100, "l1.cost"=50, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("pprec"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=3, "T.max"=18, "N.min"=10, "N.max"=50, "T.min.identify"=0,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
 
 
 ### MH 0.1.00/0.1.1 2023-05-26 test case "error_largeCL"
