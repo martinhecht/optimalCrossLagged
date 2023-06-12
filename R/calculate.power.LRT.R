@@ -48,7 +48,7 @@ calculate.power.LRT <- function(alpha, N, timepoints, input_H1,
 
 	# calculate F_diff
 	## MA/MH 0.0.21 2022-07-24: adapted for new "example3" structure
-      F_diff <- calculate.F.diff(
+      F_diff <- calculate.F.diff.fast(
           timepoints = timepoints,
           input_H1 = input_H1,
           target.parameters = target.parameters,

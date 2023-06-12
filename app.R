@@ -27,6 +27,8 @@
 
 # only for local run
 #setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
+setwd("C:/Users/manue/OneDrive/Forschung/Optimal Cross Lagged/optimalCrossLagged")
+
 
 # (install and) load packages
 packages <- c("shiny", # basic
@@ -66,7 +68,8 @@ lapply(packages, require, character.only = TRUE)
 
 
 # source all relevant functions
-source("R/calculate.F.diff.R", local = TRUE)
+source("R/calculate.F.diff.fast.R", local = TRUE)
+source("R/calculate.F.diff.precise.R", local = TRUE)
 source("R/calculate.from.cost.function.R", local = TRUE)
 source("R/calculate.power.LRT.R", local = TRUE)
 source("R/calculate.power.R", local = TRUE)

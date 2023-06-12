@@ -242,7 +242,7 @@ prepare.results <- function( res, run.time.optimizer.secs, input, clpm.info.list
 		res2 <- c( res2, list( "constraints"=constraints ) )
 
 		## MH 0.0.21 2022-07-24: covariance matrice of optimized model
-		F_diff <- calculate.F.diff(
+		F_diff <- calculate.F.diff.fast(
           timepoints = res2$T.opt,
           input_H1 = model$specification$input_H1,
           target.parameters = model$target.parameters,

@@ -1,3 +1,4 @@
+# MA 0.1.73 2023-06-12: added F_ML()
 # JW: 1.1.69: changed order of CL effect names (reviewer comment)
 # JW: 0.0.43 2022-11-02: fixed compute_results() error when no measModel
 #                        pop.size.max added in compute_results()
@@ -569,4 +570,9 @@ compute_results <- function(budget,
                   res=res)
   
   return(testing)
+}
+
+F_ML <- function(S, Sigma, N) {
+  S <- S * (N - 1) / N
+  log(det(Sigma)) + sum(diag(S %*% solve(Sigma))) - log(det(S)) - nrow(S)
 }

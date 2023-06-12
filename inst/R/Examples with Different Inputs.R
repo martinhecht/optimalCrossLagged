@@ -24,7 +24,7 @@ timepoints <- 5
 target.parameters <- c("ARCL_2_1", "RES_2_1")
 target.parameters.values.H0 <- c(0, 0)
 
-res <- calculate.F.diff(timepoints = timepoints,
+res <- calculate.F.diff.fast(timepoints = timepoints,
                         input_H1 = input_H1,
                         target.parameters = target.parameters,
                         target.parameters.values.H0 = target.parameters.values.H0
