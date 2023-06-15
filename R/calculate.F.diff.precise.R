@@ -1,4 +1,5 @@
 ## Changelog:
+# MA 0.1.75 2023-06-15: redefined OpenMx functions to my_mx functions
 # MH/MA 0.1.74 2023-06-12: "OpenMx::" added as prefix to function calls
 # MA 0.1.73 2023-06-12: initial programming
 
@@ -591,29 +592,31 @@ calculate.F.diff.precise <- function(timepoints, input_H1,
     
     dimnames(Sigma_H1) <- list(man_vars, man_vars)
     
-    m <- OpenMx::mxModel(model = "H0",
-                 OpenMx::mxMatrix(type = "Full",
+    browser()
+    
+    m <- my_mxModel(model = "H0",
+                 my_mxMatrix(type = "Full",
                           free = RAM_A_H0_free,
                           values = RAM_A_H0_values,
                           labels = RAM_A_labels,
                           name = "A"),
-                 OpenMx::mxMatrix(type = "Symm",
+                 my_mxMatrix(type = "Symm",
                           free = RAM_S_H0_free,
                           values = round(RAM_S_H0_values, 7),
                           labels = RAM_S_labels,
                           name = "S"),
-                 OpenMx::mxMatrix(type = "Full",
+                 my_mxMatrix(type = "Full",
                           free = FALSE,
                           values = RAM_F_values,
                           name = "F"),
-                 OpenMx::mxExpectationRAM("A", "S", "F",
+                 my_mxExpectationRAM("A", "S", "F",
                                   dimnames = c(man_vars, lat_vars)),
-                 OpenMx::mxData(observed = Sigma_H1, type = "cov", numObs = N),
-                 OpenMx::mxFitFunctionML())
+                 my_mxData(observed = Sigma_H1, type = "cov", numObs = N),
+                 my_mxFitFunctionML())
     
-    fit <- OpenMx::mxRun(m, silent = TRUE)
+    fit <- my_mxRun(m, silent = TRUE)
     
-    Sigma_H0 <- OpenMx::mxGetExpected(model = fit, component = "covariance")
+    Sigma_H0 <- my_mxGetExpected(model = fit, component = "covariance")
     
     lambda <- F_ML(S = Sigma_H1, Sigma = Sigma_H0, N = N)
     

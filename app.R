@@ -1,3 +1,4 @@
+# MA 0.1.75 2023-06-15: added source("locally_redefine_OpenMx_functions.R")
 # MH 0.1.74 2023-06-12: setwd commented out
 # JW: 0.1.71 2023-06-08: package OpenMx included
 # JW: 0.1.70 2023-06-06: lorem ipsum citation
@@ -28,7 +29,7 @@
 
 # only for local run
 #setwd("/Users/julia/Documents/Arbeit/Promotion/Forschung/Projects/Shiny_App_Optimal_Design/optimalCrossLagged-main")
-# setwd("C:/Users/manue/OneDrive/Forschung/Optimal Cross Lagged/optimalCrossLagged")
+#setwd("C:/Users/manue/OneDrive/Forschung/Optimal Cross Lagged/optimalCrossLagged")
 # setwd("c:/Users/martin/Dropbox/84_optimalclpm/04b_martinhecht/optimalCrossLagged")
 
 
@@ -49,7 +50,7 @@ packages <- c("shiny", # basic
               "here",
               "shinycssloaders",
               "config",
-              "OpenMx"
+              "numDeriv"
 )
 newPackages <-
   packages[!(packages %in% installed.packages()[, "Package"])]
@@ -70,6 +71,7 @@ lapply(packages, require, character.only = TRUE)
 
 
 # source all relevant functions
+source("R/locally_redefine_OpenMx_functions.R", local = TRUE)
 source("R/calculate.F.diff.fast.R", local = TRUE)
 source("R/calculate.F.diff.precise.R", local = TRUE)
 source("R/calculate.from.cost.function.R", local = TRUE)
@@ -112,155 +114,155 @@ ui <-
                    tags$br(),
                    
                    fluidRow(
-                   column(
-                     width = 6,
-                     div(class = "input-box mini-left",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "Indicate the maximum budget that you have available for the study (in any monetary unit). Note that larger budgets lead to larger computation times (because the search space for the optimizer gets larger).",
-                           icon("circle-question")
-                         )  %>% tagAppendAttributes(style = "left: 4%;"),
+                     column(
+                       width = 6,
+                       div(class = "input-box mini-left",
+                           tags$span(
+                             class = "hovertext",
+                             'data-hover' = "Indicate the maximum budget that you have available for the study (in any monetary unit). Note that larger budgets lead to larger computation times (because the search space for the optimizer gets larger).",
+                             icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 4%;"),
                            
-                         numericInput(
-                           inputId = "budget",
-                           label = "Budget",
-                           value = 10000,
-                           min = 0,
-                           max = 1000000, # otherwise no solution
-                           step = 2500 # wird verdoppelt in UI!?
-                         )
-                     )
-                   ),
-                   column(
-                     width = 6,
-                     div(class = "input-box mini-right",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "This is used for the Likelihood-Ratio-Tests in which the optimal N and T are calculated.",
-                           icon("circle-question")
-                         )  %>% tagAppendAttributes(style = "left: 4%;"),
-                         ## with arrows
-                         numericInput(
-                           inputId = "alpha",
-                           label =
-                             withMathJax(c("\\(\\alpha\\)-Level")),
-                           value = 0.05,
-                           min = 0.01,
-                           max = 1,
-                           step = 0.005
-                         )
-                         ## without arrows (but not able to give value to backend)
-                         # autonumericInput(
-                         #   inputId = "alpha",
-                         #   label =
-                         #     withMathJax(c("\\(\\alpha\\)-Level")),
-                         #   value = 0.05,
-                         #   minimumValue = 0,
-                         #   maximumValue = 1,
-                         #   ecimalCharacter = ".",
-                         #   align = "left"
-                         # )
-                     ))
+                           numericInput(
+                             inputId = "budget",
+                             label = "Budget",
+                             value = 10000,
+                             min = 0,
+                             max = 1000000, # otherwise no solution
+                             step = 2500 # wird verdoppelt in UI!?
+                           )
+                       )
+                     ),
+                     column(
+                       width = 6,
+                       div(class = "input-box mini-right",
+                           tags$span(
+                             class = "hovertext",
+                             'data-hover' = "This is used for the Likelihood-Ratio-Tests in which the optimal N and T are calculated.",
+                             icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 4%;"),
+                           ## with arrows
+                           numericInput(
+                             inputId = "alpha",
+                             label =
+                               withMathJax(c("\\(\\alpha\\)-Level")),
+                             value = 0.05,
+                             min = 0.01,
+                             max = 1,
+                             step = 0.005
+                           )
+                           ## without arrows (but not able to give value to backend)
+                           # autonumericInput(
+                           #   inputId = "alpha",
+                           #   label =
+                           #     withMathJax(c("\\(\\alpha\\)-Level")),
+                           #   value = 0.05,
+                           #   minimumValue = 0,
+                           #   maximumValue = 1,
+                           #   ecimalCharacter = ".",
+                           #   align = "left"
+                           # )
+                       ))
                    ),
                    fluidRow(
-                   column(
-                     width = 6,
-                     div(id="boxN",
-                         class = "input-box mini-left",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "Indicate the cost to include one person in the study and the desired minimum and maximum number of persons in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes.",
-                           icon("circle-question")
-                         )  %>% tagAppendAttributes(style = "left: 4%;"),
-                         p(HTML("<strong><i>Persons N</i></strong>")),
-                         numericInput(
-                           inputId = "costN",
-                           label = HTML("Costs"),
-                           value = 100,
-                           min = 0,
-                           max = 10000000,
-                           step = 5
-                         ),
-                         splitLayout(
-                           #cellWidths = c("75%", "25%"),
+                     column(
+                       width = 6,
+                       div(id="boxN",
+                           class = "input-box mini-left",
+                           tags$span(
+                             class = "hovertext",
+                             'data-hover' = "Indicate the cost to include one person in the study and the desired minimum and maximum number of persons in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes.",
+                             icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 4%;"),
+                           p(HTML("<strong><i>Persons N</i></strong>")),
                            numericInput(
-                             inputId = "minN",
-                             label = HTML("Min"),
-                             value = 10,
-                             min = 2,
-                             max = 10000,
-                             step = 0.5
+                             inputId = "costN",
+                             label = HTML("Costs"),
+                             value = 100,
+                             min = 0,
+                             max = 10000000,
+                             step = 5
                            ),
-                           conditionalPanel(
-                             condition = "output.errorCond == false", 
-                             uiOutput(outputId = "minN_Output_Backend")
+                           splitLayout(
+                             #cellWidths = c("75%", "25%"),
+                             numericInput(
+                               inputId = "minN",
+                               label = HTML("Min"),
+                               value = 10,
+                               min = 2,
+                               max = 10000,
+                               step = 0.5
+                             ),
+                             conditionalPanel(
+                               condition = "output.errorCond == false", 
+                               uiOutput(outputId = "minN_Output_Backend")
+                             )
+                           ),
+                           splitLayout(
+                             numericInput(
+                               inputId = "maxN",
+                               label = HTML("Max"),
+                               value = 50,
+                               min = 2,
+                               max = 10000,
+                               step = 0.5
+                             ),
+                             conditionalPanel(
+                               condition = "output.errorCond == false", 
+                               uiOutput(outputId = "maxN_Output_Backend")
+                             )
                            )
-                         ),
-                         splitLayout(
+                       ) ### div input-box N
+                     ), ### column N
+                     
+                     column(
+                       width = 6,
+                       div(id="boxT",
+                           class = "input-box mini-right",
+                           tags$span(
+                             class = "hovertext",
+                             'data-hover' = "Indicate the cost for measuring one person at one time point and the desired minimum and maximum number of time points in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes. The default for the minimum number of time points reflects the minimum number of time points that are required for model identification (see Usami et al., 2019).",
+                             icon("circle-question")
+                           )  %>% tagAppendAttributes(style = "left: 4%;"),
+                           p(HTML("<strong><i>Time Points T</i></strong>")),
                            numericInput(
-                             inputId = "maxN",
-                             label = HTML("Max"),
+                             inputId = "costT",
+                             label = HTML("Costs"),
                              value = 50,
-                             min = 2,
-                             max = 10000,
-                             step = 0.5
+                             min = 0,
+                             max = 10000000,
+                             step = 5
                            ),
-                           conditionalPanel(
-                             condition = "output.errorCond == false", 
-                             uiOutput(outputId = "maxN_Output_Backend")
-                           )
-                         )
-                     ) ### div input-box N
-                   ), ### column N
-                   
-                   column(
-                     width = 6,
-                     div(id="boxT",
-                         class = "input-box mini-right",
-                         tags$span(
-                           class = "hovertext",
-                           'data-hover' = "Indicate the cost for measuring one person at one time point and the desired minimum and maximum number of time points in the white boxes. As the min-max range of number of persons and number of time points is interdependent due to the cost function, the app will perform adjustments to your entered minimum and maximum values. The resulting adjusted values used in the optimization process are printed in gray boxes on the right-hand side of the input boxes. The default for the minimum number of time points reflects the minimum number of time points that are required for model identification (see Usami et al., 2019).",
-                           icon("circle-question")
-                         )  %>% tagAppendAttributes(style = "left: 4%;"),
-                         p(HTML("<strong><i>Time Points T</i></strong>")),
-                         numericInput(
-                           inputId = "costT",
-                           label = HTML("Costs"),
-                           value = 50,
-                           min = 0,
-                           max = 10000000,
-                           step = 5
-                         ),
-                         splitLayout(
-                           uiOutput(outputId = "minTidentify_Output"),
-                           conditionalPanel(
-                             condition = "output.errorCond == false", 
-                             uiOutput(outputId = "minT_Output_Backend")
-                           )
-                         ),
-                         splitLayout(
-                           numericInput(
-                             inputId = "maxT",
-                             label = HTML("Max"),
-                             value = 18,
-                             min = 1,
-                             max = 10000,
-                             step = 0.5
+                           splitLayout(
+                             uiOutput(outputId = "minTidentify_Output"),
+                             conditionalPanel(
+                               condition = "output.errorCond == false", 
+                               uiOutput(outputId = "minT_Output_Backend")
+                             )
                            ),
-                           conditionalPanel(
-                             condition = "output.errorCond == false", 
-                             uiOutput(outputId = "maxT_Output_Backend")
+                           splitLayout(
+                             numericInput(
+                               inputId = "maxT",
+                               label = HTML("Max"),
+                               value = 18,
+                               min = 1,
+                               max = 10000,
+                               step = 0.5
+                             ),
+                             conditionalPanel(
+                               condition = "output.errorCond == false", 
+                               uiOutput(outputId = "maxT_Output_Backend")
+                             )
                            )
-                         )
-                     ) ### div input-box T
-                   ) #### column T
+                       ) ### div input-box T
+                     ) #### column T
                    ),
                    br(),
                    column(width=6, "", style="margin-left:-0.5vw"),
                    icon("arrow-down")
                  ),
                  ### div study design
-
+                 
                  div(
                    class = "main-box",
                    tags$span(class = "heading", HTML("(<font color=#7000a8>2</font>) Model Characteristics")),
@@ -292,31 +294,31 @@ ui <-
                    ),
                    
                    fluidRow(column(width=10,
-                   div(class = "input-box", 
-                       splitLayout(
-                         cellWidths = c("80%", "20%"),
-                         textAreaInput(
-                           inputId = "procNames",
-                           label = HTML("Process Names"),
-                           placeholder = "y1, y2",
-                           value = "y1, y2"
-                         ),
-                         uiOutput(outputId = "nbProc")
-                       ),
-                       tags$span(style = "font-weight:normal; font-size:small;",
-                                 "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names. It is displayed right to the input field."
-                       ),
-                       tags$br(),
-                       tags$br()
-                   ),
-                   
-                   # only single-indicator for now
-                   conditionalPanel(
-                     condition = "input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs'",
-                     div(class = "input-box",
-                         uiOutput(outputId = "measModel_Output")
-                     )
-                   )), column(width=1, br(), br(), icon("arrow-turn-up")))
+                                   div(class = "input-box", 
+                                       splitLayout(
+                                         cellWidths = c("80%", "20%"),
+                                         textAreaInput(
+                                           inputId = "procNames",
+                                           label = HTML("Process Names"),
+                                           placeholder = "y1, y2",
+                                           value = "y1, y2"
+                                         ),
+                                         uiOutput(outputId = "nbProc")
+                                       ),
+                                       tags$span(style = "font-weight:normal; font-size:small;",
+                                                 "Please indicate at least one process name. Seperate multiple names with comma. The number of processes for a given model is inferred from the number of names. It is displayed right to the input field."
+                                       ),
+                                       tags$br(),
+                                       tags$br()
+                                   ),
+                                   
+                                   # only single-indicator for now
+                                   conditionalPanel(
+                                     condition = "input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs'",
+                                     div(class = "input-box",
+                                         uiOutput(outputId = "measModel_Output")
+                                     )
+                                   )), column(width=1, br(), br(), icon("arrow-turn-up")))
                    #column(width=9, ""), icon("arrow-turn-up")
                    # conditionalPanel(condition = "(input.modelClass == 'fclpm' | input.modelClass == 'starts' | input.modelClass == 'lcs') & (input.measModel.length > 0)",
                    #                  tags$br(),
@@ -328,34 +330,34 @@ ui <-
                    HTML("<p>The example path diagram below helps you select a model class and set model parameters. It shows your currently selected model class and the non-zero model parameters of the defaults of the app.</p>"),
                    br(),
                    span(style="text-align:center;",
-                   conditionalPanel(
-                     condition = "input.modelClass == 'clpm' ",
-                     imageOutput(outputId = "figCLPM")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'fclpm' ",
-                     imageOutput(outputId = "figfCLPM")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'ri-clpm' ",
-                     imageOutput(outputId = "figRICLPM")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'starts' ",
-                     imageOutput(outputId = "figSTARTS")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'lcm-sr' ",
-                     imageOutput(outputId = "figLCMSR")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'alt' ",
-                     imageOutput(outputId = "figALT")
-                   ),
-                   conditionalPanel(
-                     condition = "input.modelClass == 'lcs' ",
-                     imageOutput(outputId = "figLCS")
-                   )))
+                        conditionalPanel(
+                          condition = "input.modelClass == 'clpm' ",
+                          imageOutput(outputId = "figCLPM")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'fclpm' ",
+                          imageOutput(outputId = "figfCLPM")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'ri-clpm' ",
+                          imageOutput(outputId = "figRICLPM")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'starts' ",
+                          imageOutput(outputId = "figSTARTS")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'lcm-sr' ",
+                          imageOutput(outputId = "figLCMSR")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'alt' ",
+                          imageOutput(outputId = "figALT")
+                        ),
+                        conditionalPanel(
+                          condition = "input.modelClass == 'lcs' ",
+                          imageOutput(outputId = "figLCS")
+                        )))
                ),
                ### column one
                
@@ -967,70 +969,70 @@ ui <-
                      p(HTML("<li>Disallow logging of your results.<br/><small>(This helps us improving this app!)</small></li>")),
                      p(HTML("<li>Get technical information on your last results.</li>")),
                      br(),
-                       
-                       column(
-                         width = 5,
-                         div(class = "input-box mini-left mini-right",
-
-                             # tags$span(
-                             #   class = "hovertext",
-                             #   'data-hover' = "The term “precision” is used as an user-friendly transcription of what the argument pop.size of the genoud optimizer adjusts, see Mebane and Sekhon (2011).",
-                             #   icon("circle-question") 
-                             # ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
-                             style="padding-bottom: 5px;",
-                             sliderInput(
-                               inputId = "popSize",
-                               label = "Precision",
-                               value = 16,
-                               min = 16,
-                               max = 1000, # used in backend optmze() "pop.size.max"
-                               ticks=FALSE
-                             ),
-                             # span(style="font-size:small;", HTML("“Precision” is a user-friendly term for what the argument pop.size of the genoud optimizer from the package <a href=\"https://cran.r-project.org/web/packages/rgenoud/rgenoud.pdf\" target=\"_blank\">rgenoud</a> adjusts (see Mebane and Sekhon, 2011).</small>")),
-                         ),
-
-                         div(class = "input-box mini-left mini-right", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
-                             checkboxInput(
-                               inputId = "dbLog",
-                               label = HTML("<b>Log Results</b>"),
-                               value=TRUE
-                             )
-                         )
+                     
+                     column(
+                       width = 5,
+                       div(class = "input-box mini-left mini-right",
+                           
+                           # tags$span(
+                           #   class = "hovertext",
+                           #   'data-hover' = "The term “precision” is used as an user-friendly transcription of what the argument pop.size of the genoud optimizer adjusts, see Mebane and Sekhon (2011).",
+                           #   icon("circle-question") 
+                           # ) %>% tagAppendAttributes(style = "left: 1%; font-weight:normal;"),
+                           style="padding-bottom: 5px;",
+                           sliderInput(
+                             inputId = "popSize",
+                             label = "Precision",
+                             value = 16,
+                             min = 16,
+                             max = 1000, # used in backend optmze() "pop.size.max"
+                             ticks=FALSE
+                           ),
+                           # span(style="font-size:small;", HTML("“Precision” is a user-friendly term for what the argument pop.size of the genoud optimizer from the package <a href=\"https://cran.r-project.org/web/packages/rgenoud/rgenoud.pdf\" target=\"_blank\">rgenoud</a> adjusts (see Mebane and Sekhon, 2011).</small>")),
                        ),
                        
-                       
-                       column(
-                         width = 7,
-                         div(class = "output-box mini-left mini-right", 
-                             style="font-weight: small; font-variant:small-caps;",
-                             span("Run Time (in sec):"), textOutput("runTime", inline=T),
-                             br(), span("Number of Iterations:"), textOutput("optRuns", inline=T),
-                             # necessary bc https://github.com/rstudio/shiny/issues/1318
-                             #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
-                             br(), 
-                             br(), span("Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
-                             br(), span("Log ID:"), textOutput("logID", inline=T),
-                             br(), span("Log Status:"), textOutput("logDB", inline=T),
-                             br(), span("App Version:"), textOutput("appVersion", inline=T)
-                         )
+                       div(class = "input-box mini-left mini-right", style="padding-bottom: 2px; padding-top: 2px; font-size:12px;",
+                           checkboxInput(
+                             inputId = "dbLog",
+                             label = HTML("<b>Log Results</b>"),
+                             value=TRUE
+                           )
                        )
+                     ),
+                     
+                     
+                     column(
+                       width = 7,
+                       div(class = "output-box mini-left mini-right", 
+                           style="font-weight: small; font-variant:small-caps;",
+                           span("Run Time (in sec):"), textOutput("runTime", inline=T),
+                           br(), span("Number of Iterations:"), textOutput("optRuns", inline=T),
+                           # necessary bc https://github.com/rstudio/shiny/issues/1318
+                           #br(), span(style="font-weight:normal; font-variant:small-caps;", "Errors:"), textOutput("errorCond", inline=T),
+                           br(), 
+                           br(), span("Log Run Time (in sec):"), textOutput("runTimeDB", inline=T),
+                           br(), span("Log ID:"), textOutput("logID", inline=T),
+                           br(), span("Log Status:"), textOutput("logDB", inline=T),
+                           br(), span("App Version:"), textOutput("appVersion", inline=T)
+                       )
+                     )
                  ),
                  
                  div(class="main-box",
                      br(),
                      br(),
-                 
-                 tags$details(style="font-weight: lighter;",
-                              tags$summary(span(class = "heading", "References")),
-                              br(), 
-                              HTML("Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique of the cross-lagged panel model. <i>Psychological Methods</i>, 20, 102–116. <a href=\"https://doi.org/10.1037/a0038889\" target=\"_blank\">https://doi.org/10.1037/a0038889</a>"),
-                              br(), 
-                              br(), 
-                              HTML("Mebane, W. R., & Sekhon, J. S. (2011). Genetic optimization using derivatives: The rgenoud package for R. <i>Journal of Statistical Software</i>, 42. <a href=\"https://doi.org/10.18637/jss.v042.i11\" target=\"_blank\">https://doi.org/10.18637/jss.v042.i11</a>"),
-                              br(), 
-                              br(), 
-                              HTML("Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. <i>Psychological Methods</i>, 24, 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>")
-                 )),
+                     
+                     tags$details(style="font-weight: lighter;",
+                                  tags$summary(span(class = "heading", "References")),
+                                  br(), 
+                                  HTML("Hamaker, E. L., Kuiper, R. M., & Grasman, R. P. P. P. (2015). A critique of the cross-lagged panel model. <i>Psychological Methods</i>, 20, 102–116. <a href=\"https://doi.org/10.1037/a0038889\" target=\"_blank\">https://doi.org/10.1037/a0038889</a>"),
+                                  br(), 
+                                  br(), 
+                                  HTML("Mebane, W. R., & Sekhon, J. S. (2011). Genetic optimization using derivatives: The rgenoud package for R. <i>Journal of Statistical Software</i>, 42. <a href=\"https://doi.org/10.18637/jss.v042.i11\" target=\"_blank\">https://doi.org/10.18637/jss.v042.i11</a>"),
+                                  br(), 
+                                  br(), 
+                                  HTML("Usami, S., Murayama, K., & Hamaker, E. L. (2019). A unified framework of longitudinal models to examine reciprocal relations. <i>Psychological Methods</i>, 24, 637–657. <a href=\"https://doi.org/10.1037/met0000210\" target=\"_blank\">https://doi.org/10.1037/met0000210</a>")
+                     )),
                  
                  
                  # tags$details(#'open' = "FALSE",
@@ -2158,7 +2160,7 @@ server <- function(input, output, session) {
       popSize = input$popSize,
       dbLog = input$dbLog
     )})
-
+  
   
   # output$optN <- renderText({ tryCatch(as.integer(res()$res$N.opt), error = function(e){""})
   # })
@@ -2189,17 +2191,17 @@ server <- function(input, output, session) {
       return(data=NULL)
     }
   })
-
+  
   output$optNumTable <- DT::renderDataTable({
     wtf <- optNum() # otherwise shortly appearing: error data must be 2 dimensional
     tryCatch(DT::datatable(data=wtf, options = list(pageLength=2,
-                                                      dom = 't'),
+                                                    dom = 't'),
                            class='cell-border', escape=FALSE, 
                            colnames = c('', 'Optimal Number')),
-               error = function(e){""})
-      
+             error = function(e){""})
+    
   })
-
+  
   
   maxPower <- reactive({ 
     # besser wäre es names von power.max zu nehmen
