@@ -592,8 +592,6 @@ calculate.F.diff.precise <- function(timepoints, input_H1,
     
     dimnames(Sigma_H1) <- list(man_vars, man_vars)
     
-    browser()
-    
     m <- my_mxModel(model = "H0",
                  my_mxMatrix(type = "Full",
                           free = RAM_A_H0_free,
