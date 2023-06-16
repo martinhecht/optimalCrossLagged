@@ -1,3 +1,4 @@
+# MH 0.1.76 2023-06-16, added timeout.log.data argument to optmze() call with value 30
 # MH/MA 0.1.74 2023-06-12, changed "via" argument from "power" to "pprec" in optmze() call
 # MA 0.1.73 2023-06-12: added F_ML()
 # JW: 1.1.69: changed order of CL effect names (reviewer comment)
@@ -562,6 +563,7 @@ compute_results <- function(budget,
         "solution.tolerance" = 0.001
       ),
       log.data=dbLog, # MH 0.0.35 2022-10-05, moved log.data out of genoud list
+	  timeout.log.data=30, # MH 0.1.76 2023-06-16
 	  verbose = FALSE
     )
     
