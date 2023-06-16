@@ -1,6 +1,6 @@
 ## Changelog:
+# MH 0.2.0 2023-06-16: fixed insertion of error_codes
 # MH 0.0.44 2022-11-04: moved get.clpm.info() to separate file
-#                       
 # MH 0.0.35 2022-10-05: read of description files wrapped in try, new package required: here
 # MH 0.0.34 2022-09-15: further variables added
 # MH 0.0.33 2022-09-12: further variables added
@@ -16,7 +16,7 @@
 
 ## Function definition
 log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
-# browser()	
+
 	# start time 
 	start.time.log.data <- Sys.time()	
 	
@@ -24,12 +24,12 @@ log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
 	dw <- config::get("datawarehouse")
 	
 	# connect to data base
-	con <- dbConnect( 	eval(parse(text=dw$driver)),
-						host = dw$server,
-						port = dw$port,
-						username = dw$uid,
-						password = dw$pwd,
-						dbname = dw$database )
+	# con <- dbConnect( 	eval(parse(text=dw$driver)),
+						# host = dw$server,
+						# port = dw$port,
+						# username = dw$uid,
+						# password = dw$pwd,
+						# dbname = dw$database )
 	
 	# get date time
 	posix <- Sys.time()
@@ -235,7 +235,9 @@ log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
 						   "error_codes",
 						   ") ",
 		"VALUES (" ,logid,","
-				   ,if( is.null(results$error_codes) ) "NULL" else results$error_codes,
+				   # ,if( is.null(results$error_codes) ) "NULL" else results$error_codes,
+				   # MH 0.2.0 2023-06-16
+				   ,if( length(results$error_codes) == 0 ) "NULL" else results$error_codes,
 		 ");"
 	)
 	
@@ -273,7 +275,7 @@ log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
 	matrices <- matrices[!matrices %in% c("model","alpha","n_ov")]
 	# delete all NULL matrices
 	matrices <- matrices[!sapply( matrices, function( matr ) is.null( input$model$specification$input_H1[[matr]] ) )]
-  # values must exist
+    # values must exist
 	tr.bool <- sapply( matrices, function(matr,input) inherits( try(input$model$specification$input_H1[[matr]]$labels), "try-error"), input )
 	matrices <- matrices[!tr.bool]
 
