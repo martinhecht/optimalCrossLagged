@@ -24,12 +24,12 @@ log.data <- function( input, results, clpm.info.list, verbose=TRUE ){
 	dw <- config::get("datawarehouse")
 	
 	# connect to data base
-	# con <- dbConnect( 	eval(parse(text=dw$driver)),
-						# host = dw$server,
-						# port = dw$port,
-						# username = dw$uid,
-						# password = dw$pwd,
-						# dbname = dw$database )
+	con <- dbConnect( 	eval(parse(text=dw$driver)),
+						host = dw$server,
+						port = dw$port,
+						username = dw$uid,
+						password = dw$pwd,
+						dbname = dw$database )
 	
 	# get date time
 	posix <- Sys.time()
