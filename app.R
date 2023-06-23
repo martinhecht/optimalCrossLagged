@@ -1,3 +1,4 @@
+# JW: 0.1.76 2023-06-23: tick marks N/T in steps of 1, roudning of optimizer N/T (gray) rounded to 0
 # MA 0.1.75 2023-06-15: added source("locally_redefine_OpenMx_functions.R")
 # MH 0.1.74 2023-06-12: setwd commented out
 # JW: 0.1.71 2023-06-08: package OpenMx included
@@ -191,7 +192,7 @@ ui <-
                                value = 10,
                                min = 2,
                                max = 10000,
-                               step = 0.5
+                               step = 1
                              ),
                              conditionalPanel(
                                condition = "output.errorCond == false", 
@@ -205,7 +206,7 @@ ui <-
                                value = 50,
                                min = 2,
                                max = 10000,
-                               step = 0.5
+                               step = 1
                              ),
                              conditionalPanel(
                                condition = "output.errorCond == false", 
@@ -247,7 +248,7 @@ ui <-
                                value = 18,
                                min = 1,
                                max = 10000,
-                               step = 0.5
+                               step = 1
                              ),
                              conditionalPanel(
                                condition = "output.errorCond == false", 
@@ -1104,7 +1105,7 @@ server <- function(input, output, session) {
       value = req(minTidentify()),
       min = req(minTidentify()),
       max = 10000,
-      step = 0.5
+      step = 1
     )
   })
   
@@ -1165,19 +1166,19 @@ server <- function(input, output, session) {
   # })
   
   output$minT_Output_Backend <- renderUI({ 
-    tryCatch(div(class="unit", round(res()$res$constraints$T.min.set, 1)), error = function(e){""})
+    tryCatch(div(class="unit", round(res()$res$constraints$T.min.set, 0)), error = function(e){""})
   })
   
   output$maxT_Output_Backend <- renderUI({
-    tryCatch(div(class="unit", round(res()$res$constraints$T.max.set, 1)), error = function(e){""})
+    tryCatch(div(class="unit", round(res()$res$constraints$T.max.set, 0)), error = function(e){""})
   })
   
   output$minN_Output_Backend <- renderUI({
-    tryCatch(div(class="unit", round(res()$res$constraints$N.min.bound, 1)), error = function(e){""})
+    tryCatch(div(class="unit", round(res()$res$constraints$N.min.bound, 0)), error = function(e){""})
   })
   
   output$maxN_Output_Backend <- renderUI({
-    tryCatch(div(class="unit", round(res()$res$constraints$N.max.bound, 1)), error = function(e){""})
+    tryCatch(div(class="unit", round(res()$res$constraints$N.max.bound, 0)), error = function(e){""})
   })
   
   ### for model characteristics tab
