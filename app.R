@@ -1,3 +1,4 @@
+# JW: 0.2.1 2023-06-23: reference and link updated
 # JW: 0.1.76 2023-06-23: tick marks N/T in steps of 1, roudning of optimizer N/T (gray) rounded to 0
 # MA 0.1.75 2023-06-15: added source("locally_redefine_OpenMx_functions.R")
 # MH 0.1.74 2023-06-12: setwd commented out
@@ -1066,7 +1067,7 @@ ui <-
                  class = "main-box",
                  p(style="font-weight:normal;", HTML("If you use the app for publications, please cite the corresponding article:")),
                  br(), 
-                 p(style="font-weight: lighter;", HTML("Ipsum, L. (2023). Lorem Ipsum <i>Lorem Ipsum</i>. <a href=\"https://shiny.psychologie.hu-berlin.de/optdynmo/\" target=\"_blank\">https://shiny.psychologie.hu-berlin.de/optdynmo/</a>"))
+                 p(style="font-weight: lighter;", HTML("Hecht, M., Walther, J.-K., Arnold, M., & Zitzmann, S. (2023). Finding the Optimal Number of Persons (N) and Time Points (T) for Maximal Power in Dynamic Longitudinal Models Given a Fixed Budget. <i>Structural Equation Modeling: A Multidisciplinary Journal.</i> <a href=\"https://doi.org/10.1080/10705511.2023.2230520\" target=\"_blank\">https://doi.org/10.1080/10705511.2023.2230520</a>"))
                )
              )
              
