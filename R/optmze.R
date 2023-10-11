@@ -1,4 +1,5 @@
 ## Changelog:
+# MH 0.2.2 2023-10-11: added evaluation example
 # MH/MA 0.1.74 2023-06-12: added precise power calculation ("pprec")
 # MH 0.1.1 2023-05-26: prepare.input() now returns error_codes
 # MH 0.0.44 2022-11-04: changed default of T.min.identify from NULL to 0
@@ -212,6 +213,40 @@ optmze <- function( optimize=list(	"what"=c("power","budget","target.power"), # 
 # for( Rfile in Rfiles ){
 	# source( file.path( Rfiles.folder, Rfile ) )
 # }
+
+### MH 0.2.2 2023-10-11: evaluation example
+# specs <- generate.model.example.3()
+# specs$input_H1$model <- "clpm"
+# specs$input_H1$Gamma$values <- matrix( c(0.5,0.1,0.1,0.5), 2, 2 )
+# specs$input_H1$Omega$values <- matrix( c(1,0,0,1), 2, 2 )
+# specs$input_H1$Psi <- NULL
+
+# set.seed(12345)
+# res <- optmze( model=list("specification"=specs,
+						  # "target.parameters"=c("ARCL_2_1", "ARCL_1_2"),
+						  # "target.parameters.values.H0"=rep(0,2)),
+						  # study=list("budget"=50000, "target.power"=0.80, "l2.cost"=100, "l1.cost"=50, alpha=0.05, T=8 ),
+						  # optimize=list(
+									# "what"=c("power"),
+									# "direction"=c("max"),
+									# "via"=c("pprec"),
+									## "via"=c("power"),
+									# "par"=c("T"),
+									# "via.function"=c("calculate.power.LRT"),
+									# "optimizer"=c("genoud"),
+									# "starting.values"="round(mean(c(par.min.set,par.max.set)))",
+									# "set.seed.value"="random"
+									# ),
+							# constraints=list("T.min"=4, "T.max"=50, "N.min"=20, "N.max"=50, "T.min.identify"=0,
+											# "T.integer"=TRUE,
+											# "N.integer"=FALSE ),									
+						  # genoud=list("pop.size"=16,"pop.size.max"=1000,"max.generations"=100,"wait.generations"=1,
+						  			  # "boundary.enforcement"=2,"solution.tolerance"=0.001),
+						  # log.data=FALSE,
+						  # verbose=TRUE )
+
+# str( res ); flush.console()
+
 
 ### MH 0.1.74 2023-06-12
 # specs <- generate.model.example.3()
